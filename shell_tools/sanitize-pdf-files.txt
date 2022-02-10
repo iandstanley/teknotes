@@ -1,0 +1,37 @@
+MODIFY/REMOVE DATA FROM PDF FILES
+=================================
+
+Some PDF editors can delete some metadata, but you can also remove
+metadata with a simple text editor.
+
+Towards the end of the file you will see:
+
+---------------------------------
+
+nn n  obj<<
+  /Author ...............
+  /CreationDate ...........
+  /Subject
+	...
+	...
+	...
+  >> obj
+
+---------------------------------
+You can just change or delete this block.
+
+
+AUTOMATING THIS
+---------------
+
+You can also automate this using the EXIFTOOL from exiftool.org.
+
+This is also available in the Debian package 'libimage-exiftool'
+or the FreeBSD package 'p5-Image-ExifTool'.
+
+To use exiftool:
+
+	$ exiftool -all= pdffile_to_clean.pdf
+
+ExifTool is available for MacOS, Windows and Unix/Linux platforms.
+

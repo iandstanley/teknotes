@@ -1,0 +1,15 @@
+
+# APPLYING CHANGES TO /etc/X11/xorg.conf WITHOUT RESTARTING SYSTEM
+
+
+(1)	You can restart your display manager
+
+	$ sudo restart lightdm
+
+	-or-
+
+	$ sudo service lightdm restart
+
+
+(2)     Alternatively quit with killall X and restart X, or by
+logging out.

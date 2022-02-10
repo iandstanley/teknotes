@@ -1,0 +1,43 @@
+
+HOW TO ENABLE CUT OR COPY-PASTE IN XTERM
+
+
+You should be able to:
+
+	$ xterm -ls -xrm 'XTerm*selectToClipboard: True &'
+
+
+
+$ vi .XTerm
+
+
+	XTerm*Background:	black
+	XTerm*Foreground:	green
+	XTerm*SaveLines:	2000
+	XTerm*faceName:		Ubuntu Mono
+	XTerm*faceSize:		12
+	XTerm*rightScrollBar:	true
+	XTerm*scrollTtyOutput:	true
+	XTerm*VT100.Translations:	#override
+
+	Shift Ctrl <Key> V:	insert-selection(CLIPBOARD) \n\
+	Shift <BtnDown>: 	select-start() \n\
+	Shift <BtnMotion>: 	select-extend() \n\
+	Shift <BtnUp>:		select-end(CLIPBOARD) \n\
+	!# shift left click to select text
+	!# swipe & click right mouse to copy
+	!# ctrl-v pastes
+
+
+Add:
+
+	XTerm:select To Clipboard: True
+
+to ~/.Xdefaults and reload with:
+
+	$ xrdb ~/.Xdefaults
+
+
+
+
+

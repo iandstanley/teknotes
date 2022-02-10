@@ -1,0 +1,518 @@
+MISC GNUPG NOTES
+================
+
+For a given key id $KEYID
+
+
+
+GENERATE A REVOCATION CERT
+--------------------------
+
+$ gpg --gen-revoke $KEYID > ~/.gnupg/revocation-$KEYID.crt
+
+
+SEND KEY TO KEY SERVER
+----------------------
+
+$ gpg --keyserver pool.sks-keyserver.net --send-key $KEYID
+
+
+BACKUP YOUR GPG KEYS
+--------------------
+
+$ tar -zcvf gnupg_keys.tgz .gnupg/
+
+
+QUICK GPG KEY GENERATION
+------------------------
+
+$ gpg --quick-generate-key $USER  [algo [usage [expire] ] ]
+
+Try using future-default for 'algo'.
+
+
+CREATE GPG KEY WITHOUT A PASSPHRASE
+-----------------------------------
+
+$ gpg --passphrase '' --batch --quick-generate-key $USER
+
+
+GOT A NEW EMAIL ADDRESS?
+------------------------
+
+$ gpg --quick-add-uid $FINGERPRINT $NEWUSERID
+
+
+LOST THAT EMAIL ADDRESS?
+------------------------
+
+$ gpg --quick-revoke-uid $FINGERPRINT  Â$USERID
+
+
+Tell others
+
+$ gpg --quick-set-primary-uid $FINGERPRINT $USERID
+
+$ gpg --keyserver pgp.mit.edu --send-keys $KEYID
+
+
+KEY SIGNING PARTIES
+-------------------
+
+$ gpg --quick-sign-key $FINGERPRINT [NAMES]
+
+Mark a key as locally verified:
+
+$ gpg --quick-lsign-key $FINGERPRINT [NAMES]
+
+
+ENCRYPTION WITHOUT A KEYRING
+----------------------------
+
+Instead of importing a key and using it's fingerprint the -f option
+can be used.
+
+$ gpg -f FILE_WITH_KEY -e DATA
+
+
+PIUS KEYSIGNING PARTIES
+-----------------------
+
+Debian ships with tools for assisting before and after keysigning
+parties.
+
+After a key-signing party, pius (the PGP Individual UID Signer)
+signs each uid on a GPG key individually. Each signature is encrypted
+and mailed to the email address associated with that particular
+uid. As a result of this process, the recipient can choose which
+signatures to import. Also, signatures of inactive uids are not
+delivered. This tool greatly reduces time and error when signing
+keys.
+
+Other tools herein are useful for organizers: pius-keyring-mgr
+builds a party keyring from a CSV file or by scanning mailboxes,
+and pius-party-worksheet generates a worksheet as a hand out. If
+someone has not signed your key, pius-report can analyze a party
+keyring and remind them.
+
+For more information:
+
+	http://www.phildev.net/pius/
+
+	$ man pius
+	$ info pius
+
+
+GPG KEY VALIDATION
+------------------
+
+There are two main methods of key validation.
+
+1. Web of Trust
+
+	- hard to explain
+	- global social graph (I'm looking at you NSA, lol)
+	- doesn't scale
+
+2. Trust On First Use (TOFU)
+
+	- better paradigm
+	- easy to explain
+	- local
+	- keeps PGP/GPG properties
+
+
+SHOW KEYS IN A FILE
+-------------------
+
+$ gpg --import-options show_only  --import FILE
+
+
+EXPORT ONLY USER IDS WITH GIVEN EMAIL
+-------------------------------------
+
+$ gpg  -a  --export-options=expert-minimal \
+	--export-filter keep_uid=mbox=uk@group.org \
+	--export FINGERPRINT
+
+
+SSH AGENT AND GNUPG
+-------------------
+
+More than 10 years old 
+
+$ ssh_add 
+
+transfers existing keys into GNUPG keystore and makes them permanent.
+
+- works nicely with smartcards & Yubikeys
+- use a subkey for ssh
+- ssh_add still works
+
+
+DEBIAN APT KEYS
+---------------
+
+# apt-key list
+
+# apt-key KEYID
+
+To add a key
+
+$ gpg --keyserver subkeys.pgp.net  --recv-keys 55BE302B
+
+$ gpg -a --export 55BE302B | sudo apt-key add - 
+
+
+USE GPG TO SIGN FILES
+---------------------
+
+$ gpg --detach-signature filename
+
+This will produce the file 'filename.sig' and the original file
+'filename'
+
+$ gpg --verify filename.sig filename
+
+
+USE YOUR KEY TO ENCRYPT FILES
+-----------------------------
+
+$ gpg  --encrypt  filename  -r recipient@email.com
+
+This results in two files: 'filename' and 'filename.gpg'
+
+$ gpg  --decrypt filename.gpg > filename2
+
+
+
+GPG WEB OF TRUST
+----------------
+
+The GPG Web of Trust is where you sign somebody else's key to affirm
+you have verified that person's identity.
+
+$ gpg  --sign-key  AB34CD78
+
+GnuPG will ask you are you sure?
+
+After affirming your signature is added to the other person's public
+key.
+
+$ gpg  --list-sigs  AB34CD78
+
+Signatures are only valid if keys have not been tampered with so
+you can use this to check validity anytime.
+
+$ gpg  --check-sigs  AB34CD78
+
+After signing a key it should be exported and then re-imported.  A
+copy should be sent to the recipient who should upload it to a
+keyserver if he/she wishes to publically publish their key. Your
+signature will appear on the public key.
+
+
+MANAGING TRUST
+--------------
+
+To specify the trust level you have of a person's key and your
+assessment of their ability to validate 3rd party identities.
+
+
+REFRESHING KEYS
+---------------
+
+Periodically you will need to refresh other people's public keys
+in your keyring to keep your keyring current with any changes of
+status of their keys (new userid's, revoked and expired keys etc).
+
+$ gpg  --refresh-keys
+
+This command contacts your default keyserver and checks for any
+changes to the public keys in your keyring. If any public key has
+been changed (eg. new signatures, revocations, new keys etc).
+
+
+ROOT KEYS AND SUBKEYS
+---------------------
+
+A root key only needs the CERTIFY functionality as we will create
+subkeys for sign, encrypt and authenticate using the 'addkey' command
+inside gpg.
+
+
+GPG KEYS AND GPG AGENT
+----------------------
+
+You can use *only* GPG keys if you wish to avoid managing SSH keys
+using GPG-AGENT.
+
+See:	https://wiki.archlinux.org/index.php/GnuPG#SSH_agent
+
+
+DR DUH's GUIDE
+--------------
+
+There is a good guide to GPG keys and Yubikeys at:
+
+	https://github.com/drduh/Yubikey-Guide#SSH
+
+
+CONFIGURING GPG-AGENT
+---------------------
+
+We can configure gpg-agent by editing ~/.gnupg/gpg-agent.conf
+
+	enable_ssh_support
+	default_cache_ttl	345600
+	default_cache_ttl_ssh	345600
+	max_cache_ttl		345600
+	max_cache_ttl_ssh	345600
+	pin-entry-program	...........
+
+
+We can also add our key to ~/.gnupg/sshcontrol to allow our key to
+be used if the key is not on a keycard.
+
+To retrieve the public key part of your GPG/SSH key, run:
+
+$ gpg --export-ssh-key GPG-KEY
+
+You may add this key to the agent with 
+
+$ ssh-add  GPGKEYFILE
+
+You can confirm the key has been added with
+
+$ ssh-add -L
+
+
+GPG agent should be invoked with
+
+$ gpg-agent  --enable-ssh-support
+
+
+TO USE ALTERNATE GPG KEYRING
+----------------------------
+
+To create:
+
+$ gpg  --no-default-keyring  \
+	--keyring  trustedkeys.gpg  \
+	--fingerprint
+
+To use:
+
+$ gpg  --no-default-keyring  \
+	--keyring trsutedkeys.gpg  \
+	<gpg-command>
+
+
+STRING GENERATION
+-----------------
+
+$ openssl  rand -base64 12
+
+or 
+
+$ openssl rand -hex 12
+
+or 
+
+$ pwgen -s 13 7
+
+The '-s' flag generates a more secure string.
+
+
+
+INSTALLING AND RUNNING GPG-AGENT
+--------------------------------
+
+
+$ sudo apt install gnupg-agent monkeysphere
+
+$ eval $(gpg-agent --daemon --disable-scdaemon \
+	--enable-ssh-support)
+
+$ eval ssh-agent -s 
+
+$ gpg --list-secret-keys
+
+
+GNUPG DO's AND DONT'S
+---------------------
+
+DON'T USE:
+	
+	* anything but RSA keys (you may also use Ecliptic curve
+	  keys that are new to GPG)
+	* anything *but* SHA2 hashing
+	* a bigger keysize than needed
+	* a card to store key *unless* you are going to use it
+	* don't carry it with you.
+
+DO USE:
+
+	* RSA 4096 for CERTIFY key
+	* RSA 2048 for SIGNING key
+	* RSA 2048 for ENCRYPTION key
+	* A Yubikey
+
+
+3 STEPS TO VERIFY
+-----------------
+
+1. FACE vs NAME
+2. EMAIL vs NAME	email their signed key for them to upload
+3. KEY vs NAME
+
+
+GPG KEYS VS SSH KEYS
+--------------------
+
+You may have 5 or more SSH keys, maybe even dozens.
+
+But you can get rid of all these and replace them with a *single*
+GPG key.
+
+$ export SSH_AUTH_SOCK="~/.gnupg/s.gpg-agent.ssh"
+
+$ ssh-add -l
+
+$ ssh-add -L
+
+Use your GPG key where you can and your SSH key where you must.
+
+Better still migrate all SSH keys to GPG.
+
+
+EXTRACT SSH KEY FROM GPG 2.1+
+-----------------------------
+
+$ gpg  --export-ssh-key  KEYID !
+
+The ! is optional, it makes the primary key exportable and omits
+checking whether the key is authntication capable [CA].
+
+
+MONKEYSPHERE AND GPG
+--------------------
+
+Your gpg certificate will need a subkey for authentication ('A'
+capability flag).
+
+To create such a subkey:
+
+$ monkeysphere g
+
+To add your authentication subkeys to ssh-agent:
+
+$ monkeysphere s
+
+
+YUBIKEY 4
+---------
+
+A Yubikey 4 has a number of apps and config sets:
+
+	OpenPGP app
+	OATH / HOTP app
+	FIDO / U2F app
+	PIV app
+	Config set 1
+	Config set 2
+
+Each config set can hold one of:
+
+	Yubico OTP
+	OATH TOTP
+	Challenge-Response
+	Static Credentials
+
+A Yubikey 4 can hold all of the following at the same time:
+
+	2 one time passwords (config sets 1+2)
+	upto 4 certificates in the PIV app
+	1 OpenPGP key with upto 3 subkeys
+	Unlimited FIDO/U2F
+	20 TOTP
+
+
+SIGNING GIT COMMITS
+-------------------
+
+$ git init
+$ touch aaa
+$ git add aaa
+$ git commit -m "added aaa"
+$ touch bbb
+$ git add bbb
+$ git commit -S -m "added bbb"
+
+Note here the use of the -S flag meaning a signed commit.
+
+$ git log
+
+This will show 2 commits
+
+Â$ git log --show-signatures
+
+A signed commit stops somebody using --author to impersonate you.
+
+$ git tag -s v4.0
+
+This creates a full tag with a message and a signing
+
+$ git tag v4.0 -v 
+
+This verifies the signed tag.
+
+
+You can also configure git by editing ~/.gitconfig.user 
+
+[user]
+  name = Nick Jarret
+  email = nickj@gmail.com
+  signingkey = nickj@gmail.com
+
+[commit]
+  gpgsign = true
+
+[tag]
+  gpgSign = true
+
+
+Note the capital S in the gpgSign for the tag stanza.
+
+
+CREATE RANDOM PASSWORDS
+-----------------------
+
+$ date | sha256 | head -c 32
+
+This will generate 32 characters of radnom text for a password.
+
+
+SSH LOGINS
+----------
+
+/etc/ssh/banner
+/etc/motd
+
+.ssh/config
+	PrintMotd	yes
+	PrintLastLog	yes
+
+avoid:
+	UseDNS
+
+
+YUBIKEY WEBSITES
+----------------
+
+yubico.com
+
+yubi.co/kbwinpiv   or  yubi.co/kbmacpiv
+
+blog.progmaster.org/yubikey-cheatsheet
+

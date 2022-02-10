@@ -1,0 +1,24 @@
+# Sign a file with a ssh key
+
+SSH_AGENT_PID="17035
+17228
+15789", which is not a good PID: invalid
+Agent pid 17845
+
+ian@frodo:~/.ssh $ echo "ian@frodo namespaces=\"file\" $(awk '{print $1,$2}' id_ecdsa_sk_rk.pub)" > allowed_signers
+
+ian@frodo:~/.ssh $ ssh-add -K
+Enter PIN for authenticator: 
+Resident identity added: ECDSA-SK SHA256:DAsqf154UWAN024nfmL7OfQ0+xwTa8mnWd1i7DYTHJU
+
+ian@frodo:~/.ssh $ ssh-keygen -Y sign  -f id_ecdsa_sk_rk.pub -n "file"  zzz
+Signing file zzz
+zzz.sig already exists.
+Overwrite (y/n)? y
+Write signature to zzz.sig
+
+ian@frodo:~/.ssh $ ssh-keygen -Y verify -f allowed_signers  -I ian@frodo  -n "file" -s zzz.sig  < zzz
+Good "file" signature for ian@frodo with ECDSA-SK key SHA256:DAsqf154UWAN024nfmL7OfQ0+xwTa8mnWd1i7DYTHJU
+ian@frodo:~/.ssh $ 
+ian@frodo:~/.ssh $ 
+

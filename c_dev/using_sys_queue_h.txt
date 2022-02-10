@@ -1,0 +1,49 @@
+
+USING sys/queue.h
+
+
+LIST_ENTRY creates fields to put into your structure that are
+suitable for linking the elements, so you do not have to concern
+yourself with the specifics of those pointers.
+
+
+	struct foo {
+
+		int a, b, c;
+
+		/* instead of "struct foo *next" */
+		LIST_ENTRY(foo) pointers;
+	};
+
+
+Then to create a list you would use:
+
+	struct torrent {
+
+		LIST_HEAD(foo_list, foo) bar;
+	};
+
+
+You can initialize the list header using LIST_INIT:
+
+	struct torrent t;
+
+	LIST_INIT(&t.bar);
+
+
+
+You can insert elements using the LIST_INSERT_*() macros:
+
+	struct foo *item = malloc(sizeof(struct foo));
+
+	LIST_INSERT_HEAD(&t.bat,item, pointers);
+
+
+See man 3 queue
+
+
+
+
+
+
+

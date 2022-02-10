@@ -1,0 +1,20 @@
+SSH key auth and 2FA
+====================
+
+eg Google authenticator or similar TOTP app
+
+# vi /etc/pam.d/sshd
+
+	# auth required pam_google_authenticator.so
+	auth sufficient pa,.google.authenticator
+
+
+# vi /etc/ssh/sshd_config
+
+	ChallengeResponseAuthentication		yes
+	UsePAM	yes
+	AuthenticationMethods	publickey, keyboard_interactive
+	PasswordAuthentication	no
+
+# systemctl restart sshd
+

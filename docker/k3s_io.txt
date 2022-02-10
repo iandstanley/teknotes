@@ -1,0 +1,373 @@
+K3S.IO
+======
+
+A lightweight CERTIFIED Kubernetes designed for production on Intel
+and Arm.
+
+INSTALL AS A SINGLE NODE CLUSTER
+
+To install a specific version:
+
+$ curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v0.3.0 sh -
+
+To install the LATEST version:
+
+$ curl -sfL https://get.k3s.io |  sh -
+
+
+WHICH VERSION INSTALLED?
+
+$ kubectl version
+
+This shows client and server versions.
+
+$ k3s --version
+
+k3s version 0.3.0 (9a1a1ec)
+
+Running the first command again with a version of v0.7.0-rc4 followed
+by a kubectl version will show a fail as v0.3.0 allowed me to use
+the kube config regardless of which user I'm logged in as. v0.7.0-rc4
+doesn't and reports telling the user to use '--write-kube-config-mode'
+when starting the server.
+
+To do this, upgrade with:
+
+$ curl -sfL https://get.k3s.io | \
+      INSTALL_K3S_VERSION=v0.7.0-rc4 \
+      INSTALL_K3S_EXEC="--write-kubeconfig-mode 644" sh -
+
+Which allows me to run kubeconfig without security -- not good.
+
+The script install k3s as a systemd script and I can start and stop
+using systemctl.
+
+$ kubectl get node
+
+This displays that it is a single node cluster
+
+
+UNINSTALL
+
+$ /usr/local/bin/k3s-uninstall.sh
+
+
+
+REQUIREMENTS
+
+k3s run in 250mb with server & agent running a cluster on RPi3a+
+
+
+
+MULTINODE CLUSTERS
+
+Process:
+
+	Server:	
+		* standup as server only
+		* get a node-token for agents
+
+	Agents: 
+		* Install binary ONLY
+		* view resource utilization
+		* connect agent to server
+
+SERVER:
+
+$ curl -sfL https://get.k3s.io | \
+	INSTALL_K3S_EXEC="--disable-agent \
+	--write-kubeconfig-mode 644 \
+	--tls-san 54.196.155.129" sh - 
+
+given the public ip address of the server as 54.196.155.129
+
+$ kubectl get node
+
+no resouces found
+
+$ echo "export node_token = \
+	$(sudo cat /var/lib/rancher/k3s/server/node-token)"
+
+
+AGENT:
+
+Install k3s as a binary:
+
+$ curl -L -o k3s https://github.com/rancher \
+	/k3s/releases/download/v0.6.1/k3s-arm64
+
+$ chmod 755 k3s && sudo mv k3s /usr/local/bin/k3s
+
+Copy and paste the export node_token command from the echo on the
+server
+
+$ sudo /usr/local/bin/k3s agent \
+	--server https://54.196.155.129:6443 \
+	--token "$node_token" >& k3s-agent.log &
+
+Then I can run
+
+$ kubectl get node
+
+on the same server and see one worker has been added.
+
+
+WHAT IS RUNNING ON THE CLUSTER?
+
+You can see what is running using:
+
+$ watch kubectl get pods --all-namespaces
+
+
+
+NGINX SAMPLE CONFIGURATION
+
+nginx.yaml:
+
+apiversion:  apps/v1
+kind:  Deployment
+metadata:
+  name: nginx-deployment
+  labels: 
+  app: nginx
+spec:
+  replicas:  1
+  selector:
+    matchLabels:
+      app:  nginx
+    template:  
+      metadata:
+        labels:
+          app: nginx
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+          - containerPort: 80
+
+
+* Standard k8s approach using: kubectl apply -f <filename>
+
+$ kubectl apply -f nginx.yaml
+
+* k3s capability
+	
+  - standard k8s apporach
+  - by using the manifest, take that file and drop it in  a
+    location and let kubernetes do its thing.
+
+You can delete it with:
+
+$ kubectl delete -f nginx.yaml
+
+
+ADD REPLICAS
+
+$ vi nginx.yaml
+
+and change replicas: Â3
+
+$ cp nginx.yaml /var/lib/rancher/k3s/server/manifests
+
+$ watch kubectl get pads --all-namespaces
+
+will show 3 pods of nginx.
+
+
+K3D & DOCKER
+
+k3d is a developer project. k3d gives us the ability to run k3s in
+docker. k3d "creates and destroys clusters in docker containers".
+
+
+CREATE CLUSTERS
+
+Single node default
+
+$ k3s create
+
+Multinode named
+
+$ k3d create --name cluster01 --workers 3
+
+k3d is really cool, when it comes to local development in kubernetes:
+
+$ k3d create && k3d list
+
+NAME		IMAGE				STATUS	WORKERS
+k3s-default	docker.io/rancher/k3s:v0.6.1	running	0/0
+
+k3d create shows:
+
+	export KUBECONFIG="$(k3d get-kubeconfig \
+		--name='k3s-default')"
+
+$ KUBECONFIG="$(k3d get-kubeconfig --name='k3s-default')";
+  kubectl get node
+
+shows that k3d has created a 1 node cluster by default
+
+$ k3d delete -a 
+
+$ k3d create --name cluster01 --workers 3
+
+$ export KUBECONFIG="$(k3d get-kubeconfig --name='cluster01')"
+
+$ kubectl get node
+
+shows a server and starts 3 workers in the cluster
+
+
+
+
+K3OS
+====
+
+The container operating system.
+
+* Runs only the minimum required services resulting in a smaller
+  attack surface.
+* Doesn't require a package manager
+* Models infrastructure as code (manage system config with a VCS
+  system)
+
+
+K3OS INSTALLATION
+
+* load the ISO and run
+
+$ os-config
+
+* automated kernel command line parameters
+* bootstrapped "install.sh" to block device
+* remaster ISO "gmb-mkrescue" utility
+* takeover an existing linux installation with the command:
+
+$ install.sh --takeover
+
+* ARM overlay rootfs & config.yaml
+
+By default K3OS runs as a single node cluster.
+
+$ kubectl get node
+
+Fleet management can be done with RANCHER
+
+K3OS is a single user OS - really a Kubernetes appliance. There is
+no real reason for multiple user accounts on this but you can add
+multiple ssh keys.
+
+To get started:
+
+$ sudo os-config
+
+K3OS asks you if you want to 
+  * install to disk
+  * configure server or agent
+
+There is NO PERSISTENT /etc -- all changes needed should be added
+to config.yaml.
+
+	/usr 		is read only 
+			except /usr/local which is mapped to /var/local
+	/k3os		system files
+	/home		persistent
+	/var		persistent
+	/opt		persistent
+	/usr/local 	persistent
+
+Technically /etc/ is a tempfs
+
+/k3os/system/config.yaml is the system installation configuration.
+
+/var/lib/rancher/k3os/config.yaml and config.d/* are the runtime
+config files
+
+On a new system (rather than a takeover) the /var/lib files aren't
+there.
+
+Anything in the cloud config can also be configured from the kernel
+command line.
+
+In the config files you can use a write_files directive to write a
+file into /etc
+
+For any more complicated network configuration you will need a
+'connmand' service file:
+
+
+
+kind:	NodeConfig
+...
+..
+...
+...
+spec: 
+  ...
+  ...
+  config:
+    writefiles:
+    - path:   /ver/tmp/mount-storage.sh
+      permissions:  "0700"
+      content: |
+      #!/bin/bash
+      STORAGE=$(blkid -L STORAGE || true)
+      if ["$STORAGE" != ""]; then
+      mkdir /media/storage
+      mount LABEL=STORAGE /media/storage
+      fi
+      runcmd:
+      - "/var/tmp/mount-storage.sh"
+
+
+MANAGING WITH RANCHER
+
+$ docker run -p 80:80 -p 443:443 rancher/rancher
+
+to run the rancher management software if desired.
+
+
+
+K3OS ON RASPBERRY PI 
+====================
+
+Install Raspbian lite
+
+$ sudo touch /boot/ssh
+
+$ sudo raspi-config
+
+change GPU memory =16mb, hostname and pi password
+
+$ ssh-copy-id pi@k3osmachine.local
+
+$ vi /boot/cmdline.txt
+
+append:
+
+  cgroup-enable=cpuset 
+  cgroup-memory=1
+  cgroup-enable=memory
+
+$ curl -sfL https://get.k3s.io | sh - 
+
+$ sudo systemctl status k3s
+
+$ sudo cat /var/lib/rancher/k3s/server/node_token
+
+$ k3sup install --ip $SERVER --user pi
+
+$ k3sup join --ip $AGENT --server $SERVER --user pi
+
+
+Installing apps with arkade:
+
+e.g.
+
+$ arkade install openfaas
+$ arkade install kubernetes-dashboard
+
+For k3sup see https://k3sup.dev
+For arkade see https://get-arkade.dev
+

@@ -1,0 +1,121 @@
+
+FREEBSD AND OPEN-MOTIF (MWM)
+
+
+Running FreeBSD, XOrg and MWM takes about 29Mb.
+
+	.mwmrc	configuration file
+	.Xdefaults	the look and feel of MWM
+
+Motif Window Manager is the epitome of simplicity with the configuration and look-and-feel being controlled by two text files; so it is easy to clone your configuration between systems. You need to restart is you modify .mwmrc.
+
+
+$ vi .mwmrc
+
+Menu DefaultRootMenu
+{
+	"FreeBSD 12"	f.title
+	"Firefox"	f.exe	"dbus_launch firefox &"
+	"Mutt"		f.exec	"xterm -e mutt &"
+	"XTerm"		f.exec 	"xterm &"
+	separator	f.separator
+	"Office"	f.menu	office
+	separator	f.separator
+	"Ram Disk"	f.exec	"rox /tmp/ &"
+	"Home"		f.exec	"rox &"
+	"Storage"	f.exec	"rox /mnt/storage/ &"
+	"NFS Storage"	f.exec	"rox /mnt/nfs/ &"
+	separator	f.separator
+	"Refresh"	f.refresh
+	"Pack Icons"	f.pack-icon
+	no-label	f.set_behaviour
+	"Restart"	f.restart
+	"Quit"		f.quit_mwm
+}
+
+Menu office
+{
+	"OpenOffice Writer"	f.exec	"/usr/local/bin/openoffice-4.1.7-swriter &"
+}
+
+Menu sessions
+{
+	"Session"	f.title
+#	"Restart"	f.exec	"sudo shutdown -r now"
+#	"Shutdown"	f.exec	"sudo shutdown -h now"
+}
+
+Buttons DefaultButtonBindings
+{
+	<Btn1Down>	frame|icon	f.raise
+	<Btn3Down>	frame|icon	f.lower
+#	<Btn1Down>	root		f.menu DefaultRootMenu
+	<Btn2Down>	root		f.menu progs
+	<Btn3Down>	root		f.menu DefaultRootMenu
+
+	Meta <Btn1Down>	window|icon	f.move
+	Meta <Btn2Down>	window|icon	f.move
+	Meta Shift <Btn1Down>	window|icon	f.minimize
+	Meta Shift <Btn2Down>	window|icon	f.focus_color
+	Meta Shift <Btn3Down>	window|icon	f.post_wmenu
+
+	Meta <Btn1Down>		root		f.track_pan
+	Meta <Btn2Down>		root		f.track_pan
+
+	Alt <Btn4Up>	app	f.exec "transset-df--min0.1-p--dec0.2"
+	Alt <Btn5Down>	app	f.exec "transset-df-p--inc0.2"
+}
+
+Menu utils
+{
+	"Xkill"		f.exec "xkill &"
+
+}
+
+Menu system
+{
+	"MWM Config"	f.exec	"xterm -T MWMRC -r vi ~/.mwmrc &"
+}
+
+
+
+
+$ vi .Xdefaults
+
+Xft*dpi:	99
+Xft*antialias:	true
+Xft*hinting:	true
+Xft*hinting:	full
+Xft*hintstyle:	hintfull
+Xft*lcdfilter:	lcddefault
+
+*lookAndFeel:	motif
+
+Mwm*iconDecoration:	label activelabel
+Mwm*iconPlacement:	bottom right
+Mwm*XClock*clientDecoration:	Border
+Mwm*fontList:		9x13
+Mwm*menu*fontList:	9x15
+Mwm*keyboardFocusPolicy:	pointer
+Mwm*background:		LightBlue
+Mwm*foreground:		Black
+Mwm*activeBackground:	Blue
+Mwm*icon*foreground:	DarkSlateBlue
+Mwm*matchMenuColors:	1 
+Mwm*fontList:		-mMenu-Medium-R-Normal--*-120-*-*-p-*-ISO8859-1
+
+XTermfaceName:		Bitstream Vera Serif Mono
+
+
+
+
+$ vi .xinitrc
+
+xsetroot	-gray
+xv -quit -root ~/Wallpapers/purple.gif
+# sh ~/scripts/backup.sh
+EXPORT BROWSER=firefox
+exec mwm
+
+
+

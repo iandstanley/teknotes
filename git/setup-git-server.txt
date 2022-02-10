@@ -1,0 +1,112 @@
+SETUP YOUR OWN GIT SERVER
+=========================
+
+See tinyurl.com/mygitserver
+
+$ sudo apt install git
+
+$ sudo adduser git
+
+Give the git user a password. You are not going to use the password
+to login as you will use ssh keys.
+
+$ su - git 
+(git) $ cd 
+(git) $ mkdir .ssh && chmod 700 .ssh 
+(git) $ touch .ssh/authorized_keys 
+(git) $ chmod 600 .ssh/authorized_keys
+
+Now you need to copy over your ssh keys to git's authorized_keys
+file.
+
+You can do this by one of the following:
+
+	$ cat /tmp/id_rsa.ian.pub >> .ssh/authorized_keys
+
+	$ vi .ssh/authorized_keys    # and paste in your public key
+
+	$ ssh-copyid git@yourgitserver.com
+
+Once this has all been setup you should disable password login in
+PAM.
+
+If you change the directory of the service, make sure the new
+directory is owned by git:git
+
+ADD A PROJECT
+-------------
+
+$ mkdir myproject.git $ cd myproject.git
+
+$ git init --bare
+
+This will initialize an empty Git repo in git's ~/myproject.git
+
+
+ON YOUR DESKTOP
+---------------
+
+$ cd myproject 
+$ git init 
+$ git add .  
+$ git commit -m "Initial Commit" 
+$ git remote add origin git@yourgitserver /home/git/myproject.git
+
+
+
+MULTIPLE UPSTREAMS ------------------
+
+You can have multiple upstreams.
+
+$ view .git/config
+
+------------------------------------------------------
+
+[core]
+	repositoryformatversion = 0 filemode = true bare = flase
+	logallrefupdates = true
+
+[credential]
+	helper=store
+
+[remote "origin"]
+	url = git@github.com:luke.xyz/test.git fetch =
+	+refs/heads/*:refs/remote/origin/*
+
+[remote "home"]
+	url = git@yougitserver:/home/git/myproject.git fetch =
+	+refs/heads/*:refs/remotes/home/*
+
+------------------------------------------------------
+
+
+Back on your desktop you may now push.
+
+$ git push home master
+
+
+RESTRICTING THE GIT USER ========================
+
+You may restrict the git user by setting the git user's login shell
+to git-shell.
+
+On the git server:
+
+
+$ cat /etc/shells 
+$ which git-shell 
+$ sudo -e /etc/shells           # and add the path of git-shell to it
+
+$ sudo chsh git -s$(which git-shell)
+
+Now the git user can still use the ssh connection to push and pull
+git repository change but cannot shell onto the machine. But you
+could still use port forwarding to access other servers/services.
+To restrict that edit the authorized_keys file and prepend BEFORE
+the ssh-rsa:
+
+	no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty
+
+
+The git-shell can also be used to imitate a cvs-server.
+

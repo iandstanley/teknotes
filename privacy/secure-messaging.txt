@@ -1,0 +1,33 @@
+SECURE MESSAGING
+================
+
+matrix.org
+
+	client = element.io (available for all platforms)
+	you can also run your own server
+
+AVOID TELEGRAM AND WHATSAPP
+
+	You should avoid telegram and whatsapp as they are 
+	not end-2-end encrypted.
+
+signal.org
+
+	not open source but it is e2e encrypted
+
+disroot.org
+
+	with only a handful of users they shutdown their 
+	Matrix server because it had grown to 5GB ram and 
+	170gb HDD. They switched to XMPP
+
+xmpp.org
+
+	a privacy respecting, opensource platform since 1999
+	xmpp has a wider choice of clients
+
+briar messaging
+
+	Android / F-Droid only. Highly secure and doesn't 
+	require internet!
+

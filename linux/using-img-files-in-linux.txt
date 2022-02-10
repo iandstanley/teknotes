@@ -1,0 +1,21 @@
+Using .img files in Linux
+=========================
+
+	# udiskctl loop-setup --file disk.img
+
+Remove images mounted with:
+
+	# kpartx -d disk.img
+
+Mount all partitions in a disk image:
+
+	# kpartx -av disk.img
+
+Which will output lines like this:
+
+	loop3p1:  0  2964762  /dev/loop3  63
+
+You can mount individual partitions:
+
+	# mount /dev/mapper/loop3p1  /mnt
+

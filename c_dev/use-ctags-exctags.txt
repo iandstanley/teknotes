@@ -1,0 +1,28 @@
+
+USE CTAGS(1) or EXCTAGS(1)
+
+
+The ctags(1) and exctags(1) programs generate a tagfile for editors
+to locate source code.
+
+$ ctags *.c *.h
+
+
+-or-
+
+$ exctags -f~/.tags -R -I__weak_alias /usr/include /usr/src/lib
+
+$ echo "set tags=tags\ /home/ian/.tags" >> .exrc
+$ echo "set tags+=/home/ian/.tags" >> .vimrc
+
+
+CTAGS KEYBOARD COMMANDS:
+
+	Ctrl+]		jump to definition
+	Ctrl+t 		return to your code
+
+In Vim you can use:
+
+	K               pull up manual definitionfor word under
+			cursor
+

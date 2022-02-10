@@ -1,0 +1,6 @@
+to use the super key in dwm modify the config.h:
+
+#define MODKEY Mod4Mask
+
+To return to using the alt key change to Mod1Mask
+

@@ -1,0 +1,178 @@
+# How to Use shfmt to Format Shell Scripts Better
+
+Yes, formatting is necessary and helps tremendously with understanding
+complex code. However, for those who write shell scripts often,
+double checking formatting can become a tedious task. This article
+will show you how to shortcut the work using shfmt!
+
+## What Is shfmt?
+
+Developed by Dustin Krysak, shfmt is a Shell formatter, parser and
+interpreter. The project itself is hosted on GitHub and has a clear
+README and cleanly presented repository. The tool was developed in
+Go and supports the POSIX, Bash and mksh shells. This makes shfmt
+a truly universal program instead of being restricted to Bash only.
+
+## Installing shfmt
+
+To install shfmt on your snap-enabled Linux distribution (Like
+Ubuntu and Mint), execute the following command in your terminal:
+
+	sudo snap install shfmt
+
+## Installing shfmt with snap
+
+To install shfmt on your RedHat/Yum based Linux distribution (Like
+RHEL, Centos and Fedora), execute the following commands in your
+terminal:
+
+Note: you will have to reboot your machine (or logout and re-login)
+after executing the first command and before executing the next
+commands.
+
+	sudo dnf install snapd
+	sudo snap install snap-store
+	sudo snap install shfmt
+
+On RHEL and Centos you may also have to install the EPEL repository
+first.
+
+## Using shfmt
+
+One the snap package is installed, you can start using shfmt.
+
+	$ shfmt --help
+
+Let us define a very poorly formatted and written script as test.sh
+as follows:
+
+-----------------------
+#!/bin/bash__
+ echo 'not well formatted line 1'
+   echo 'not well formatted line 2'
+ echo 'this line has extra spaces on the end > '            
+   func() {
+     echo 'more unneeded spaces'
+             echo 'way out'
+		    }
+ func ()
+-----------------------
+
+There are several issues with this script, the most prominent being
+the formatting thereof. But there is also an error/bug in the script:
+The function call func on the last line is followed by more brackets.
+A function call in Bash (rather than a function definition) should
+only have the name, not the brackets. It is a bit higher that the
+proper function definition happened.
+
+Let’s see what shfmt thinks of this.
+
+	$ shfmt test.sh
+	test.sh:9:1: "foo()" must be followed by a statement
+
+
+A practical example for shfmt with error on incorrect function call
+
+Whereas the output looks a little cryptic, note that the term foo
+(used here) and bar (not used here now) are often used in IT circles
+to indicate/represent any like idiom or element. foo here really
+refers to func.
+
+Even then, the message remains a little cryptic until we realize,
+looking at the last line, that what is really happening is the start
+of a function definition (and not a function call) because the two
+brackets were included. This then explains why the message is telling
+us that something more is expected; must be followed by a statement.
+shmft is looking here for something like func(){ some_command[s]; }.
+
+Bingo! This increases the functionality of shfmt to being a shell
+script validation/checker tool, though likely nowhere near a
+comprehensive one as the one we wrote about in using shellcheck to
+find and fix scripting bugs. Still, very handy indeed!
+
+We fix our bug and now the input script test.sh reads as follows:
+
+#!/bin/bash__
+ echo 'not well formatted line 1'
+  echo 'not well formatted line 2'
+echo 'this line has extra spaces on the end > '            
+func() {
+ echo 'more unneeded spaces'
+       echo 'way out'
+}
+func
+
+We again execute shfmt against the code and receive a much more
+suitable, and well formatted, output:
+
+
+	$ shfmt test.sh
+	#!/bin/bash__
+	echo 'not well formatted line 1'
+	echo 'not well formatted line 2'
+	echo 'this line has extra spaces on the end > '            
+	func() {
+		echo 'more unneeded spaces'
+		echo 'way out'
+	}
+	func
+	$ 
+
+
+## Using a two space indent with shfmt using the -i option
+
+Great. We can now take this one level further and indicate to shfmt
+that we would like to use an indent/tab width of two spaces instead
+of a full tab. I always write code using two spaces as an indent/tab
+width, and use an additional space where a command on the next line
+closely relates to the previous one, like a continued command etc.
+though this does not happen often. Over more than 10 years, I have
+found the two spaces to be the personal and shared projects ideal.
+
+Everyone and every project has to find their own ideal syntax, but
+note that if you use a large tab (8 spaces) like the formatting
+presented by shfmt in the example above, your code may become harder
+to read easily.
+
+We will set the indent/tab width to two spaces using the -i option
+(which the --help defines as indent: 0 for tabs (default), >0 for
+number of spaces): shfmt -i 2 test.sh which will render the script
+as follows:
+
+
+	$ shfmt 0i 2 test.sh
+	#!/bin/bash__
+	echo 'not well formatted line 1'
+	echo 'not well formatted line 2'
+	echo 'this line has extra spaces on the end > '
+	func() {
+	  echo 'more unneeded spaces'
+	  echo 'way out'
+	}
+	func
+
+Great! However, we note that shfmt did not pickup on our deliberate
+error: #!/bin/bash__ is not correct, and should read #!/bin/bash
+instead.
+
+There is thus still a use case for using shellcheck to find script
+bugs besides using shfmt to format scripts better. However,
+interestingly, in this particular case, even shellcheck failed to
+notice the issue. This shortcoming was reported to the shellcheck
+team so in due time this may be fixed.
+
+If you are interested in learning more about Linux, you can review
+the Bash Automation & Scripting Basics Series, as well as the Bash
+Loops: for, while, and until Bash Loops: for, while, and until and
+Exporting Variables in Bash: the Why and How articles.
+
+## Wrapping up
+
+Being able to write clean, well-formatted, and bug-free scripts
+becomes an easier job when you use a shell formatting tool like
+shfmt and a bug/error checker like shellcheck. Even then, as we
+saw, some things may go unnoticed even up to the moment where you
+run the script for the first time. shfmt is a small but effective
+utility which will help you format your scripts and code in accordance
+with your selected indents. Enjoy!
+					

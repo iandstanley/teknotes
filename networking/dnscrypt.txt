@@ -1,0 +1,102 @@
+# DNSCrypt
+
+DNSCrypt software can be used as a server and client to encrypt DNS 
+traffic, as well as filter and shape queries.
+
+If you are running your own private or public recursive DNS server, 
+adding support for the DNSCrypt protocol requires installing 
+DNSCrypt-Wrapper, the server-side DNSCrypt proxy.
+
+To configure a private or public DNSCrypt server, first install 
+libsodium and libevent:
+
+	$ sudo apt -y install libsodium-dev libevent-dev
+
+Clone the DNSCrypt-Wrapper repository, make and install the software:
+
+	$ git clone --recursive git://github.com/Cofyc/dnscrypt-wrapper.git
+	$ cd dnscrypt-wrapper
+	$ make configure
+	$ ./configure
+	$ sudo make install
+
+See instructions Cofyc/dnscrypt-wrapper to configure or use drduh/config/scripts/dnscrypt.sh:
+
+	$ mkdir ~/dnscrypt-keys
+	$ cd ~/dnscrypt-keys
+	$ cp ~/config/scripts/dnscrypt.sh .
+	$ chmod +x dnscrypt.sh
+	$ sudo ./dnscrypt.sh
+
+Copy the sdns:// line to a client. To use a port other than 443, use 
+https://dnscrypt.info/stamps to update the value.
+
+Update firewall rules to allow the new port:
+
+	$ gcloud compute firewall-rules create dnscrypt-udp-443 --network $NETWORK \
+	  --allow udp:443 --source-ranges $(curl -sq https://icanhazip.com/)
+
+On a client, edit dnscrypt-proxy.toml to include the server stamp:
+
+	listen_addresses = ['127.0.0.1:40']
+	server_names = ['abc']
+	[static]
+	  [static.'abc']
+	  stamp = 'sdns://AQAAAAAAAAAAEj...ZA'
+
+See drduh/config/dnscrypt-proxy.toml and 
+jedisct1/dnscrypt-proxy/example-dnscrypt-proxy.toml for examples.
+
+Start the client manually:
+
+	$ sudo ./dnscrypt-proxy
+
+Check the logfile:
+
+	$ tail -f dnscrypt.log
+	[NOTICE] dnscrypt-proxy 2.0.33
+	[NOTICE] Network connectivity detected
+	[NOTICE] Firefox workaround initialized
+	[NOTICE] Loading the set of blocking rules from [blacklist.txt]
+	[NOTICE] Loading the set of forwarding rules from [forwarding-rules.txt]
+	[NOTICE] Loading the set of IP blocking rules from [ip-blacklist.txt]
+	[NOTICE] Now listening to 127.0.0.1:4200 [UDP]
+	[NOTICE] Now listening to 127.0.0.1:4200 [TCP]
+	[NOTICE] [abc] OK (DNSCrypt) - rtt: 10ms
+	[NOTICE] Server with the lowest initial latency: abc (rtt: 10ms)
+	[NOTICE] dnscrypt-proxy is ready - live servers: 1
+
+Install the service:
+
+	$ sudo ./dnscrypt-proxy -service install
+
+	$ sudo ./dnscrypt-proxy -service start
+
+Edit /etc/dnsmasq.conf on the client and append server=127.0.0.1#4200 to 
+use DNSCrypt with dnsmasq.
+
+
+## Blacklist
+
+DNSCrypt supports query blocking with regular expression matching.
+
+On the client, clone the dnscrypt-proxy repository and use the included 
+Python script to generate a list, then configure dnscrypt to use it.
+
+	$ git clone https://github.com/jedisct1/dnscrypt-proxy
+
+	$ cd dnscrypt-proxy/utils/generate-domains-blacklists
+
+	$ python generate-domains-blacklist.py > blacklist.$(date +%F)
+	Loading data from [file:domains-blacklist-local-additions.txt]
+	Loading data from [https://easylist-downloads.adblockplus.org/antiadblockfilters.txt]
+	[...]
+	Loading data from [https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt]
+	Loading data from [file:domains-time-restricted.txt]
+	Loading data from [file:domains-whitelist.txt]
+
+	$ cp blacklist.$(date +%F) ~/build/linux-x86_64/blacklist.txt
+
+	$ wc -l blacklist.txt
+	117838 blacklist.txt
+

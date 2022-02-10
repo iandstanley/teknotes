@@ -1,0 +1,32 @@
+CLUSTERHAT
+==========
+
+$ clusterhat on
+$ clusterhat hub one
+$ clusterctrl on P1
+$ clusterctrl on P4
+
+RPIBOOT
+
+Boot Raspberry Pi's with 
+
+$ sudo rpiboot
+
+
+$ clusterctrl
+	on [devices]
+	off [devices]
+	status
+	maxp
+	init
+	alert on|off [devices]		displays red LED
+	led on|off			toggle all LEDs
+	hub on|off
+	save <order>		save settings to EEPROM
+	saveorder <order>	save current order to EEPROM
+	saveusbboot <order>	save usb settings
+	savedefault
+	fan on|off
+	set order <old> <new>
+	getpath			get usb path to Px
+

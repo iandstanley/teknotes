@@ -1,0 +1,47 @@
+QUICK & DIRTY HTTPS WEBSERVER USING OPENSSL
+===========================================
+
+1. Create SSL Certificate
+
+	$ openssl req -x509 -newkey rsa:2048 
+		-keyout key.pem -out cert.pem \
+		-days 365 -nodes
+
+2. Open a port on the firewall (if needed)
+
+3. Let's run an SSL webserver on port 44330, say
+
+	$ openssl s_server -key key.pem -cert cert.pem \
+		-accept 44330 -WWW
+
+
+QUICK & DIRTY HTTP WEBSERVER USING PHP
+======================================
+
+Often you don't need the overhead of HTTP for development work. 
+
+You can get awau with a simple HTTP server instead. Many people
+install a dedicated webserver or write their own. But why go the
+effort when many machines have PHP installed by default.
+
+If you have PHP vesion 5.4+ (use 'php -v' to check; the current
+Debian 10 version is v7.3) then you can run a simple PHP based
+webserver that canserve simple PHP sites and static HTML sites.
+
+Simply run:
+
+	$ php -S 127.0.0.1:8080
+
+You could also run a stunnelwrapper for SSL if needed 
+
+	$ stunnel -d 443 -r 8080
+
+The server will serve index.html or index.php to your browser on
+the localhost URL.
+
+
+WHAT NO PHP? GOT PYTHON? WELL...
+================================
+
+	$ python -m http.server
+

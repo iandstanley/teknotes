@@ -1,0 +1,102 @@
+
+WRITING A DAEMON
+
+Resource leaks eventually surface- if you leak a file descriptor
+through a logic mistake you will eventually run out of file
+descriptors.
+
+Daemons do one thing ONLY so keep it simple.
+
+When your service runs, consider the current working directory.
+This is important if you resolve relative paths but also as the
+current directory is an open file handle it can prevent you from
+unmounting the filesystem.
+
+Daemons haev little or no user interaction (usually the latter).
+
+You need to figure out how you are going to handle debugging output.
+
+
+HOW DO WE WRITE A DAEMON?
+
+First we clear the environment so our service has NO outside
+influences.
+
+Fork off from the parent process and have the parent terminate.
+This leads to the child process being orphaned and then reaped by
+init(1), thus allowing it to run in the background and controlled
+by init(1).
+
+We normally set a desireable umask(2) to ensure that any files
+created by the process (or any child process we may create) will
+get the right permissions.
+
+We then call setsid(2) to create a unique session id (SID) thereby
+losing any controlling terminal and allow all of our processes to
+remain grouped together in our process group and session.
+
+Now we change the current working directory to a safe place (often
+the root dir OR a restricted directry).
+
+Next close (or redirect) the standard file descriptors (stdin,
+stdout and stderr).
+
+Open any logs for writing.
+
+And finally enter our actual code for our service.
+
+
+DAEMON CONVENTIONS
+
+Prevent against multiple instances running via a lockfile.
+
+Allow for easy determination of PID via a PIDfile -- often we use
+the pidfile as our lockfile.
+
+If we want our service to start at boot time we will need a system
+initialization script (for /etc/rc.d/, /etc/init.d/ or systemd).
+
+We may need a configuration file e.g. /etc/names.conf as there is
+NO way for us to interact with the daemon.
+
+We relay information via event logging. This is typically done via
+syslog(3).
+
+For example:
+
+	$ vi /usr/src/usr.sbin/syslogd/syslogd.c
+
+	if (! Debug) {
+
+		(void) daemon(0,0); daemonized =1;
+
+Here on BSD-based systems, most of the heavy lifting is done with
+the daemon(3) syscall. NB daemon(3) changes the process id (PID)
+since it usess fork(2) as part of its tty detachment function.
+
+From the source of daemon(3) we see daemon() forks, calls setsid(),
+changes directory, sorts out the standard file descriptors. After
+that we are a proper deamon. So we can now write our pidfile and
+begin out actual functionality.
+
+
+TYPICAL DAEMON STARTUP SCRIPT
+
+See /etc/rc.d/syslogd
+
+We can add:
+
+	local0.*	/var/log/local0
+
+After changing the confg file we need to restart the daemon. We can simply kill the PID and restart with:
+
+	$ sudo syslogd
+
+
+Note the shell prompt immediately returns (silently) with our daemon running in the background.
+
+We can also use the command:
+
+	$ sudo /etc/rc.d/syslodg restart
+
+

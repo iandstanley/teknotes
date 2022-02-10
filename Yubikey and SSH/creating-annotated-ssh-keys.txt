@@ -1,0 +1,10 @@
+CREATING AN ANNOTATED SSH KEY
+=============================
+
+SSH keys can have a comment which can be really useful when you have 
+multiple ssh keys.
+
+	$ ssh_keygen -a 100 -t ed25519 \
+		-f ~/.ssh/id_ed25519 \
+		-C "hans@server"
+

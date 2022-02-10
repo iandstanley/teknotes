@@ -1,0 +1,11 @@
+
+# SPECIFYING SCREEN MODE IN X11
+
+To specify a screen mode in X11: 
+
+	$ sudo xrandr
+
+		Modeline	"1280.............." ...................
+
+	$ sudo xrandr --newmode "1280.............." ...................
+

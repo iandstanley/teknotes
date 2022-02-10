@@ -1,0 +1,16 @@
+BASH ALISES
+===========
+
+$ alias ls='ls --color=auto'
+$ alias grep='grep --color=auto'
+
+$ alias lsa='ls -alf'
+
+£ export TERM=xterm-256-color
+$ export HISTCONTROL=ignoreboth
+(this removes duplicates and ^_)
+
+$ bind -P 	# shows all macros
+
+$ shopt -s autocd	# make directories autochanging
+

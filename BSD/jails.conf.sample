@@ -1,0 +1,17 @@
+$j="/jail";
+path="/$j/$name";
+
+host.hostname="$name.local";
+
+mount.devfs;
+exec.clean;
+exec.start="sh /etc/rc";
+exec.stop="/bin/sh /etc/rc.shutdown";
+exec.created="logger jail $name has started";
+#exec.created+="cpuset -c -j $name -l 2;
+
+demo {
+	ip4.addr="wlan0|192.168.4.4/16";
+	interface = wlan0;
+}
+

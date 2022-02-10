@@ -1,0 +1,386 @@
+# YubiKey lock screen
+
+
+THE FOLLOWING ARTICLE IS REFERRED TO IN THE LATTER PART OF THIS DOOCUMENT
+
+https://wiki.d3xt3r01.tk/index.php/YubiKey_lock_screen
+
+I'm trying to make my fedora 17 ( gnome3 ) desktop lock the screen when 
+it sees my yubikey removed from the usb slot. HOW
+
+Get the serial, idVendor, idProduct of the thing.
+
+udevadm info -a -p $(udevadm info -q path -n /dev/hidraw0)
+
+Create a /etc/udev/rules.d/85-screen-lock-toggle.rules
+
+	SUBSYSTEM=="usb", ACTION=="remove", ENV{ID_VENDOR_ID}=="1050", ENV{ID_MODEL_ID}="0010", RUN+="/usr/local/bin/gnome-lock enable"
+	SUBSYSTEM=="usb", ACTION=="add", ENV{ID_VENDOR_ID}=="1050", ENV{ID_MODEL_ID}=="0010", RUN+="/usr/local/bin/gnome-lock disable"
+
+Also you should probably reload the rules:
+
+	udevadm control --reload-rules
+
+And you should create the following script (you'll probably have to comment out default requiretty in /etc/sudoers) :
+
+	~# cat /usr/local/bin/gnome-lock
+	#!/bin/bash
+	log="/tmp/yubi_lock_log"
+	yubimap="/etc/yubikey_decmappings"
+	ykinfo=$(/usr/bin/ykinfo -q -s)
+	if [ ! -z "${PAM_USER}" ]
+	then
+	    	echo "AUTH-PAM $(date) $(whoami) - '${PAM_USER}' '$0'" >>${log}
+	        if [ "$(fgrep -wc ${PAM_USER} ${yubimap})" == "1" ]
+	        then
+	            	echo "IT REQUIRES YUBIKEY." >>${log}
+	                if [ -z "${ykinfo}" ]
+	                then
+	                    	echo "Didn't find a yubikey." >>${log}
+	                        exit 1
+	                fi
+	                echo "Searching for ${PAM_USER}:${ykinfo} in ${yubimap}. Found:" >>${log}
+	                fgrep -w ${PAM_USER}:${ykinfo} ${yubimap} >>${log}
+	                exitcode=$?
+	                echo "EXITCODE=${exitcode}" >>${log}
+	                exit ${exitcode}
+	        else
+	            	exit 0
+	        fi
+	else
+	    	gnome_session=$(/usr/bin/ps aux | fgrep gnome-session | head -n 1)
+	        user=$(echo ${gnome_session} | awk '{print $1}')
+	        GNOME_SESSION_PROC=$(echo $gnome_session | awk '{print $2}')
+	        export `grep -z DBUS_SESSION_BUS_ADDRESS /proc/$GNOME_SESSION_PROC/environ`
+	        export DISPLAY=":0"
+	        current_lock_status=$(/sbin/runuser ${user} -c "/usr/bin/qdbus org.gnome.ScreenSaver /org/gnome/ScreenSaver org.gnome.ScreenSaver.GetActive")
+	        echo "AUTH-GNOME $(date) $(whoami) - '${user}' - '${ykinfo}' - '$0' '$1'" >>${log}
+	        if [ "$1" == "enable" ]
+	        then
+	                if [ -n ${user} -a "$(fgrep -wc ${user} ${yubimap})" == "1" -a "${current_lock_status}" == "false" ]
+	                then
+	                        /sbin/runuser ${user} -c "/usr/bin/dbus-send --type=method_call --dest=org.gnome.ScreenSaver /org/gnome/ScreenSaver org.gnome.ScreenSaver.Lock"
+	                        touch /tmp/.yubikey_lock
+	                fi
+	        else
+	            	if [ -n ${user} -a "$(fgrep -wc ${user}:${ykinfo} ${yubimap})" == "1" ]
+	                then
+	                    	if [ -f /tmp/.yubikey_lock ]
+	                        then
+	                               	/sbin/runuser ${user} -c "dbus-send --type=method_call --dest=org.gnome.ScreenSaver /org/gnome/ScreenSaver org.gnome.ScreenSaver.SetActive boolean:false"
+	                                rm -f /tmp/.yubikey_lock
+	                        fi
+	                fi
+	        fi
+	fi
+
+Your /etc/yubikey_decmappings should contain user:key, you can see that 
+with ykinfo -q -s (which key should be able to unlock what login if in 
+multiple desktop environment )
+
+The ykinfo binary is available in rawhide ( or >= fedora 18 ).
+
+Also, since fedora 17 it seems for me at least that I can't use 
+gnome-screensaver-command to query the screensaver so I switched to dbus 
+and runuser :)
+
+Latest changes to the script enable it to only unlock if it was locked 
+by the yubikey !
+
+In order for the pam method to work, you'd need these 2 lines in the 
+required /etc/pam.d ( don't know which one your system uses. My fedora 
+used /etc/pam.d/password-auth and /etc/pam.d/system-auth ):
+
+	auth required pam_exec.so quiet /usr/local/bin/gnome-lock
+	auth sufficient    pam_unix.so try_first_pass nullok
+
+# ISSUES
+
+On an arch environment it has been said you need some other exports for 
+this to work...
+
+GNOME_SCREENSAVER_PROC=`ps xa | grep gnome-screensaver | head -n 1 | awk '{print $1}'`
+export `grep -z DBUS_SESSION_BUS_ADDRESS /proc/$GNOME_SCREENSAVER_PROC/environ`
+
+Also, you could probably use dbus to do the job for locking/unlocking
+
+	sudo -u ${user} dbus-send --type=method_call --dest=org.gnome.ScreenSaver /org/gnome/ScreenSaver org.gnome.ScreenSaver.SetActive boolean:false # for unlock
+	sudo -u ${user} dbus-send --type=method_call --dest=org.gnome.ScreenSaver /org/gnome/ScreenSaver org.gnome.ScreenSaver.Lock # for lock
+	sudo -u ${user} qdbus org.gnome.ScreenSaver /org/gnome/ScreenSaver org.gnome.ScreenSaver.GetActive # to query via qdbus
+	sudo -u ${user} /usr/bin/gnome-screensaver-command --query
+
+
+###########################################
+
+I, like many others use Linux as my main Operating System, both at home 
+and in the enterprise. Token based authentication is also a very strong 
+topic for many organisations for two factor authentication (password + 
+one time password = successful login).
+
+My preferred token of choice is the Yubikey from Yubico.
+
+Questions have been floating around recently of “How do I lock my linux 
+desktop when I unplug my Yubikey?”. I have been trying to achieve this 
+for a few weeks now and despite coming across a fantastic article 
+(http://wiki.d3xt3r01.tk/index.php/YubiKey_lock_screen), I never managed 
+to get it to work in Fedora 18.
+
+I’d like to just say here, that this is not my original work. Thank you 
+very much to the author of the above link for their contribution to the 
+community as it has helped many people to achieve this goal.
+
+A special thanks to Lennart Poettering for pointing me in the right 
+direction to get this working as well. Thanks very much.
+
+Unfortunately for Gnome3 / Fedora 18 users, some changes needed to be 
+made to the original method. Below I will be walking you through setting 
+up your Fedora 18 system running the Gnome3 desktop, to lock and unlock 
+with your Yubikey. (This will be based on the above article, however I 
+have made a few changes to get things working for Fedora 18.)
+
+Here is a short Youtube video of the final result.
+
+http://www.youtube.com/watch?v=GyWfWUmdbVY
+
+ 
+Step 1: Create a new udev rule.
+
+Udev is used to map hardware to your system. We can tap into udev and 
+ask it to do funky things for us, which is exactly what we need to do 
+here.
+
+Create a file called /etc/udev/rules.d/85-yubikey-screen-lock.rules with 
+the below contents:
+
+	[root@localhost ~]# vi /etc/udev/rules.d/85-yubikey-screen-lock.rules 
+	SUBSYSTEM=="usb", ACTION=="remove", ENV{ID_VENDOR_ID}=="1050", ENV{ID_MODEL_ID}="0010", RUN+="/usr/local/bin/yubikey-screen-lock enable"
+	SUBSYSTEM=="usb", ACTION=="add", ENV{ID_VENDOR_ID}=="1050", ENV{ID_MODEL_ID}=="0010", RUN+="/usr/local/bin/yubikey-screen-lock disable"
+
+Step 2. Create the yubikey-screen-lock
+
+Create a file called /usr/local/bin/yubikey-screen-lock with the below 
+contents:
+
+	[root@localhost ~]# vi /usr/local/bin/yubikey-screen-lock
+	#!/bin/bash
+	log="/var/log/yubilock.log"
+	yubimap="/etc/sysconfig/yubikeys"
+	user=`ps aux | grep -v root | grep session | head -n 1 | awk '{print $1}'`
+
+	check_gnome=$(ps -aux | awk '{print $11}' | grep ^gnome-session)
+	if [[ -n $check_gnome ]]
+	then
+	DESKTOP=gnome
+	sessionid=`/bin/loginctl list-sessions | grep ${user} | awk '{print $1}'`
+	fi
+
+	check_cinnamon=$(ps -aux | awk '{print $11}' | grep ^cinnamon-session)
+	if [[ -n $check_cinnamon ]]
+	then
+	DESKTOP=cinnamon
+	fi
+
+	check_lxde=$(ps -aux | awk '{print $11}' | grep lxsession)
+	if [[ -n $check_lxde ]]
+	then
+	DESKTOP=lxde
+	fi
+
+	check_xfce=$(ps -aux | awk '{print $11}' | grep ^xfce4-session)
+	if [[ -n $check_xfce ]]
+	then
+	DESKTOP=xfce
+	fi
+
+	check_kde=$(ps -aux | awk '{print $11}' | grep kded4)
+	if [[ -n $check_kde ]]
+	then
+	DESKTOP=kde
+	fi
+
+	echo "$(date) $(whoami) '$0' '$1' | Desktop Environment = '$DESKTOP'" >> ${log}
+	case "$1" in
+	        enable)
+	                if [ -n ${user} -a "$(grep -c ${user}:000$(ykinfo -q -s) ${yubimap})" == "1" ]
+	                then
+	                case $DESKTOP in
+	                        gnome)
+	                                /bin/loginctl lock-session $sessionid
+	                        ;;
+	                        cinnamon)
+	                                /bin/su ${user} -c "DISPLAY=:0 /usr/bin/cinnamon-screensaver-command -a"
+	                        ;;
+	                        lxde)
+	                                /bin/su ${user} -c "DISPLAY=:0 /usr/bin/xscreensaver-command -activate"
+	                        ;;
+	                        xfce)
+	                                /bin/su ${user} -c "DISPLAY=:0 /usr/bin/xflock4"
+	                        ;;
+	                        kde)
+	                                /bin/su ${user} -c "DISPLAY=:0 /usr/bin/xscreensaver-command -activate"
+	                        ;;
+	                esac
+	                fi
+	        ;;
+	        disable)
+	                if [ -n ${user} -a "$(grep -c ${user}:000$(ykinfo -q -s) ${yubimap})" == "1" ]
+	                then
+	                case $DESKTOP in
+	                        gnome)
+	                                /bin/loginctl unlock-session $sessionid
+	                        ;;
+	                        cinnamon)
+	                                /bin/su ${user} -c "DISPLAY=:0 /usr/bin/cinnamon-screensaver-command -d"
+	                        ;;
+	                        lxde)
+	                                /bin/su ${user} -c "DISPLAY=:0 /usr/bin/xscreensaver-command -deactivate"
+	                        ;;
+	                        xfce)
+	                                /bin/su ${user} -c "DISPLAY=:0 /usr/bin/xscreensaver-command -deactivate"
+	                        ;;
+	                        kde)
+	                                /bin/su ${user} -c "DISPLAY=:0 /usr/bin/xscreensaver-command -deactivate"
+	                        ;;
+	                esac
+	                fi
+	        ;;
+	esac
+
+Step 3. Ensure yubikey-screen-lock can be executed
+
+Here we need to change the permissions of the 
+/usr/local/bin/yubikey-screen-lock script to allow it to execute like 
+any other normal command.
+
+Please do the following:
+
+	[root@localhost ~]# chmod 755 /usr/local/bin/yubikey-screen-lock
+
+Step 4. Add username and yubikey token to authorised file
+
+We need to create a user maps file which has a list of which Yubikeys 
+can unlock which user’s sessions. We need to do this to stop user Jim, 
+from unlocking user Bob’s session.
+
+Firstly, insert a single Yubikey into your system and on your terminal, 
+run “ykinfo -q -s”. This will give you the output of your key serial 
+number.
+
+For example:
+
+	This is one of my test keys.
+
+	[root@localhost ~]# ykinfo -q -s
+	283749
+
+Now we need to take this number, and add it to our user maps file. Here 
+the syntax is <username>:000<serial number>
+
+For example:
+
+Here my username is mac and my serial number is 283749, so my user maps 
+file looks as follows.
+
+	[root@localhost ~]# cat /etc/sysconfig/yubikeys
+	mac:000283749
+	[root@localhost ~]#
+
+Step 5. Reload udev
+
+As we have just added a new rule, we need to apply it so udev knows to 
+action it. To reload udev in Feodra 18, run the following.
+
+	[root@localhost ~]# udevadm control --reload-rules
+
+Step 6. Test
+
+It is important to test your configuration. If you are making these 
+chances and are already logged into Gnome3 as the user you have set up, 
+simply by removing your Yubikey will activate the lock screen.
+
+If you reinsert your key, it will take you back to your existing session.
+
+ 
+
+Please note: One of the big reasons Two factor authentication is seen as 
+so critical is because it forces a user to require both a password AND a 
+key or token to log back into your session.
+
+If you are planning to do this in the enterprise, I highly recommend 
+that you do not unlock your sessions with your Yubikey tokens.
+
+If you use systems in a kerberised environment (for example Microsoft 
+Active Directory or FreeIPA), unlocking your user session will not 
+acquire a valid authentication ticket (TGT). If you don’t acquire a 
+ticket, you won’t be able to access several resources that would 
+normally be required.
+
+My recommendation here is, only use this in the enterprise to lock your 
+sessions.
+
+To achieve this, change your udev rule from:
+
+	[root@localhost ~]# vi /etc/udev/rules.d/85-yubikey-screen-lock.rules 
+	SUBSYSTEM=="usb", ACTION=="remove", ENV{ID_VENDOR_ID}=="1050", ENV{ID_MODEL_ID}="0010", RUN+="/usr/local/bin/yubikey-screen-lock enable"
+	SUBSYSTEM=="usb", ACTION=="add", ENV{ID_VENDOR_ID}=="1050", ENV{ID_MODEL_ID}=="0010", RUN+="/usr/local/bin/yubikey-screen-lock disable"
+
+to
+
+	[root@localhost ~]# vi /etc/udev/rules.d/85-yubikey-screen-lock.rules 
+	SUBSYSTEM=="usb", ACTION=="remove", ENV{ID_VENDOR_ID}=="1050", ENV{ID_MODEL_ID}="0010", RUN+="/usr/local/bin/yubikey-screen-lock enable"
+	#SUBSYSTEM=="usb", ACTION=="add", ENV{ID_VENDOR_ID}=="1050", ENV{ID_MODEL_ID}=="0010", RUN+="/usr/local/bin/yubikey-screen-lock disable"
+
+Don’t forget to reload your rules after you make this change.
+
+	[root@localhost ~]# udevadm control --reload-rules
+
+ 
+## Troubleshooting
+
+If you are having problems with your new udev rule, perhaps you have hit 
+a problem with SELinux if you use it in enforcing mode.
+
+Firstly, verify if SELinux is causing a problem.
+
+You can do this by setting SELinux to permissive mode whilst you 
+troubleshoot. To do this, run the following
+
+	[root@localhost ~]# setenforce 0
+
+Now insert and remove your yubikey. If your GNOME3 session now locks and 
+unlocks with no problems then chances are you are affected by the same 
+problem I had.
+
+When I tailed my /var/log/audit/audit.log file, I found the following 
+kept appearing when I inserted my key.
+
+	type=USER_AVC msg=audit(1358202964.902:412): pid=563 uid=81 auid=4294967295 ses=4294967295 subj=system_u:system_r:system_dbusd_t:s0-s0:c0.c1023 msg='avc:  denied  { send_msg } for msgtype=method_return dest=:1.106 spid=548 tpid=2305 scontext=system_u:system_r:systemd_logind_t:s0 tcontext=system_u:system_r:udev_t:s0-s0:c0.c1023 tclass=dbus  exe="/usr/bin/dbus-daemon" sauid=81 hostname=? addr=? terminal=?'
+
+ 
+
+What I did to resolve the issue was,
+
+Save the above output to a text file. I called mine selinux.txt
+
+I then cat’d the file and passed it to ‘audit2allow’ which is a tool you 
+can use to create your own SELinux policies.
+
+	[root@localhost ~]# cat selinux.txt | audit2allow -M yubikey_session_lock
+	******************** IMPORTANT ***********************
+	To make this policy package active, execute:
+
+	semodule -i yubikey_session_lock.pp
+
+	[root@localhost ~]#
+
+	 
+
+Next you should install your new policy with the following.
+
+	[root@localhost ~]# semodule -i yubikey_session_lock.pp
+
+Next, just reenable SELinux and try testing your keys again.
+
+Turn SELinux back to Enforcing mode with the following.
+
+	[root@localhost ~]# setenforce 1

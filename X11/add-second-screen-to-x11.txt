@@ -1,0 +1,42 @@
+
+# ADDING A SECOND SCREEN TO X11
+
+
+	Section 	"serverLayout"
+	Identifier	"Layout0"
+	Screen	0 "screen 0" 0 0 	# orientation of monitors
+	InputDevice	"Keyboard0"	"CoreKeyboard"
+	InputDevice	"Mouse"		"CorePointer"
+	Option		"Xinerama"	"0"
+	EndSection
+
+	Section		"Monitor"
+	Identifier	"Monitor0"
+	VendorName	"Unknown"
+	ModelName	"Seiko|Epson"
+	HorizSync	37.2 - 55.8
+	VertRefresh	40.0 - 60.0
+	Option		"DPMS"
+	EndSection
+
+	Section		"Device"
+	Identifier	"Device0"
+	Driver		"nvidia"
+	VendorName	"NVIDIA Corporation"
+	BoardName	"Quadro FX 880m"
+	EndSection
+
+	# One screen section for extended desktop
+
+	Section		"Screen"
+	Device		"Device0"
+	Monitor		"Monitor0"
+	DefaultDepth	24
+	Option		"Stereo" "0"
+	Option		"Metamodes" "DP-3: 1600x900, VGA-0 1440x900"
+	Subsection	"Display"
+	Depth 		24
+	Endsubsection
+	EndSection
+
+

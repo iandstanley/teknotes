@@ -1,0 +1,77 @@
+SUDO AUTH WITH YUBIKEY U2F
+==========================
+
+Open a second terminal with 'sudo -i' for a root shell for emergency
+during this configuration.
+
+On a regular terminal:
+
+$ pamu2fcfg -u `whoami` -opam://`hostname` -ipam://`hostname`
+
+  bob: ..........................................
+  ...............................................
+  ...............................................
+$
+
+Copy the output generated for later.
+
+Now edit ONE of the following files:
+	/etc/u2f_mappings 
+	$HOME/Yubico/u2f_keys
+	$HOME/.config/Yubico/u2f_keys
+
+$ sudo -e /etc/u2f_mappings
+
+Paste the output from above into this file (for multiple keys we
+see user:key1:key2:key3)
+
+Configure PAM to authenticate with our Yubikey
+
+$ sudo -e /etc/pam.d/sudo
+
+	auth sufficient pam_u2f.so origin=pam://$HOSTNAME \
+		appid=pam://$HOSTNAME \ 
+		authfile=/etc/u2f_mappings  cue
+
+The 'cue' prompts the user to auth with the u2f key.
+
+Replacing the $HOSTNAME with the hostname of your system.
+
+Now test it on another terminal.
+
+$ sudo apt update
+  Please touch the device
+  ....
+  ....
+  apt update output here
+  ....
+  ....
+$
+
+Repeat without the Yubikey and you will be prompted for your password.
+
+To force Yubikey authenticate on every SUDO (rather than cached 15m
+default):
+
+$ sudo -e /etc/sudoers
+
+And amend the Defaults line to:
+
+	Defaults env_reset,timestamp_timeout=0
+
+And test again (twice to check timeout)
+
+$ sudo ls
+  Please touch your device
+  ....  
+  ....
+  ....
+
+$ sudo ls
+  Please touch your device
+  ....
+  ....
+  ....
+
+$
+

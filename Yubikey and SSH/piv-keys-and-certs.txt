@@ -1,0 +1,47 @@
+
+REQUIRED SOFTWARE
+=================
+
+github.com/ronwellman/how-to/blob/master/yubikey/ssh_via_yubikey.md
+
+
+# apt update 
+# apt install opensc-pksdl yubikey-pivtool 
+# apt install yubikey-personalization-gui
+
+
+GENERATE PUBLIC CERT
+====================
+
+$ yubico-piv-tool  -s 9a generate -o public.pem
+
+SELFSIGN AND PRIVATE CERT
+=========================
+
+$ yubico-piv-tool  -a verify-pin -P PIN \
+	-a selfsign-certificate  /
+	-s 9a \
+	-S '/CN=SSHKEY/' \
+	-i public.pem -o cert.pem
+
+
+LOAD CERTIFICATE
+================
+
+$ yubico-piv-tool -a import-certificate -s 9a \
+	-i cert.pem
+
+
+GENERATE PUBLIC KEY
+===================
+
+$ ssh-keygen -D /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so \
+	> ~/.ssh/yubikey.pub
+
+$ sudo -e /etc/ssh/ssh_config
+
+	# add line
+	PKCS11Provider /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so
+
+$ ssh_copyid -i ~/.ssh/yubikey.pub  username@host
+

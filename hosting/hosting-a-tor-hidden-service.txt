@@ -1,0 +1,59 @@
+HOSTING A TOR HIDDEN SERVICE
+============================
+
+Install TOR client:
+
+	$ sudo apt install tor
+
+Create a directory for server to live in:
+
+	$ cd /var/lib/tor
+	$ mkdir hidden_service
+	$ cd hidden_service
+
+	$ python3 -m http.server --bind 127.0.0.1  8080
+
+Here I am running a simple http server with Python3 for an example.
+This can be replaced with something more powerful if needed. We
+need to bind to localhost to prevent the webserver from being seen
+on the network as a regular webserver.
+
+On another terminal
+
+	$ vi index.html
+
+		<html><body><h1>Hello World</h1></body></html>
+
+Test using a normal web browser pointing to localhost:8080
+
+
+Now we setup the tor service.
+
+	$ cd /etc/tor
+
+	$ sudo vi torrc
+
+Scroll down to the section saying "This block is for location hidden
+services". uncomment and edit to:
+
+	HiddenServiceDirectory	/var/lib/tor/hidden_service
+	HiddenServicePort	8080
+
+Start tor
+
+	$ sudo tor
+
+Get a new .onion address.
+
+	$ sudo su - 
+
+	# /var/lib/tor/hidden_service
+	# ls
+
+	  hostname private_key
+
+	# cat hostname
+	  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion
+
+Cut and paste the .onion address into your tor browser.
+

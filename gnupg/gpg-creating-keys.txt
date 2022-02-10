@@ -1,0 +1,201 @@
+CREATING GPG KEYS
+=================
+
+Once created you can use   $ gpg --edit-keys <email address>
+
+
+$ gpg --fullgen-key
+
+	(1)
+	4096
+	0 	(not expire)
+	user 
+	email
+
+$ gpg --list-keys
+
+$ gpg --fingerprint --fingerprint  <KEYID>
+
+$ gpg --edit-key --expert <KEYID)
+
+this allows more options like:
+
+	adduid		(adds email aliases)
+	save
+
+
+
+CHOOSING YOUR OWN SETTINGS
+
+$ gpg  --edit-key  --expert  <KEYID>
+
+	addkey
+		8 RSA	(choose own abilities)
+
+		Then create a key for each of the SIGN, ENCRYPT &
+		AUTHENTICATE by toggling the modes on/off
+
+		Make each one 4096 bits with a 1y expiry 
+		(or even 380d to give you a bit more time)
+
+		save
+
+$ gpg --fingerprint --fingerprint
+
+Produces detailed fingerprint of subkeys as well as main key.
+
+$ mkdir export
+
+$ gpg --export-secret-subkeys -a <KEYID> \
+	> export/<KEYID>.private-encrypt-subkey.txt
+
+$ gpg --export-secret-subkeys -a <KEYID> \
+	> export/<KEYID>.private-sign-subkey.txt
+
+$ gpg --export-secret-subkeys -a <KEYID> \
+	> export/<KEYID>.private-auth-subkey.txt
+
+$ gpg --export-secret-keys -a <KEYID> \
+	> export/<KEYID>.private-encrypt-master-key.txt
+
+$ gpg --export -a <KEYID> > export/<KEYID>.public-key.txt
+
+
+ADDING CARD SUPPORT
+
+$ sudo apt install scdaemon
+
+$ gpg --card-status
+
+You should see NO keys on the card. If you see a key then you should
+reset the openpgp app on the Yubikey
+
+You can submit your public key now to the keyservers if you wish
+(and note the URL of the key to point to in the card settings)
+
+$ gpg --keyserver certserver.pgp.com --send-key <KEYID>
+
+
+NB: BACKUP YOUR KEYS BEFORE DOING THE NEXT STEPS AS KEYS ARE DELETED
+ON TRANSFER!!
+
+
+$ gpg --edit-key <KEYID>
+
+gpg> key 4 	select authentication key (selected key has a *)
+
+gpg> keytocard
+
+	(3) Authentication
+
+	Send key 4 to the authentication slot on the card
+
+	Repeat for each subkey (s) (e) (a)
+
+Then quit (if you save then keys are deleted and you cannot setup
+backup card with them)
+
+
+You may get an error; in which case you should check that the card
+is setup for 4096 bits rather than the default 2048 bits. NB Yubikey
+NEO do not support 4096 bit keys.
+
+To check this:
+
+$ gpg --card-status
+
+To change:
+
+$ gpg --card-edit
+
+	gpg> admin
+	gpg> key-attr
+
+		enter 4096 for bit length
+
+	gpg> save
+
+
+BACKUP YOU KEYS
+
+This should be done before you move any key to a Yubikey card. 
+
+$ cp -auxf .gnupg/ .backup-gnupg/ 
+
+
+DELETING KEYS
+
+If you have 'quit' from the --card-edit after both  gpg> keytocard
+operations then you may still have private keys in your GNUPG
+keyring.
+
+To delete a private key use:
+
+$ gpg --delete-secret-keys <KEYID>
+
+
+CHANGE THE YUBIKEY PIN NO
+
+You should then change the PIN no and admin PIN no on the Yubikey.
+
+$ gpg --card-edit
+
+	gpg> admin
+	gpg> passwd
+		
+		Admin default = 12345678
+		PIN default = 123456
+
+	gpg> quit
+
+
+TESTING YOUR KEY
+
+Create a dummy file
+
+$ cal > test
+
+$ gpg --clearsign test
+
+Insert your Yubikey and type in the PIN no
+
+$ cat test.asc
+
+ENCRYPTING A FILE
+
+To encrypt a file:
+
+$ gpg -e file
+
+This will create a binary file containing the encrypted contents
+of the file addressed to yourself!
+
+To encrypt a file in ASCII format
+
+$ gpg -ear recipient@domain.ext  file
+
+
+DECRYPTING A FILE
+
+To decrypt a file that has been sent to you:
+
+$ gpg -d file.gpg  # or file.asc for ascii encoded
+
+
+TO SETUP SSH ACCESS USING THE GPG KEY
+
+Add the following to your .bashrc:
+
+	export GPG_TTY="$(tty)"
+	export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+
+	gpgconf --launch gpg-agent
+	gpg-connect-agent updatestartuptty /bye > /dev/null
+
+And then add the following to your authorised keys file:
+
+	$ ssh_add -L  >>  ~/.ssh/authorised_keys
+
+Note: ssh_add -L shows a card no which matches the Yubikey card
+serial number shown when you run 'gpg --card-status'
+

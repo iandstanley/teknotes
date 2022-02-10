@@ -1,0 +1,90 @@
+
+# PROCESSES, THREADS AND IO MULTIPLEXING
+
+PROCESS HAS:
+
+	- virtual memory
+
+	- a set of registers, stack pointers and instruction pointers
+
+	- the state of running programs is different from the
+	environment that it runs in
+
+	- every process has at least one thread of control defined
+	by those register values
+
+	- so there is nothing to stop you having another thread of
+	control within the process. That thread will have it's own
+	resgisters, stack pointers and instruction pointers. Then
+	I can run 2 different things in this same environment and
+	use more than one processor and can handle multiple requests
+	very easily.
+
+	- a cpu decides which thread to run, then fiures out which
+	process to load
+
+	- so the threads are the things that are scheduled by the
+	OS to start running on the CPUs
+
+	- usually don't use multiprocessing to use concurrancy to
+	write parallel programs
+
+
+
+THREADS:
+
+	- the other option is to have a thread based system
+
+	- threads have different stocks and IP's and are scheduled
+	in parallel but they all have access to the same memory all
+	the time
+
+	- a cpu switching between threads in the same proceess
+	deosn't need to switch page tables
+
+	- need to use mutex's to block concurrent access as threads
+	can be switched out between any machne code instructions
+
+
+
+IO MULTIPLEXING
+
+	- one thread of control in an event loop
+
+	- each new event in an event loop is handled in response
+	to an event in ONE iteration of that loop
+
+
+
+
+I/O MULTIPLEXING IN AN HTTP WEBSERVER
+
+For each request we do:
+
+	- accept() the connection
+	- recieve the request
+	- open the file that was requested
+	- write the HTTP response header
+	- write the file was requested
+
+In the multithreaded webserver we would:
+
+	- after we call accept()
+	- we refactor the above process to handle_request()
+	- and call it with a Pthread_create() parsing the fd and a
+	pointer to the handle_request()
+
+Behind the scenes the OS puts your program to sleep and runs the
+new thread and interleave different threads for you. Each thread
+getting swapped in maintains it's own state of where it is in
+handle_request() and what files we have open.
+
+Threads and processes are typically used for pre-emptive mutlitasking.
+There is overheard included here.
+
+In I/O Multiplexing you take over control, and there are many things
+that can block (eg waiting for kernel to open file) -- so you have
+to manually manage state, so we know where you are to continue.
+
+
+

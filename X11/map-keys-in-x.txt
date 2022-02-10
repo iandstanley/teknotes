@@ -1,0 +1,5 @@
+XBINDKEYS
+=========
+
+You can map keys under X in any desktop environment with xbindkeys
+

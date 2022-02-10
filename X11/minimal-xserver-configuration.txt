@@ -1,0 +1,31 @@
+
+MINIMAL XSERVER CONFIGURATION RECOMMENDATIONS
+
+
+Try installing:
+
+	libX11
+	xorg-server
+	xinit
+	libxrandr
+	libXinerama
+	libXft
+	xrdb
+	mesa-progs
+	xrandr
+	xf86-video-vboxvideo
+	unclutter
+	xclip
+	pcmanfm
+	fontawesome
+
+
+
+- Unclutter hides mouse after 3 seconds.
+- libXinerama is used to render multimonitor
+- X11drivers e.g. vboxvideo for VirtualBox and video-intel for Intel Integrated Graphics 
+- xclip clipboard manager
+- pcmanfm filemanager (or similar)
+
+
+

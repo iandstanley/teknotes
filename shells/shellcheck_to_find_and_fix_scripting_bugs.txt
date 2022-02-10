@@ -1,0 +1,192 @@
+# Using shellcheck to Find and Fix Scripting Bugs
+
+Shellcheck is a great script analysis tool for the Linux shell which
+can be used to detect common programming mistakes. Shellcheck
+analyses scripts, and informs about errors and warnings, alike to
+what a compiler would do.  What Is shellcheck?
+
+If you have been a Linux Bash developer for a while, you have likely
+found a good number of bugs in your own scripts, or the scripts of
+others. Introducing bugs into code is bound to happen when humans
+are developing code. Even the best developers may once in a while
+miss a unforeseen complexity or caveat in their code.
+
+In Bash, there is no real compiler as there is for example in C++.
+There are however a set of tools which can help greatly when
+developing Bash scripts. Once such a tool is shellcheck. This fine
+utility will parse a Bash script file and make recommendations based
+on what is found during it’s analysis. It is a bit like having a
+compiler for Bash.
+
+Tools like shellcheck differ in their operation from other runtime
+tools, like for example executing a script with bash -x to see each
+and every command in the script being executed, and that in real
+time. The reason is that shellcheck will analyze the script (file)
+without actually executing it, again alike to what a compiler would
+do.
+
+For more information on bash -x, you may like to read Bash Automation
+and Scripting Basics (Part 3), which is a part of the Bash Automation
+and Scripting Basics 3 part series.
+
+## Installing shellcheck
+
+To install shellcheck on your Debian/Apt based Linux distribution
+(Like Ubuntu and Mint), execute the following command in your
+terminal:
+
+	sudo apt install shellcheck
+
+To install shellcheck on your RedHat/Yum based Linux distribution
+(Like RHEL, Centos and Fedora), execute the following command in
+your terminal:
+
+	sudo yum install shellcheck
+
+## Running shellcheck
+
+Once we have installed shellcheck, we can do a simple test with a
+broken script. First we define our script test.sh as follows:
+
+	#!/bin/wash
+	echo 'Bash is not wash
+	echo More errors for me"
+	if [ -d ./directory }; than
+	  echo 'sure! < start
+	fif
+
+How many bugs can you find? (Tip: there are 8!).
+
+Let’s next see what shellcheck makes of this code:
+
+	$ shellcheck test.sh
+
+Immediately on the first line it finds an issue with the shebang
+specification. If you haven’t heard of shebang yet, please checkout
+our Bash Automation and Scripting Basics Part 1 article. Our pun
+shebang line #!/bin/wash should be #!/bin/bash. Let’s fix this.
+Issue 1/8 fixed!
+
+We will also at the same time fix the other two issues immediately
+recognized by shellcheck: Did you forget to close this single quoted
+string? for the second line: spot on! Issue 2/8 fixed. For the third
+issue there is a little confusion as to our/the developers intent
+for shellcheck, and this is to be expected, as the ' on line 2 opens
+a string which is only terminated on line 5 when another ' is seen!
+
+As this third issue is thus a result of the second issue, this run
+will allow us to fix two issues for the time being. Our script now
+looks like this:
+
+	#!/bin/bash
+	echo 'Bash is not wash'
+	echo More errors for me"
+	if [ -d ./directory }; than
+	  echo 'sure! < start
+	fif
+
+
+Let’s run shellcheck on this again after making the corrections and
+see what the output is.
+
+In this instance, shellcheck sees that a " is opened on line 3 (even
+though it is at the end of the line, it is actually an opening
+double quote as such), and that even at script end (note the line
+8 indication, which does not exist in our 6-line script with a
+single empty line after the last line. Let’s clean up this empty
+line, and fix the double quoting issue at the start of line 3, which
+can now be readily understood. Issue 3/8 fixed!
+
+Our script now looks like this:
+
+	#!/bin/bash
+	echo 'Bash is not wash'
+	echo "More errors for me"
+	if [ -d ./directory }; than
+	  echo 'sure! < start
+	  fif
+
+Re-running shellcheck (note how similar again these steps are to
+using a compiler in other coding languages):
+
+Could not be clearer; The mentioned syntax error was in this if
+expression and Expected test to end here. We shall do as suggested
+and change the } to ], making the line read if [ -d ./directory ];
+than. Issue 4/8 fixed! We reran shellcheck and are now presented
+with the following:
+
+
+Another single quote issue. We already know how to fix these. Let’s
+change echo 'sure! < start to echo 'sure!' < start (issue 5/8 fixed!)
+and rerun shellcheck once more:
+
+Interesting at first, we see that shellcheck is unable to parse a
+line. Whereas this may look like a shortcoming in shellcheck, reading
+a bit further we see that somewhere a then is missing. Aha! We
+placed than instead of then. What a careless mistake 😉 Easily fixed
+(issue 6/8 fixed!). Our script now looks like this:
+
+	#!/bin/bash
+	echo 'Bash is not wash'
+	echo "More errors for me"
+	if [ -d ./directory ]; then
+	  echo 'sure!' < start
+	  fif
+
+And another shellcheck run provides us with another helpful bit of
+information:
+
+
+
+We have a missing fi! Aha, yes, fif will not do. We change fif to
+fi on the last line of the script (issue 7/8) fixed and run shellcheck
+once more!
+
+
+A redirection issue. I honestly did not expect shellcheck to also
+pickup on this mistake, as < can be used in Bash also, but it sure
+did. Indeed our redirection was intended to be > instead of <. Issue
+8/8 – all issues – fixed! This brings us to the final script
+
+	#!/bin/bash
+	echo 'Bash is not wash'
+	echo "More errors for me"
+	if [ -d ./directory ]; then
+	  echo 'sure!' > start
+	fi
+  
+Let’s see what shellcheck thinks of it now.
+ 
+Perfect! And the script runs perfectly, from the first execution.
+
+If you review the output of the various shellcheck commands you
+will also notice another very handy feature of shellcheck, especially
+for beginners: a set of hyperlinks (website links) are displayed,
+which are mouse-clickable from within the terminal window, or you
+can select (if necessary) > right-click to copy and then paste into
+a browser. Clicking on such a link will take you to the shellcheck
+GitHub project.
+
+## In a Rush?
+
+If you want to quickly check only the most significant options, you
+may like to have a look at the --severity={SEVERITY} option, where
+you would replace {SEVERITY} with one out of error, warning, info,
+style.
+
+Thus is you are only looking for errors and warnings, you would use
+--severity=warning (which includes higher levels, in this case being
+only error) as an option to shellcheck.
+
+## Wrapping up
+
+If there are no issues with logic in a script, running shellcheck
+before executing the script and fixing all issues seen will ensure
+a quasi-perfect run on first go. You may even be able to use
+shellcheck in that coding challenge for your next live Bash coding
+interview! In this article we explored various issues which could
+arise in scripts and how shellcheck handles them.
+
+Enjoy bug-free scripts!
+
+

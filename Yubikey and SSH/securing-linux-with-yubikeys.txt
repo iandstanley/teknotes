@@ -1,0 +1,228 @@
+SECURING LINUX WITH YUBIKEYS
+============================
+
+We can secure Linux with Yubikeys preventing login (via GUI, TTY,
+or SSH) without the interaction or presence of the Yubikey. Sudo
+can also be prevented.
+
+
+Securing Local Authentication
+-----------------------------
+
+$ sudo apt update && sudo apt dist-upgrade
+$ sudo apt install libpam-u2f
+
+$ mkdir -p  ~/.config/Yubico
+
+Insert your Yubikey
+
+$ pamu2fcfg >> ~/.config/Yubico/u2f_keys
+
+(you can add the -n option for extra keys)
+
+Touch the Yubikey button and pamu2fcfg will add the Yubikey to the
+u2f_keys file. Now we need to setup each authentication type to use
+libpam_u2f.
+
+
+Securing Sudo
+-------------
+
+$ sudo -e /etc/pam.d/sudo
+
+Look for the line containing:
+
+	@include common-auth
+
+This refers to the standard password authentication.
+
+Add the following AFTER that line:
+
+	auth	required	pam_u2f.so
+
+(Note the tabs between the words)
+
+Now save and test this. Remove the Yubikey and open a new terminal.
+
+$ sudo apt update
+
+Sudo will fail without the Yubikey. Now insert the Yubikey and try
+again
+
+$ sudo apt update
+
+This time after you enter your password the Yubikey starts flashing
+wanting you to touch the key. After the touch the command continues.
+
+
+Securing GDM Graphical Login Manager
+------------------------------------
+
+GDM is the graphical login manager for Gnome Desktop. GDM is an
+acronym for the Gnome Display Manager.
+
+$ sudo -e /etc/pam.d/gdm-password
+
+(If you are running something else like Ubuntu-mate that has the
+lightdm login manager then the actual file to edit is 'lightdm'.
+Other login managers have similar config files).
+
+Again find the line:
+
+	@include common-auth
+
+And add the line:
+
+	auth	require		pam_u2f.so
+
+(again note the tabs between the words)
+
+To test this you will have to logout and back in again.
+
+
+Securing TTYs
+-------------
+
+One way you can bypass the GDM login manager is switching to a
+virtual terminals TTYs.
+
+$ sudo -e /etc/pam.d/login
+
+And after the line containing:
+
+	@include common-auth
+
+Add the line:
+
+	auth	required 	pam_u2f.so
+
+(again tabs between words)
+
+You can test this with CTRL-ALT-FN and try to login.
+
+
+Securing OpenSSH
+----------------
+
+$ sudo -e /etc/ssh/authorized_yubikeys
+
+We are going to create a line configuration for EACH user's Yubikey.
+
+Insert the username and a colon:
+
+	ian:
+
+Then touch the Yubikey to insert it's OTP password. Now delete all
+but the first 12 characters of this password which is the Yubikey's
+identifier.
+
+Once you have setup each user, save and exit.
+
+$ sudo -e /etc/pam.d/sshd
+
+Add a new line of configuration as the FIRST statement in this file.
+
+	auth	required	pam_yubico.so	 /
+		id=clientid key=secret /
+		authfile=/etc/ssh/authorized_yubikeys
+
+Where 'clientid' and 'secret' are provided by Yubico. 
+
+Before we save the file we will need to register with Yubico for
+an API key and obtain our clientid and secret. In a web browser go
+to  https://upgrade.yubico.com/getapikey
+
+Enter your email address in the first field and then tab to the
+"Yubico OTP" field. Touch your Yubikey to insert the one time
+password.
+
+Check the box and click 'GET API KEY'.You will be provided with the
+CLIENTID and SECRET.Grab these details and paste them into the
+config line above.
+
+Next we will need to edit 
+
+$ sudo -e /etc/ssh/sshd_config
+
+And change the following lines:
+
+	ChallengeResponseAuthentication		yes
+	UsePAM     yes
+
+Then restart sshd:
+
+$ sudo servicectl restart ssh
+
+Open up another terminal for ssh testing.  SSH to that server and
+you should get prompted for a Yubikey press (the Yubikey's light
+should flash if inserted prior to logging in).
+
+If you are using ssh keys then you will still drop right through
+to a shell.
+
+$ nano .ssh/authorized_keys
+
+And comment out your key.
+
+Disconnect your ssh session and try and reconnect. You will see that
+the prompt has changed:
+
+	Yubikey for 'ian': 		(button press)
+	Password:
+
+NB you can also have resident ssh keys on the Yubikey 5 range
+(including the security key).
+
+
+Prompting to insert a Yubikey
+-----------------------------
+
+To get a prompt to insert a Yubikey you need to have the 'interactive'
+command added to the auth line:
+
+	auth 	required	pam_u2f.so  interactive
+
+
+Using Multiple Yubikeys
+-----------------------
+
+To use multiple Yubikeys (eg as a backup) in the .ssh/authorized_yubikeys
+file you need to append a colon then the next key
+
+	user:first_key:second_key
+
+FIDO2 & OpenSSH 8.2
+===================
+
+With the latest releases of OpenSSH (version 8.2+) we have some
+added support for FIDO2 and FIDO(u2f) devices.
+
+You can require a FIDO/FIDO2 security key to be present as well as
+my private ssh key.
+
+You will need a keypair with FIDO support. This is not present with
+the usual RSA keys and you will need to make a new key with a newer
+format (specifically a ECDSA-SK key or a ED25519-SK key).
+
+Generate a keypair with FIDO support:
+
+$ ssh-keygen -t ecdsa-sk -f ~/.ssh/fidokey
+
+In the key generation you will be required to physically confirm
+your presence with a button press.
+
+As usual you get a public key and a private key.
+
+$ cat fidokey.pub >> .ssh/authorized_keys
+
+$ ssh -i .ssh/fidokey localhost
+  Confirm user presence for key ECDSA-SK .........................
+
+Without the inserted key or the button press there is not enough
+cryptographic information to establish the ssh session.
+
+Unlike Yubikey OTP which operates as a USB keyboard a FIDO U2F  /
+FIDO2 device appears as a different device and you won't end up
+typing your OTP password in the wrong window.
+
+

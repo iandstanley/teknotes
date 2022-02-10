@@ -1,0 +1,45 @@
+
+# Types of Interprocess Communication
+
+
+			   S    A    B    R    U    N    V		
+			   y    s    i    e    n    e    a
+			   c    y    d    l    r    t    r
+			   h    c    i    a    e    w    i
+			   r    h    r    t    l    o    a
+			   o    r    e    e    a    r    b
+			   n    o    c    d    t    k    l
+			   o    n    t         e         e
+			   s    o    i    P    d    C    
+			   .    s    o    r         o    D
+			   .    .    n    o    P    m    a
+			   .    .    a    c    r    m    t
+			   .	.    l    e    o    s    a
+			   .    .    .	  s    c    .    .
+			   .    .    .	  s    s    .    .
+			+-----------------------------------
+			|
+ 2 processes read/write	|  .    Y    Y    Y    Y    .    .
+ to a file on shared	|
+ filesystem		|
+			|
+ signals		|  .    Y    .    Y    Y    .    .
+			|
+ semaphores 		|  .    Y    .    Y    Y    .    .
+ (primarily used as a	|
+  locking mechanism)	|
+			|
+ shared memory		|  .    Y    Y    Y    Y    .    Y
+			|
+ message queues		|  .    Y    Y    Y    Y    .    Y
+			|
+ pipes			|  Y    .    .    Y    .    .    Y
+			|
+ fifos			|  Y    .    .    Y    Y    .    Y
+			|
+ socket pairs		|  Y    .    Y    Y    .    .    Y
+			|
+ sockets		|  Y    .    Y    Y    Y    Y    Y
+			|
+
+

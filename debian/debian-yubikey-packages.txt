@@ -1,0 +1,24 @@
+Debian Yubikey packages
+=======================
+
+Debian has the following packages:
+
+	Yubikey-ksm
+	ykcs11
+	yubikey-manager
+	yubikey-piv-applet
+	pamu2fcfg
+	yubikey-personalization
+	yubikey-personalization-gui
+	scdaemon
+	yubikey-totp
+	yubioath-desktop
+	yubikey-luks
+
+
+SEE ALSO
+--------
+	
+	https://wiki.debian.org/Smartcards/Yubikey4
+	https://wiki.debian.org/DebianSingleSignOn
+

@@ -1,0 +1,74 @@
+RCLONE - RSYNC FOR COMMERCIAL CLOUD STORAGE
+===========================================
+
+Rclone is a command line program to manage files on cloud storage.
+
+Over 40 cloud storage products are supported by rclone including:
+
+	Box
+	Dropbox
+	SFTP/SSH
+	Amazon drive
+	Amazon S3
+	Google Drive
+	Google Photos
+	Google Cloud Storage 
+	HTTP
+	Microsoft OneDrive
+	OwnCloud
+	Wasabi 
+	Zoho Workdrive 
+	local filesystem
+
+It is supported on many distributions including Debian and FreeBSD.
+
+Debian packages:
+
+	rclone 
+	rclone-browser 
+	git-annex-remote-rclone
+
+
+FreeBSD packages:
+
+	rclone
+	rclone-browser
+
+Rclone is great for off site backups and you can even encrypt your
+backups.
+
+Once setup with 'rclone config' you can also do:
+
+	$ rclone copy myfile.txt iandropbox:/mystuff/
+
+You can even encrypt remotes by choosing 'crypt' as the target
+remote.
+
+Use 'rclone config' then select 'n' for new remote and choose
+'crypt'.
+
+You then add a path to store onto. This can be a local directory
+or on a previously configured remote eg. Dropbox.
+
+We can then choose whether to encrypt our filenames.
+
+It then asks for a passphrase.
+
+This only uses symmetric encryption. You could however encrypt you
+backup with a gpg key before running rclone to copy it to the cloud.
+
+See https://rclone.org
+
+
+
+USING RCLONE TO MOUNT GOOGLE DRIVE LOCALLY
+------------------------------------------
+
+After configuring rclone to talk to Google Drive as 'mygdrive':
+
+	$ mkdir gdrive
+
+	$ rclone mount --daemon mygrive: ~/gdrive
+
+	$ df -h ~/gdrive
+

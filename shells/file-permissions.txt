@@ -1,0 +1,143 @@
+
+STANDARD UNIX FILE PERMISSIONS
+""""""""""""""""""""""""""""""
+
+SETUID          file executes as owner of the file (an 'S' indicates
+		owner -x permission
+		-rwsr-xr-x
+
+		$ chmod u+s file
+
+SETGID          files executes as the group who owns the file. Any
+		files createdin a directory with SETGID have group
+		ownership set to the group ofowner of directory.
+		Owning group without execute is shown as 's'.
+		drwxrws---
+
+		$ chmod g+s file
+
+STICKY BIT      Doesn't affect individual files. However, a directory
+		with the sticky bit 't' restricts deletion to owner
+		of directory.  A 'T' indicates file/folder doesn't
+		have exec permissions for all users.
+		Drwxrwxrwt
+
+		$ chmod o+t folder
+		-or-
+		$ chmod +t folder
+
+
+LINUX ACLS
+""""""""""
+
+We can use SELinux to restrict further than standard UNIX DAC (ie
+rwxrwxrwx) can manage.
+
+	# ls -l
+	  -rw-r--r-+  1  root root  0  Sep 19 14:41 filename
+
+	Note: the '+' at the end of the DAC list denotes that the
+	file has an ACL attached to it.
+
+
+	# getfacl filename
+	  # file:	filen
+	  # owner:	user
+	  # group:	user
+	  user:		rwx
+	  group:	rwx
+	  other:	r-x
+
+Use 'setfacl' to set ACL defaults
+
+
+
+LINUX APPARMOR
+""""""""""""""
+
+AppArmor is a Linux kernel securty module that supplements the
+standard Linux user and group based permissions to confine programs
+to a limited set of resources.
+
+An apparmor profile defines what resource that the target can access.
+
+eg      AppArmor can be used to hide output from the terminal for
+	example. If an attacker established a reverse shell of a
+	bind shell to the system this could successfully mitigate
+	the attacker shell and make it useless.
+
+
+
+SE LINUX
+"""""""" 
+
+SE Linux allows more control over who can access system. It was
+originally developed by the NSA as a series of kernel patches and
+open sourced in 2000.
+
+When a process (subject) make a request to access an object SE Linux checks the ACCESS VECTOR CACHE (AVC) where permissions are cached. If SE Linux can't decide it forwards the request to the securty server.
+
+SE Linux can be configured in multiple ways.
+
+Most common are 'targetted policy' or 'multilevel security (MLS)'
+
+	* targetted policy is the default option and covers a range
+	  of processes, tasks and services.
+
+	* MLS can be very complicated and is typically only used
+	  by government orgs.
+
+
+See /etc/sysconfig/selinux -- it has a section saying SE Linux is
+in PERMISSIVE MODE, ENFORCING MODE or disabled and also which policy
+is supposed to be loaded.
+
+SE Linux works as a labelling system.
+
+	label = user:role:type:level	(level is optional)
+
+User, role, and level are used in an advanced implementations like
+MLS.
+
+Label 'type' is most important for targetted policy.
+
+
+SE Linux Modes
+
+	Permissive	allow but log
+	Enforcing	denies
+	Disabled	only use DAC rules
+
+Note: 	changes between enforcing and permissive mode DO NOT PERSIST
+	across reboots.
+
+	$ /usr/sbin/setenforce 	1		# enforced
+	$ /usr/sbin/setenforce	0		# Permissive
+
+To view current SE Linux mode:
+
+	$ /usr/sbin/getenforce
+
+
+SE LINUX AUDITING TOOLS
+
+	* auditallow    generates policy allow/don't allow rules
+			from log of denied operations
+	* auditwhy      translates audit messages into a description
+			why
+
+Useful commands:
+	$ id -Z
+	$ ps -Z 
+	$ ls -laZ
+	where Z= security context on SE Linux enabled kernel
+
+
+CONFIG /etc/selinux/config
+
+Use 
+	$ getsebool -a  		to see what settings used
+	$ setsebool -P name 0|1		to set
+
+
+

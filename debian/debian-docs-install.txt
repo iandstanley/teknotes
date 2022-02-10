@@ -1,0 +1,23 @@
+# Debian docs install
+
+sudo apt install	debian-faq \
+			debian-goodies \
+			debian-handbook \
+			debian-history \
+			debian-installer-launcher \
+			debian-installer-10netbootarmhf \
+			debian-keyring \
+			debian-lan-config \
+			debian-policy \
+			debian-reference \
+			debian-reference-common \
+			debian-security-support \
+			debian-timeline \
+			debianutils \
+			harden \
+			harden-doc \
+			harden-tools
+			dwww
+
+sudo a2enmod cgi
+

@@ -1,0 +1,126 @@
+Privacy tools in Debian
+======================
+
+tor
+torchat
+onion balance
+onion share
+torsocks
+
+
+Other tools
+===========
+
+riseup.net		email privacy
+privoxy
+vonvpodcast.com
+jitsi			video conferencing
+stacer			system performance & cleanup
+privacy.com
+blur8			by Abine Inc
+privateseabass.com
+
+
+Security Tools review
+=====================
+
+prism-break.org
+
+
+Browser plugins
+===============
+
+httpseverywhere
+privacy-badger
+umatrix			denies parts of a website
+
+
+Email
+=====
+
+protonmail
+tutanota
+fastmail
+Onionmail		en.onionmail.info
+
+Onionmail is a mailserver designed to run over the TOR network
+without loosing the ability to connect to the internet.
+
+
+Burner phones
+=============
+
+burner app 
+mysnd
+
+
+Messenger apps
+==============
+
+signal
+jani
+wire
+
+
+Getting a random birthdate
+==========================
+
+On Linux (needs GNU date) run:
+
+$ date -d @$((RANDOM*24*3600/2 - 500000000)) +%Y%b%d
+
+
+ANONYMOUTH
+==========
+
+github.com/psal/anonymouth
+
+Anonymouth anonymises your writing style.  An alternative is to use
+a dictionary that is restricted to only the 1,000 most common words.
+Anonymouth is written by Philadelphia University, Drexel.  Anonymouth
+tries to remove stylometric language you use in documents.
+
+
+PRIVATE VIDEO CHAT
+==================
+
+tox.chat
+jitsi.org
+ekiga.org
+
+
+DEBIAN PACKAGING SYSTEM
+=======================
+
+vmakviiezienjx6t.onion
+
+nb. must get new v3 onion address
+
+
+RICOCHET
+========
+
+Ricochet is like jabber but without a central server.
+
+
+SECUREDROP
+==========
+
+securedrop.org provides a secure filedrop solution.
+
+
+MISC
+====
+
+Library Freedom Project
+
+OONI Probe   ooni.org
+
+
+VIDEO STREAMING
+===============
+
+Invidious is a privacy respecting video streaming (no javascript). 
+
+It is a Youtube frontend that works without Javascript.
+

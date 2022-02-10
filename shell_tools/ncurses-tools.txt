@@ -1,0 +1,14 @@
+
+NCURSES TOOLS
+=============
+
+curseradio	internet radio
+termdown	countdown
+reddio		reddit viewer (in bash)
+ncdu 		ncurses du
+lame		mp3 management
+castero		podcast client (in python)
+moc		music player
+cheat.sh	cheat sheets
+mutt		email
+

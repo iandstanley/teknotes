@@ -1,0 +1,22 @@
+
+GRAPHICAL APPS OVER SSH
+
+
+SSh can forward X11 using the -Y (or -X) flags.
+
+In your /etc/sshd_config set the following:
+
+	X11Forwarding		yes
+
+On some systems you may need the following line as well:
+	X11UseForwarding	yes
+
+
+
+	$ ssh -Y hostname	# used for trusted systems
+	$ ssh -X hostname	# used for untrusted systems
+
+Note the use of -Y for trusted systems DISABLES SECURITY POLICIES`
+
+
+

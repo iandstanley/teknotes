@@ -1,0 +1,12 @@
+SECURE BACKUPS WITH TAR & GPG
+=============================
+
+	$ tar -c /etc | gpg -r backup@me.com \
+		-o /tmp/backup.tar.gpg
+
+All I had to do was import my GPG public key onto the server and
+import it into my keyring.
+
+The private key is found elsewhere securely saved so that only I
+can restore it.
+

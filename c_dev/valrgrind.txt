@@ -1,0 +1,317 @@
+
+			     VALGRIND
+
+
+Valgrind is a suite of dbugging and profiling tools that allow you
+to check your code in a number of ways. The defaut tool, which is
+perhaps one of the best, is the memcheck feature which will find a
+lot of different memory access problems. The way it does this is
+by running your cod e inside a virtual machine and instruments all
+of the memory accesses and double checks to see that all of your
+pointer accesses are valid.
+
+Next you must setup your build with the -g option to include debugging
+information into your program to allow valgrind to see the debugging
+source code links.
+
+We should also ensure we have "-Wall -Werror" defined on the 'cc'
+line to get the compiler to tell me as much as possible what I am
+doing wrong.
+
+When we run make with $(CFLAGS)="-Wall -Werror -g" we may still get
+no errors from the compiler; and the code builds without any warnings
+or errors.
+
+	$ cc -Wall -Wextra -g -std=c99 badmemory.c -o badmemory 
+
+	$ valgrind ./badmemory
+
+All of the lines starting ==(number)== are messages from Valgrind
+descibing something that it has found of interest. Valgrind can
+trace forks, if you have a program that forks.
+
+eg. Running Valgrind on the following code says "Invalid write of
+size 4 bytes":
+
+	const int NUM_HEIGHTS = 3; 
+
+	int *heights = malloc(NUM_HEIGHTS);
+	
+	for (int i=0 ; i < NUM_HEIGHTS ; i++)
+		heights[i] = i * i;
+
+Here the issues is malloc() that allocates in bytes not ints.
+
+We could write:
+
+			= malloc(NUM_HEIGHTS * sizeof(int));
+
+or better:
+			= malloc(NUM_HEIGHTS * sizeof( *heights));
+
+... because we change the heights's type it adjusts!
+
+If we look at the HEAP summary section, Valgrind report the memory
+leaks on the heap. Valgrind will also detect writes to memory after
+free() is called.
+
+We can also run valgrind with the option "--leak-check=full" to get
+the full details of any leaked memory including a stack trace of
+the location where it was allocated/leaked.
+
+
+Valgrind can do a whole lot more including:
+
+	- code quality checks
+	- memory leaks
+	- profiling
+
+
+                        PROFILING CPU TIME
+
+Valgrind is another injection based profilier/analyzer.
+
+It can profile based on counts of clock cycles or instructions run
+at runtime. Gprof bases it's profiles on the time spent in each
+function rather than clock cycles/instructions run.
+
+Profiling with Valgrind is a two step process:
+
+	1. producing a data file callgrind.out.<PID>
+
+	2. running callgrind_annotate on file
+
+$ valgrind --tool=callgrind ./myprog <myargs>
+$ callgrind_annotate callgrind.out.237 -inclusive=yes -tree=both
+
+
+Sample workflow:
+
+	$ cc -g sorter.c sorter
+	$ valgrind --tool=callgrind ./sorter 1000
+	$ ls 
+	callgrind.out.3591 sorter sorter.c
+	$ callgrind_annotate callgrind.out.3591 --inclusive=yes \
+	--tree=both | less
+
+
+When we look at this output we see there are a bunch of instructions
+from library calls listed drowning out what we want to look at.
+
+If we filter out lines containing 'build':
+
+	$ callgrind_annotate callgrind.out.3591 --inclusive=yes \
+	--tree=both | grep -v build | less
+
+Notice the output of main files has the calls broken down into
+subfunctions:
+
+	50,477,675	* sorter.c:main
+	20,659,730	> sorter.c:testrandom
+	 1,919,154	> sorter.c:testsorted
+	27,895,472	> sorter.c:testreversed
+
+And also the reverse tree:
+
+	18,572,638	< sorter.c:testrandom
+	    23,005	< sorter.c:testsorted
+	25,991,999	< sorter.c:testreversed
+	45,588,642	* sorter.c:sort
+
+This can break down which specific uses of a function is slower.
+
+Here the * shows which function we are looking at and the total
+instruction count.
+
+	6012	< prog.c:main()
+	2064	* prog.c:g(int, float)
+	 512	> prog.c:i(float)
+
+This block is about function g() which was called from main() and
+which in turn called i().
+
+
+
+                    PROFILING MEMORY ANALYSIS
+
+Analyses amount of dynamically allocated memory at each snapshot
+(eg. a program may take 10 snapshots).
+
+Two step process using Valgrind to produce massif.out.PID:
+
+	1. valgrind -tool=massif ./prog <myargs>
+	2. ms_print massif.out.123
+
+
+
+                   MASSIF/MS_PRINT GRAPH OUTPUT
+
+* ms_print will show a graph followed by a table with an extra
+'peak' analysis somewhere in the table.
+
+* the graph shows amount of dynamically allocated memory in use
+over (n) snapshots with a breakdown in the table for each snapshot.
+
+* where memory use peaked it will show a breakdown of where the
+allocated memory came from (which functions/instructions requested
+how much).
+
+
+	Table Columns:
+
+	- snapshot #
+	- time of snapshot, how many instructions ran from start
+	  of program
+	- total memory
+	- amount of heap (dynamically allocated memory) and heap
+	  in use
+	- any extra heap space allocated (if requested more than
+	  used, for example)
+	- the size of the stack (OFF by default)
+
+
+
+	$ valgrind --tool=massif ./sorter 1000
+	$ ls
+	massif.out.3604	  sorter	sorter.c
+	$ ms_print massif.out.3604 | less
+
+
+
+                   VALGRIND AS A DEBUGGING TOOL
+
+With Valgrind we can check:
+
+	- memory leaks
+	- unreachable code
+	- uninitialised variables
+
+
+Memory leaks can be:
+
+	- definately lost 	(never deallocated)
+	- indirectly lost	(contained a pointer to item lost)
+
+An indirectly lost block of memory can be where you deallocate the
+root of a tree before children are freed.
+
+
+
+Basic errors found:
+
+	$ valgrind -v ./myprog
+
+
+Test & fix with basic memory checking:
+
+	$ valgrind -v  --leak-check=yes  ./myprog
+
+
+Finally use full memory checking:
+
+	$ valgrind -v  --leak-check=full  ./myprog
+
+
+
+                             EXAMPLE
+
+
+	$ vi leaky.cpp
+
+
+	#include <iostream>
+	#include <ostring>
+
+	int * create(int x) {
+		int *arr = new int[x];
+		return arr;
+	}
+
+	void badPtrDev() {
+		// definately lost 40 bytes
+		int *p = create(10);
+		p[0] = 1;
+	}
+
+	void goodPtrDev() {
+		// propertly created/deleted 24 bytes
+		int *p = create(6);
+		if (p != NULL) {
+			delete []p;
+			p = NULL;
+		}
+	}
+
+	int main() {
+		badPtrDev();
+		goodPtrDev();
+
+		char * last = new char[9];
+		// above created and still in use at end of prog
+
+		strcpy(last, "goodbye");
+		std:cout << last << std::endl;
+	}
+
+
+
+
+	$ g++ -g leaky.cpp -Wall -Wextra -o leaky
+
+	$ valgrind -v --leak-check=full ./leaky
+
+	...
+	...
+
+	9 bytes in 1 blocks are definately lost in record 1 of 2
+
+		~~~~~~: main (leaky.cpp:28)
+
+	40 bytes in 1 blocks are definately lost in record 1 of 2
+
+		~~~~~~: operator new[]
+		~~~~~~: create (int) (leaky.cpp:5)
+		~~~~~~: badPtrDev () (leaky.cpp:11)
+		~~~~~~: main (leaky.cpp:26)
+
+	LEAK SuMMARY
+
+		definately lsot: 49 bytes in 2 blocks
+
+		...
+		...
+
+	ERROR SUMMARY: 2 errors from 2 contexts
+
+
+	--------------------------------------------------------------
+
+
+                   FIND UNINITIALIZED VARIABLES
+
+
+Valgrind can find uninitialised variables with the flags:
+
+	--track-origins=yes
+
+If Valgrind finds the program uses uninitialized values it tells
+you to use --track-origins in the output header.
+
+
+
+
+                           OTHER TOOLS
+
+
+There are many other tools int he Valgrind suite ... see valgrind(1).
+
+eg	you can use 
+
+	$ valgrind --tool=helgrind ./a.out 
+
+	to check for problems with POSIX threads and race conditions.
+
+
+
+
+See also 	https://valgrind.org

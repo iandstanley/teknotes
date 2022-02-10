@@ -1,0 +1,71 @@
+# Send mail like a boss!
+
+This will basically let you send email from the terminal, using mailx 
+and Gmail as SMTP server.
+
+First, create a certificate directory then create new certificate and 
+key databases:
+
+	$ mkdir ~/.certs
+	$ certutil -N -d ~/.certs
+
+Then fetch the certificate from Gmail and import the cert file into the 
+new database:
+
+	$ echo -n | openssl s_client -connect smtp.gmail.com:465 | \
+		sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' \
+		 > ~/.certs/gmail.crt
+	$ certutil -A -n "Google Internet Authority" -t "C,," \
+		-d ~/.certs -i ~/.certs/gmail.crt
+
+Now, send a mail:
+
+	$ echo -e "Email content" | mailx -v -s "Email subject" \
+		-S smtp-use-starttls -S ssl-verify=ignore -S smtp-auth=login \
+		-S smtp=smtp://smtp.gmail.com:587 \
+		-S from="username@gmail.com(John Doe)" \
+		-S smtp-auth-user=username@gmail.com \
+		-S smtp-auth-password=s0m3p@zzW0rD \
+		-S ssl-verify=ignore -S nss-config-dir=~/.certs \
+		recipient@some.com
+
+Woah! That is friggin' long! Let's make it a bit shorter by adding the 
+account settings in /etc/mail.rc: (insert at the end of the file)
+
+	account gmail {
+		set smtp-use-starttls
+		set ssl-verify=ignore
+		set smtp-auth=login
+		set smtp=smtp://smtp.gmail.com:587
+		set from="username@gmail.com(John Doe)"
+		set smtp-auth-user=username@gmail.com
+		set smtp-auth-password=s0m3p@zzW0rD
+		set ssl-verify=ignore
+		set nss-config-dir=/home/path/to/.certs
+	}
+
+Let's try again and send a mail to a single recipient:
+
+	$ echo -e "Mail body text" | mailx -A gmail \
+		-s "Mail subject" recipient@some.com
+
+...or send to multiple recipients: (-b = BCC, -c = CC)
+
+	$ echo -e "Mail body text" | mailx -A gmail \
+		-s "Mail subject" -b bcc_user@some.com \
+		-c cc_user@some.com recipient@some.com
+
+Now, that's much better!
+
+Use Case: Send work report like a boss!
+
+Based on Create your work report using Git Log
+
+	$ git report | mailx -A gmail \
+		-s "Last Week Activity Report" client@company.com
+
+Sources: Sending email from mailx command in linux using Gmails SMTP, 
+mailx and Gmail NSS config dir, SMTP Gmail.com from bash gives error in 
+certificate peers certificate issuer 
+
+https://coderwall.com/p/ez1x2w/send-mail-like-a-boss

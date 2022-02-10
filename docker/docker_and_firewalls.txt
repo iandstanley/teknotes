@@ -1,0 +1,168 @@
+
+https://degreesofzero.com/article/docker-and-firewalls.html
+
+# Docker and firewalls: Are your services protected?
+
+Are you running a firewall like ufw with docker? You might be
+surprised to learn that your firewall is probably not doing anything
+to block unwanted internet traffic from reaching your docker services.
+Docker modifies iptables rules to completely bypass or ignore the
+rules set by ufw. In this article, I will explain how to check if
+the services running on your server are exposed and how to protect
+them.
+
+## Check for exposed docker services
+
+I usually begin articles, like this one, by explaining some history
+or back-story to provide context. But in this case, let's dive right
+into how to check if your services are exposed remotely.
+
+In this section we will use netstat and nmap to check for local
+processes that are listening for TCP connections and to scan ports.
+To install them:
+
+	sudo apt-get install net-tools nmap
+
+Use netstat to print a list of processes that are actively listening
+for TCP connections:
+
+	sudo netstat -tlpn
+
+Example results:
+
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address  Foreign Addr State  PID/Program name    
+tcp        0      0 127.0.0.1:8332 0.0.0.0:*    LISTEN 17021/docker-proxy  
+tcp        0      0 127.0.0.1:8333 0.0.0.0:*    LISTEN 17146/docker-proxy  
+tcp        0      0 0.0.0.0:5432   0.0.0.0:*    LISTEN 17330/docker-proxy  
+tcp        0      0 0.0.0.0:22     0.0.0.0:*    LISTEN 651/sshd            
+
+From the above results, we can see that we have 5 services listening
+for TCP connections. "Local Address" refers to the host (IP address
+and port number) on which the service is listening. For example,
+requests to "127.0.0.1:8332" will be handled by that service.
+
+"127.0.0.1" is the loopback address. Services bound to the loopback
+address are not accessible remotely.  "0.0.0.0" means all interfaces.
+Services bound to this address are accessible remotely unless a
+firewall is blocking those requests.
+
+Let's check this assumption by using nmap to scan for open ports:
+
+	nmap -p 0-65535 0.0.0.0
+
+Example results:
+
+	Starting Nmap 7.60 ( https://nmap.org ) at 2021-08-16 16:00 UTC
+	Nmap scan report for 0.0.0.0
+	Host is up (0.010s latency).
+	Not shown: 65535 closed ports
+	PORT      STATE SERVICE
+	22/tcp    open  ssh
+	8332/tcp  open  unknown
+	8333/tcp  open  bitcoin
+	5432/tcp  open  postgresql
+
+Nmap done: 1 IP address (1 host up) scanned in 3.15 seconds
+
+Here we see that all 5 service ports are open on any interface. But
+this doesn't tell us what we really want to know - are these ports
+exposed remotely?
+
+To answer that, we need the system's LAN IP address. You can get
+this by using ifconfig:
+
+	ifconfig | grep -Po "inet 192.168.[^ ]+" | grep -Po "192.168.[^ ]+"
+
+If your system is a VPS, running in a cloud, then its LAN IP address
+might be begin with "10." instead of "192.168.". Check the full
+output of ifconfig to view all of your system's networking interfaces.
+
+Now let's repeat the scan with the LAN IP address:
+
+	nmap -p 0-65535 192.168.XXX.XXX
+
+Example results:
+
+	Starting Nmap 7.60 ( https://nmap.org ) at 2021-08-16 16:00 UTC
+	Nmap scan report for 192.168.XXX.XXX
+	Host is up (0.010s latency).
+	Not shown: 65535 closed ports
+	PORT      STATE SERVICE
+	22/tcp    open  ssh
+	5432/tcp  open  postgresql
+
+	Nmap done: 1 IP address (1 host up) scanned in 3.31 seconds
+
+From the above we can see that the system has two ports open for
+remote TCP traffic. The first is port 22 which is used for SSH
+access. If we need to access the machine remotely via SSH, then
+this port should stay open.
+
+The second port is for postgreSQL, which very likely should not be
+exposed remotely. In this example server, we're running postgreSQL
+in a docker container.
+
+So what gives? Why is docker exposing this service remotely? The
+answer is because you told it to. Now let's fix it.  The Fix: Don't
+expose docker services remotely
+
+Sounds simple, right?
+
+Most users of docker don't realize that they are exposing their
+services remotely when they publish ports. For example, this command
+creates and runs a docker container:
+
+docker run -p 3000:3000 
+
+The -p argument tells docker to "publish" port 3000 - i.e. create
+a listener and forward requests to port 3000 to the new container.
+But this is insecure because the default host that docker binds to
+is "0.0.0.0"!
+
+These kinds of examples are all over the internet in tutorials,
+how-to articles, GitHub issues, stackoverflow answers, and more.
+Users have been trained to use docker in an insecure way.
+
+The fix is actually quite simple. When publishing ports, tell docker
+to bind to "127.0.0.1" instead:
+
+	docker run -p 127.0.0.1:3000:3000 
+
+Now the service will not be exposed remotely.
+
+You can find more details about using the -p, --publish arguments
+in the official documentation.  The docker + ufw problem: Unintuitive
+defaults
+
+Based on the many articles, bugs, and issues about this common
+problem, it's safe to say that docker's default behavior is far
+from intuitive. One could even call the default behavior dangerous.
+
+From an old issue which remains un-fixed as of today:
+
+Docker Network bypasses Firewall, no option to disable
+
+Steps to reproduce the issue:
+
+* Setup the system with a locked down firewall
+* Create a set of docker containers with exposed ports
+* Check the firewall; docker will by use "anywhere" as the source,
+  thereby all containers are exposed to the public.
+
+And the problem has recently attracted the attention of hackernews:
+
+Hacker deleted all of NewsBlur’s Mongo data and is now holding the
+data hostage
+
+NewsBlur's founder here. I'll attempt to explain what's happening.
+
+...
+
+It's been a great year of maintenance and I've enjoyed the fruits
+of Ansible + Docker for NewsBlur's 5 database servers (PostgreSQL,
+MongoDB, Redis, Elasticsearch, and soon ML models).
+
+...
+
+

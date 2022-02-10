@@ -1,0 +1,323 @@
+#  Caching Nameserver using dnsmasq 
+
+This tutorial contains information about the preparation of the system 
+in order to run dnsmasq and also detailed instructions about how to 
+configure it as a caching DNS server. A full configuration file is also 
+provided as a drop-in replacement for the default dnsmasq.conf.
+
+dnsmasq is a lightweight, open-source DNS forwarder and DHCP server. In 
+this article we go through how to prepare the system in order to run 
+dnsmasq and also how to configure the latter as a caching-only DNS 
+server. A configuration file is also provided as a drop-in replacement 
+for the default dnsmasq.conf that ships with your system. dnsmasq is 
+available in most Linux distributions. This article was written while 
+using CentOS, so it is safe to say that it also fully covers RHEL, 
+Fedora and generally the whole Red Hat family of operating systems and 
+possibly Novell’s SLES and OpenSUSE. Small modifications of the invoked 
+commands may be needed for Debian, Ubuntu and other systems.
+
+## Is a caching nameserver really important?
+
+There is some controversy about the real benefits of using a caching 
+name server in a system, either desktop or server. In this article we 
+keep controversy out of the discussion and focus on the performance 
+improvement the caching of DNS information can offer to a system while 
+performing specific tasks. For instance, a caching nameserver allows a 
+web browser to acquire DNS information from the local DNS cache, 
+provided that this information has already been cached, without the need 
+to access any public DNS servers, which results in faster web browsing. 
+Similarly, in a server environment, services like spam filters often 
+need to perform many DNS queries for the same hostnames. The latency of 
+the communication with the remote nameserver may add up to the total 
+time of email processing.
+
+## BIND vs dnsmasq
+
+BIND is the flagship of DNS servers with large deployments around the 
+globe. I have used BIND for many years as a caching nameserver, even on 
+my desktop, until I realized it is overkill to use BIND this way. There 
+are lighter solutions, even all-in-one software like dnsmasq, that seem 
+to be more suitable for setting up local DNS caching. System preparation
+
+So, let’s get started with the system preparation before going into the 
+details of the dnsmasq configuration.
+
+First of all, we need to install dnsmasq:
+
+	yum install dnsmasq
+
+dnsmasq, when run as root, is designed to drop privileges and run as an 
+unprivileged user. By default, this user is nobody. We use a dedicated 
+system user to run dnsmasq.
+
+Run the following commands as root to create such an unprivileged system 
+user and group named dnsmasq:
+
+	groupadd -r dnsmasq
+	useradd -r -g dnsmasq dnsmasq
+
+The above should be enough.
+
+## Configuration
+
+All dnsmasq configuration options go into /etc/dnsmasq.conf. Here we 
+write this file from scratch, so if you need to keep a copy of the 
+original that ships with your distribution, do so with:
+
+	cp /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+
+Now, let’s get started with adding our own dnsmasq configuration in 
+/etc/dnsmasq.conf.
+
+First of all, we set some options regarding the basic server operation 
+like the interface and port on which it should bind, the unprivileged 
+user that should run the service and a PID file:
+
+	listen-address=127.0.0.1
+	port=53
+	bind-interfaces
+	user=dnsmasq
+	group=dnsmasq
+	pid-file=/var/run/dnsmasq.pid
+
+The bind-interfaces directive instructs dnsmasq to bind only to the 
+network interface specified in the listen-address directive.
+
+## Next comes logging.
+
+By default, dnsmasq sends its log messages to the DAEMON syslog facility 
+(LOCAL0 when operating in debug mode). We go with the defaults here, but 
+keep in mind that a separate log file can be set as it is shown in the 
+configuration snippet below (currently commented out):
+
+	#log-facility=/var/log/dnsmasq.log
+	#log-queries
+
+Logging to file requires some extra configuration for proper log 
+rotation. For more information, please read Appendix II.
+
+Finally, we set the options that configure dnsmasq’s name resolution and 
+caching operations.
+
+The following directives prevent dnsmasq from forwarding plain names 
+(without any dots) or addresses in the non-routed address space to the 
+parent nameservers.
+
+	domain-needed
+	bogus-priv
+
+The no-hosts directive also instructs dnsmasq not to read any hostnames 
+from /etc/hosts. In most systems, /etc/hosts is queried before a DNS 
+service is used by the system for name lookups. So, all plain name to 
+private IP mappings should normally be added in /etc/hosts. If this is 
+not what you want, then take a look at the expand-hosts and domain 
+directives.
+
+	no-hosts
+
+Set the maximum number of concurrent DNS queries. The default value is 
+150. Adjust to your needs.
+
+	dns-forward-max=150
+
+Set the size of the dnsmasq cache. The default is to keep 150 hostnames. 
+By setting the cache size to 0 disables the feature (this is not what we 
+really want). Again, adjust this value according to your needs.
+
+	cache-size=1000
+
+The following directive controls whether negative caching should be 
+enabled or not. Negative caching allows dnsmasq to remember “no such 
+domain” answers from the parent nameservers, so it does not query for 
+the same non-existent hostnames again and again. This is probably useful 
+for spam filters or MTA services. By default, negative caching is 
+enabled. To disable, un-comment the following directive.
+
+	#no-negcache
+
+The neg-ttl directive sets a default TTL value to add to negative 
+replies from the parent nameservers, in case these replies do not 
+contain TTL information. If neg-ttl is not set and a negative reply from 
+a parent DNS server does not contain TTL information, then dnsmasq will 
+not cache the reply. Here we set the default TTL to 3600 seconds. Again, 
+adjust to your specific needs.
+
+	neg-ttl=3600
+
+Here we use a separate file where dnsmasq reads the IPs of the parent 
+nameservers from. The syntax is the same as in /etc/resolv.conf. We do 
+this to facilitate the manipulation of the parent nameservers that 
+should be used by dnsmasq by using, for example, an external script. The 
+filename we use here is resolv.dnsmasq, but this can be changed to your 
+liking. We also set the no-poll directive here to prevent dnsmasq from 
+polling the ‘resolv’ file for changes.
+
+	resolv-file=/etc/resolv.dnsmasq
+	no-poll
+
+A full configuration file containing all the above configuration, which 
+can can be used as a drop-in replacement of the default 
+/etc/dnsmasq.conf, can be found in Appendix I. 
+
+## Upstream Nameservers
+
+We have used a separate file to store the IPs of the parent nameservers; 
+that is /etc/resolv.dnsmasq. Using the same syntax as in 
+/etc/resolv.conf add the nameserver IP addresses in resolv.dnsmasq. For 
+example:
+
+	nameserver 192.168.0.252
+	nameserver 192.168.0.253
+	nameserver 192.168.0.254
+
+Note that we still need to make a change in /etc/resolv.conf before the 
+system starts using dnsmasq for domain name lookups. Read on…
+
+## Starting dnsmasq
+
+In order to start dnsmasq, run as root:
+
+	/etc/init.d/dnsmasq start
+
+Check the syslog or the dnsmasq logfile (if used) for any error 
+messages.
+
+If everything seems to be OK, set the dnsmasq service to start on boot:
+
+	chkconfig dnsmasq on
+
+This command might be Red-Hat specific, so consult your distribution’s 
+documentation about how to set services to start on boot.
+
+## Switch name resolution to dnsmasq
+
+What we have done so far is set up the dnsmasq service. For hostnames 
+that do not exist in /etc/hosts the system still uses the nameserver 
+inside /etc/resolv.conf for name resolution.
+
+To start using dnsmasq, edit /etc/resolv.conf, remove all nameservers 
+and add only the IP of our dnsmasq service:
+
+	nameserver 127.0.0.1
+
+From now on, the system will use dnsmasq for domain name resolution. You 
+can un-comment the log-queries option in order to confirm the dnsmasq 
+operation. 
+
+## Appendix I – Full configuration file
+
+This is the complete configuration file containing the configuration 
+that has been discussed in this article. Note that it can be used as is 
+to replace the default /etc/dnsmasq.conf.
+
+	#
+	# Configuration file for dnsmasq acting as a caching nameserver.
+	#
+	# Format is one option per line, legal options are the same
+	# as the long options legal on the command line. See
+	# "/usr/sbin/dnsmasq --help" or "man 8 dnsmasq" for details.
+	#
+	# Updated versions of this configuration file may be available at:
+	#
+	#   http://www.g-loaded.eu/2010/09/18/caching-nameserver-using-dnsmasq/
+	#
+
+	#
+	# Basic server configuration
+	#
+
+	listen-address=127.0.0.1
+	port=53
+	bind-interfaces
+	user=dnsmasq
+	group=dnsmasq
+	pid-file=/var/run/dnsmasq.pid
+
+	#
+	# Logging
+	#
+
+	#log-facility=/var/log/dnsmasq.log
+	#log-queries
+
+	#
+	# Name resolution options
+	#
+
+	domain-needed
+	bogus-priv
+	no-hosts
+	dns-forward-max=150
+	cache-size=1000
+	#no-negcache
+	neg-ttl=3600
+	resolv-file=/etc/resolv.dnsmasq
+	no-poll
+
+This file is meant to be used both on servers and desktops.
+
+## Appendix II – Logging to file
+
+Before dnsmasq starts logging to file it is required to set the path to the logfile in the log-facility option inside /etc/dnsmasq.conf.
+
+log-facility=/var/log/dnsmasq.log
+
+To ensure proper rotation of the log file you should use the following logrotate configuration:
+
+/var/log/dnsmasq.log {
+    monthly
+    missingok
+    notifempty
+    delaycompress
+    sharedscripts
+    postrotate
+        [ ! -f /var/run/dnsmasq.pid ] || kill -USR2 `cat /var/run/dnsmasq.pid`
+    endscript
+    create 0640 dnsmasq dnsmasq
+}
+
+Save the above configuration in /etc/logrotate.d/dnsmasq. Also, adjust 
+the log filename or the path to the PID file in case you have used 
+custom names, but make sure you do not change the USR2 signal that is 
+sent to the dnsmasq process in the post-rotation script.
+
+## Final Thoughts
+
+dnsmasq is a very lightweight service. Therefore, you can run it on any 
+system, either server or desktop without any noticeable impact on system 
+resources. In this guide we used it as an internal system service bound 
+to the loopback interface, without permitting direct access from the 
+outside. This along with the fact that dnsmasq is mature software that 
+has been around for several years makes our setup rather secure.
+
+Several people might argue that the performance improvement a local 
+caching nameserver offers in terms of name lookup speed is 
+insignificant. This might be true in some cases, but there are times 
+that this performance improvement is noticeable, especially when the 
+quality of the network connectivity between the current machine and the 
+upstream nameserver is an issue, or when the upstream name server is 
+overloaded. On the other hand, it is almost certain that a local caching 
+DNS server can in no way make name resolution slower, unless perhaps a 
+huge cache is being used. Generally, I find keeping such a service 
+operational a good idea.
+
+In this article we discussed about one of the dnsmasq features: DNS 
+caching. dnsmasq is a lot more than just that. Check the whole feature 
+set in the dnsmasq homepage. Perhaps, in the future, more guides 
+covering other features of this software are published. Until then, 
+enjoy local DNS caching!!!
+
+Caching Nameserver using dnsmasq by George Notaras is licensed under a 
+Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International 
+License. Copyright © 2010 - Some Rights Reserved Cache Desktop DNS HOWTO 
+Networking Service George Notaras avatar About George Notaras
+
+George Notaras is the editor of the G-Loaded Journal, a technical blog 
+about Free and Open-Source Software. George, among other things, is an 
+enthusiast self-taught GNU/Linux system administrator. He has created 
+this web site to share the IT knowledge and experience he has gained 
+over the years with other people. George primarily uses CentOS and 
+Fedora. He has also developed some open-source software projects in his 
+spare time.
+
+https://www.g-loaded.eu/2010/09/18/caching-nameserver-using-dnsmasq/

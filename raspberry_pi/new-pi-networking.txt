@@ -1,0 +1,24 @@
+SETTING UP NETWORKING ON A NEW PI SERVER
+========================================
+
+Setting up a Pi server typically starts with an installation of
+Raspberry Pi OS lite (no X)
+
+Unfortunately, this can sometimes cause problems with getting the
+network up and running.
+
+Here is the process to use:
+
+
+	1.	Use Imager to install OS lite to SD card or USB drive
+
+	2. 	Mount the card / drive on your machine.
+
+	3. 	$ sudo touch /media/pi/boot/ssh
+	
+	4. 	$ cp /etc/wpa_supplicant/wpa_supplicant.conf \
+			/media/pi/boot/
+
+The pi will copy the .conf file to the corrent place on the SD
+card's /boot and turn on ssh access on boot.
+

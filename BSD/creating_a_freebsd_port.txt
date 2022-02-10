@@ -1,0 +1,55 @@
+
+CREATING A FREEBSD PORT
+
+See the FreeBSD handbook for more details.
+
+# cd /usr/ports/games
+
+# mkdir demo && cd demo
+
+# vi Makefile
+
+	# $FreeBSD$
+	PORTNAME=	demo
+	PORTVERSION=	1.0
+	CATEGORIES=	games
+	MASTER_SITES=
+	LICENCE=	BSDCLAUSE
+
+	do-build:
+	do-install:
+		install -m755 $(WRKSRC)/demo.sh \
+			$(STAYEDIR)$(PREFIX)/bin/demo.sh
+
+	.include <bsd.port.mk>
+
+# mkdir demo-1.0 && cd demo-1.0
+
+# vi demo.sh
+
+	#!/bin/sh
+	echo "Hello World"
+
+# cd ..
+
+# tar vzcf /usr/port/distfiles/demo-1.0.tar.gz demo-1.0
+
+# vi pkg-descr
+
+	A demo that echoes Hello World
+
+# vi pkg-list
+
+	/usr/local/bin/demo.sh
+
+# make makesum
+
+# cat distinfo
+
+# make stage
+
+# make package
+
+# pkginfo -F work/pkg/demo-1.0-txz
+
+

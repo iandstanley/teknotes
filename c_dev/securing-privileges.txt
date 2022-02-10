@@ -1,0 +1,340 @@
+DROPPING YOUR OWN PRIVILEGES 
+"""""""""""""""""""""""""""" 
+
+How to write your own programs that are safer even if there are big
+bugs in them.
+
+We depend on code with bugs - many of them are securty bugs. ONE
+DOES NOT SIMPLY FIX ALL THE BUGS!
+
+Another idea is to reduce exposure of the code eg. using this after
+authentication; or have it as an internal microservice not visible
+from the internet; or its behind 7 proxies or airgapped DECnet;
+behind a SNA router; or admin interface reachable via ssh over IPX
+only Netware network. But you can only REDUCE PROBABILITY.
+
+You can have a non-executable stack (DEP/NX), cookies on stack,
+hardened heap, position independant executables (eg OpenBSD), run
+the code on a VAX.
+
+OR you can drop privileges. The less the code can do the less can
+be gained by attacking it.
+
+NOTE "that the code CAN DO" <>"the code DOES"
+
+The post exploitation attacker is not limited to what the code tried
+to do.
+
+So any system service (started by root) is bad.
+
+you can put application in a VM, container or jail to constrain the
+explosion.
+
+But maybe the app can confine itself too --  you can split the
+service eg.teh public side can't open files but only talk to the
+right side which can open files.
+
+Dropping privileges is permanent.
+
+Traditionally: the setuid binary resets the UID to caller.
+
+Traditionally only considered for privileged processes. The Ping
+is setuid root because it needs to access raw sockets; X11 server
+needs to access hardware, xterm needs to create ttys etc.
+
+IDEA: do privilege operations first THEN drop privileges.
+
+
+PRIVILEGE SEPARATION 
+""""""""""""""""""""
+
+OpenBSD's openssh puts dangerous part into a separate process (SSH
+handshake). and confines that process as much as possible eg ensure
+it can't open sockets or files. Give that process a means of
+communicating the result to you. If fishy, shoot the process in the
+head.
+
+Another idea is the admin confining the app in a jail/container/VM.
+This can be difficult for certain programs. You should first write
+app to constrain themselves.
+
+
+DROPPING PRIVILEGES, OLD SCHOOL WAY
+
+* Processes have 2 UIDs - the UID and the effective UID (eUID). If
+you have SETUID root, UID remains the same, but eUID=0.  
+* The drop eUID back to UID.
+
+	BUT THIS IS NOT ENOUGH
+
+There is a 3rd uid, the SAVD UID and you can just seteuid back to
+the saved uid.
+
+At some point a new api was created
+
+	u = getuid; setresuid(u,u,u);
+
+Is this enough? Nope. it's OK but ...
+
+setresuid() can fail so you need to check the return value.
+
+What about groups? Supplementary groups? Maybe setguid() too?
+
+
+How can setresuid() fail if I am the superuser?
+
+Example:        process quota
+
+eg.     UID 8 can only have 10 processes running. 10 are running
+and you are trying to setuid() to UID 8 .... FAIL with error
+errno=EAGAIN
+
+Not checking the return value is as bad as not dropping privileges
+in the first place.
+
+
+OLD FART MODE
+
+Actually it used to be worse than that.
+
+Before somebody tries to build your software on an OS without
+setresuid(), FAIL THE BUILD. Seriously!
+
+Some systems have a setreguid() and setreuid() eg Apple Mac OSX.
+setreuid() / setregid() failed to drop privilages in 2015 - setreuid()
+doesn't do what you think .... CVE 2015-1117.
+
+
+
+HAVE I ACTUALLY DROPPED PRIVILEGES?  
+"""""""""""""""""""""""""""""""""""
+
+eg      We drop privs after we create a raw socket. 
+	Do we do that BEFORE or AFTER parsing the command line arguements?
+	Are we using ENV variables?  
+	Did the attacker need raw sockets?
+
+
+We want to limit:
+
+	* filesystem 
+	* system V IPC 
+	* other processes (no signals or attacing debuggers) 
+	* sockets (the network) 
+	* routing table
+
+Common approaches include 'NAMESPACES' or a 'PRISON & GUARD'.
+
+
+
+1. NAMESPACES
+
+You put together some sort of fake filesystem for the process.
+Continuing exactly only what the process needs to interact with.
+This fake filesystem is a subset of the real filesystem. eg /etc/hosts
+becomes /var/jail1/etc/hosts
+
+Namespaces can also be done for PIDs an UIDs.
+
+
+2. PRISON & GUARD
+
+FreeBSD has jails for this.
+
+Descriptors can be passed by Unix Domain Sockets. Access checks are
+done at open rather than Forking.
+
+The trick is to disallow all open/socket operations, but provide a
+broker that can do it for you. When OK it passes you the descriptor.
+
+Same for sockets chdir.
+
+
+DESCRIPTOR PASSING
+
+The concept is easy but it is one of the hairest, cruftiest, most
+horrible corners of UNIX.
+
+Actually, it is not UNIX but the BSD Socket API.
+
+	man 2 sendmsg man -k cmsg
+
+Advice: don't even do it. Find an abstraction from someone else.
+eg.     www.fefe.de/libowfat
+
+This is an #ifdef minefield and probably won't run on operating
+systems you didn't personally test. It only has 3 lines of code but
+is different for every unix/linux/unix-like out there.
+
+It looks and feels like a giant kludge - the epitome of NIH syndrone
+(Not Invented Here).
+
+The OpenBSD developers agreed and replaced it with pledge(2).
+
+
+OPENBSD: PLEDGE(2)
+
+* solution: pledge("stdio cpath", paths); 
+* just like tame but worse (now we pass strings around the kernel) 
+* but I do like the paths feature -- I wish Linux had this
+
+
+LINUX: CAPABILITIES(7)
+
+* from the dark ages. "Let's split up superuser powers" 
+* eg only give ping raw socket power not the other stuff 
+* can only be used to reduce root privileges but not regular user?
+* never really took off
+
+
+OPENBSD/LINUX: SYSTRACE
+
+* stale (last update 2009) 
+* system wide profiles 
+* uses profiles - but where does the profile come from?  
+* fundamentally misguided for admin to configure
+
+LINUX: GRSECURITY
+
+* not part of stock kernel - ignore it
+
+LINUX: SECCOMP
+
+* failed startup from 2005
+
+LINUX: SECCOMP MODE 2
+
+Enter Berkeley Packet Filters
+
+* BPF is horrible byte-code to express filter for tcpdump and pcap
+* no tooling to speak of 
+* fast, powerful, efficient 
+* if you abstract it you hardly notice the smell for a while 
+* what where they thinking?
+
+LINUX: CHECKING PATH ARGUMENT TO OPEN(2)
+
+* can't check then call open 
+* other attacks are possible to buffer before open 
+* loads of problems
+
+
+
+
+	-------------------------------------------
+
+
+
+FREEBSD Capability Mode 
+"""""""""""""""""""""""
+
+FreeBSD has soe interesting security features: capsicum(4) and
+cap_enter(2).
+
+Capsicum is a lightweight OS capability and sandbox framework.
+
+
+PROBLEM:
+
+An attacker takes over my jailed server can still do evil things.
+
+* cap_enter(2) enters "capability mode" 
+* has access to global namespaces (filesystem Sys V IPC etc) 
+* to access resources you need to already have a descriptor or have
+a broker pass you one.
+* Access on descriptors can be further limited (can disallow accept,
+bind etc upto which ioctls can be called and whether fctl and F_SETFL
+can be used)
+
+eg.     You can say only these socket ops are allowed...
+
+
+
+OPENBSD: TAME(2) 
+""""""""""""""""
+
+Solution: tame(flags)
+
+If flags = 0 only _exit() is allowed limited selection of flags.
+
+
+
+FREEBSD jail(8), jail_set(2) """"""""""""""""""""""""""""
+
+* Jails are chroots on steroids 
+* Jails get their own filesystem root and can have sub-jails 
+* Admin can allow/limit (per jail)
+	* access to raw socket or sys V IPC 
+	* mount/unmount of jail friendly filesystems (filesystem flag) 
+	* quota administration
+* Superuser in jail == unprivileged on host
+
+
+FREEBSD JAIL
+
+* No new namespaces for UID/PID (but UID 0 is different) 
+* PID 1 is always init of the HOST system - so 'kill 1' in a jail
+always fails
+* Jails don't run their own init (yet non-PID 1 support for init
+is being worked on)
+* Admin can set resource limits and cpu set 
+* Used to create containers and chroot processes or process groups 
+* chroot jail != jail(8)
+
+	-------------------------------------------
+
+FILESYSTEM ACCESS
+
+Old school:     chroot
+
+* create an empty root-owned read-only directory, /var/jail or
+similar
+
+* In the service code:
+
+	chdir("/var/jail");
+
+	close all file and directory handles you don't need.
+
+	chroot("."); setresuid(a,a,a); /* with a != 0 */
+
+	if process opens foo -> /var/jail/foo and will fail. Can't
+	escape via a symlink or relative path.
+
+	Chroot...that's all?
+
+	Root can escape a chroot jail:
+
+
+
+
+HOW TO ESCAPE A CHROOT JAIL AS ROOT
+
+	/* escape chroot jail as root */ 
+	int fd = open(".", O_DIRECTORY); 
+	mkdir("fnord"); 
+	chroot("fnord");
+
+	/* outside the chroot now */
+	chdir("../../../../../../../../../../.."); 
+	chroot(".");
+
+ie. If a process can obtain a handle to a directory outside a jail
+it can escape (man fchdir)
+
+NOTE: 
+* chroot doesn't chdir!  
+* check return values
+
+A process in the chroot jail can still use sockets, send signals,
+debug other processes with ptrace or exhaust system resources.
+
+UIDs/PIDs are shared; kill and ptrace work outside procs!
+
+See also BSD SECURELEVEL
+
+	-------------------------------------------
+
+ - fefe's blog
+
+

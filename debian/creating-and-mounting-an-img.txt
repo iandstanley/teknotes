@@ -1,0 +1,103 @@
+CREATING AND MOUNTING AN IMAGE .IMG FILE
+========================================
+
+
+CREATE AND IMAGE
+----------------
+
+$ dd if=/dev/zero bs=2m count=500 of=debian.img
+
+This creates a 1GB image on which we can create a filesystem. (This
+is actually too large for many purposes).
+
+$ sudo fdisk -l debian.img
+
+This shows no partitions so we will need to create partitions:
+
+$ sudo fdisk debian.img
+
+Select 'n' for a new partition 'p' for primary accept defaults and
+'w' to write the partition table to the image.
+
+$ sudo fdisk -l debian.img
+
+Now we need to format the partitions with a filesystem.
+
+$ sudo mkfs.ext4 debian.img
+
+You can then mount the image with:
+
+$ mkdir ~/mnt $ sudo mount debian.img mnt
+
+If you have more than one partition -or- if your partition doesn't
+take up the WHOLE of the image file then an alternate approach is
+needed.
+
+$ sudo kpart -av
+
+This creates a virtual loopback devices for each partition found.
+
+$ sudo losetup -l
+
+You will see that your file will be linked to a device  /dev/loopn
+
+But you will see in /dev/mapper loop devices, eg loop0p1, loop0p2
+etc.
+
+So now we can format with:
+
+$ sudo mkfs.ext4 /dev/mapper/loop0p1
+
+Later to remove the loopback devices we can use
+
+$ sudo kpartx -d debian.img $ ls /dev/mapper/
+
+
+MOUNTING A PARTITION
+--------------------
+
+$ mkdir ~/mnt $ sudo mount /dev/mapper/loop0p1 -t ext4 mnt
+
+
+USING THE FILESYSTEMS
+---------------------
+
+You may use them as any normal filesystem. For example, you could
+install debian into it for use as a chroot.
+
+$ sudo debootstrap stable mnt 
+$ sudo chroot mnt 
+# apt update 
+# apt upgrade 
+# apt install vim               # or any other software etc
+# exit                          # to leave the chroot $
+
+
+UNMOUNTING THE IMAGE
+--------------------
+
+To unmount the filesystem of the image, simply:
+
+$ sudo umount mnt
+
+
+REMOVING THE LOOPBACK DEVICES
+-----------------------------
+
+$ sudo kpartx -d debian.img 
+$ sudo kpartx -l debian.img 
+$ sudo losetup -l
+
+Or you can use the low level tools:
+
+$ sudo dmsetup ls 
+$ sudo dmsetup remove loop0p1
+
+You can also use:
+
+$ sudo losetup -fP debian.img
+
+To scan the partition table and recreate loopback devices:
+
+$ mount -o loop /dev/loop0 mnt
+

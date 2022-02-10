@@ -1,0 +1,150 @@
+
+# STAT(2)
+
+stat(2) comes in 3 flavours.
+
+	stat()          info about a file
+
+	lstat()         if path is a symlink returns info about
+			symlink
+
+	fstat()         takes a file descriptor
+
+All three require       #include <sys/stat.h>
+
+There is also a need to allow for atomically accessing relative
+pathnames outside of CWD so use fstatat().
+
+	#include <sys/stat.h> #include <fcntl.h>
+
+	fstatat();
+
+
+
+st_mode encodes the file access permissions.
+
+* to open a file, need execute a permission on each directory
+component of the path
+
+* read perms on a directory are needed only to list the contents
+of the directory, not to open a file
+
+* to open a file in O_RDONLY or O_RDWR you need read perms
+
+* to open a file in O_WRONLY or O_RDWR you need write perms
+
+* to use O_TRUNC you need write perms
+
+* to create a new file you need write and execute permission for
+the directory
+
+* to delete a file you need write and execute permission on the
+DIRECTORY. The file permissions don't matter
+
+* to execute a file you need execute permissions but you don't need
+read permissions for compiled programs (but you do need read
+permissions for interpreted, scripting languages)
+
+
+
+# The exec(3) Functions
+
+* if it has a 'v' in its name then argvs are a vector:
+	const * char argv[]
+
+* if it has a 'l' in its name then argvs are a list:
+	const chat *arg0, ... , (char *) 0 /* ie null terminated
+	*/
+
+* if it has a 'e' in its suffix, it takes a
+	char const envp[] /* array of environment variables */
+
+* if it has a 'p' in its name, it uses the PATH environment variable
+	to search for the file
+
+
+When you call exec(3) there are a few side effects that are worth
+mentioning:
+
+* open file descriptors are inherited, unless the close-on-exec
+file flag was set via fcontrol or at file open time
+
+* ignored signals in the calling process are ignored after exec(3),
+but caught signals are set to default
+
+* our process inherits the real UID/GID; effective UID/GID is
+inherited unless the executable was setuid/setgid
+
+We may call wait(2) to wait for a specified process to end, see
+wait(2) or waitpid(2). The syscalls wait3(2) and wait4(2) allow
+process end inspection of resource usage.
+
+Once we get a termination status back, we can determine how a child
+died.
+
+We have the following macros:
+
+	WIFEXITED(status)       = true if child exited normally
+
+		use             WEXITSTATUS(status) to get exit
+				status
+
+	WIFSIGNALLED(status)    = true if child terminated abnormally
+				(by receiving a signal it didn't
+				catch)
+
+		use             WTERMSIG(status) to retrieve a
+				signal no
+
+				WCOREDUMP(status) to see if a child
+				left a core dump
+
+	WIFSTOPPED(status)      = true if child is currently stopped
+
+		use             WSTOPSIG(status) to determine the
+				signal that caused it
+
+
+Additionally wait(2) will block until a child terminates; pass
+WNOHANG to waitpid(2) / wait(4) to return immediately.
+
+Why should you bother to wait(2)?
+
+When a process dies its exit status information must remain available
+for inspection so if nothing ever clears up this exit status
+information we have a process that is dead but still running in
+other words we have Zombies (a dead process that hasn't been waited
+for). A zombie continues to use up certain resources (process id,
+resource utilization and exit status).
+
+For example, we have a program that calls fork() but the child exits
+quickly:
+
+	while ( x++ < 50) {
+
+		pid = fork();
+
+		if (pid == 0) {
+	
+			/* do nothing in child */
+			exit(EXIT_SUCCESS);
+
+		} else {
+
+			system("ps a | grep '[^ ]' a.ou[t]");
+
+			/* we dont wait for our children */
+			sleep(1);
+		}
+	}
+
+	printf("I'm going to sleep - try to kill my zombie children");
+
+	sleep(30);
+
+	printf("That's enough zombies, lets have init clean them up");
+
+	return(EXIT_SUCCESS);
+
+
+

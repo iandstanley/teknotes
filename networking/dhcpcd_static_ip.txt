@@ -1,0 +1,15 @@
+STATIC IP ADDRESS
+=================
+
+To configure a static ip address, edit dhcpcd.conf:
+
+-----------------------------------------------
+
+hostname	home.jesusdiedfor.me
+interface	wlan0
+static ip_address=192.168.1.50/24
+static routers=192.168.1.254
+static domain_name_server=192.168.1.50 9.9.9.9
+
+-----------------------------------------------
+

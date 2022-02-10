@@ -1,0 +1,22 @@
+
+FREEBSD & OTP
+
+
+freebsd.org/doc/handbook/one-time-passwords.html
+
+freebsd.org/doc/en/articles/pam/
+
+and /etc/pam.d/sshd
+
+
+(i)	You can try an alternate password file 
+	security/pam_pwd file
+
+	add to /etc/pam.d/sshd
+
+		auth required /usr/local/lib/pam_pwdfile.so \
+			pwdfile /path/to/file
+
+(ii)	consider pam radius
+
+

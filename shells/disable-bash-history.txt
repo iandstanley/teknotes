@@ -1,0 +1,37 @@
+# How to disable BASH shell history on Linux or Unix
+
+You can remove HISTFILE shell variable by typing the following unset 
+command:
+
+	unset HISTFILE
+
+Add above line to the end of to a new /etc/profile.d/disable.history.sh 
+file or ~/.bash_profile:
+
+	echo 'unset HISTFILE' >> /etc/profile.d/disable.history.sh
+
+OR
+
+	echo 'unset HISTFILE' >> ~/.bash_profile
+
+## How to permanently disable bash history using set command
+
+Another option is to pass the +o history option to the set builtin 
+command:
+
+	set +o history
+
+Again add set +o history to the end of to a new 
+/etc/profile.d/disable.history.sh file or ~/.bash_profile. See how to 
+set and use shell option in bash for more info.
+
+## How to clear the bash history
+
+Type the following command in your current session:
+	
+	history -c
+
+To delete a single command number 42 from history in Linux/Unix:
+
+	history -d 42
+

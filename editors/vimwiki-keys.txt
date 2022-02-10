@@ -1,0 +1,11 @@
+VimWiki
+=======
+
+\wi	diary
+\w\i	update index
+\w\w	today's diary
+\ws	select wiki
+\wr	rename page
+\wd	delete current file
+\ww	start vimwiki
+

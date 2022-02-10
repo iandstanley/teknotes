@@ -1,0 +1,122 @@
+# How to use Vi Editor and Common Problems – CLI Putty Errors and Terminal Type
+
+## The Vi Unix Editor
+
+The Vi Unix Editor is the standard UNIX command line editor and if
+you’re planning on doing some configuring of a Unix Server you will
+definitely need to use the VI editor especially when you’re running
+a Command Line only operating system.
+
+This hub will go through the basics of using the Vi unix editor,
+opening, creating, saving and writing to a file as well as the
+different modes for the Vi Editor. I will also go through common
+problems people have with the Vi editor especially the annoying
+problem when logging into your server using a SSH client such as
+Putty, where you find that the backspace key doesn’t work or the
+arrow keys simply return letters.
+
+I’ll also cover basic terminal modes and types and how to make sure
+the server’s terminal type and the putty terminal type match so
+that you have no problems accessing and editing files remotely on
+your server.
+
+
+## Unix Vi Editor Modes
+
+- Command mode – This is the basic mode of the Vi editor and can
+be accessed by opening a file using “vi file.conf”. Letters and
+combination of letters will be interpreted as commands.
+
+- Insert Mode – The Insert mode as it sounds allows you to edit
+text and insert your own text into configuration files. Depending
+on how your Unix system is setup you can either navigate using the
+arrow keys and regular windows keyboard or use the following. Press
+the INSERT key on your keyboard to enter this mode.
+
+- INSEERT IMAGE, ordinarily you can use the regular keyboard functions
+otherwise use these ones. Paste bigger list onto a copy code thingo
+
+- Line Mode – The line mode can be entered by pressing ESC and then
+type colon (J
+
+From here you can either save the file, save and quit , or quit
+without saving changes.
+
+:wq write the file to disk and quit
+
+:q! quit without saving any changes
+
+:w! newfile write all lines from the entire current file into the
+file 'newfile', overwriting any existing newfile
+
+:n,m w! newfile write the lines from n to m, inclusive, into the
+file newfile, overwriting any existing newfile the Vim editor will
+solve all your problems :)
+
+
+## Common Problems when using Vi Editor
+
+- Backspace function not working
+
+- Arrow keys return A, B, C , alpha functions
+
+- Keys generally acting strange and muddled
+
+- Errors when using Putty or SSH client to remotely access server
+
+
+## Solution – Vim Editor **
+
+There is an incredibly easy solution to this problem, instead of
+using the light weight Vi editor, instead use vim to edit your
+files. Simply type Vim “filename” to edit the files and you will
+notice all the regular functions are restored. You can backspace
+as usual and the arrows also work fine.
+
+You can also choose to change the alias for vi to point to the vim
+editor in your bashrc profile. Follow the steps below
+
+- Open up your terminal window , Command Line
+
+- Type “vim ~/.bashrc” , create the file if it doesn’t already
+exist, or copy the file from your existing login directory
+
+- At the end of the file type “alias vi=’vim’”
+
+- Save and Quit
+
+- Done
+
+
+## Other Problems - Cant Backspace, Weird arrow Keys etc
+
+### SSH client Putty Problem – Weird key functions, backspace not working
+
+Solution – Make sure the Terminal mode on your server matches the
+Terminal mode used on the putty or ssh client. If they don’t match
+putty and the server won’t be able to agree on how to interpret
+keys and you may find it hard to carry out basic tasks.
+
+Check what Terminal Mode you are running
+
+Echo $SHELL or Echo $TERM
+
+You can set the terminal type by typing “set term/device=vt100”
+replace vt100 with your chosen terminal mode. Vt100 is the most
+commonly used.
+
+Check Terminal Mode on your SSH client (putty)
+
+- Check terminal-type string and make sure they match
+
+- Save your SSH client configuration
+
+Note: If your problem is only to do with the backspace check the
+setting under keyboard and try using Backspace key , Control-H.
+
+### Setting the Backspace Key on Linux
+
+stty erase ^v<press backspace key right after typing ^v>
+
+(just incase you incorrectly assign the backspace key)
+

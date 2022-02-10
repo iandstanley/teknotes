@@ -1,0 +1,9 @@
+CACHE TOUCH BUTTON FOR GPG DECRYPT
+==================================
+
+$ ykman openpgp set-touch enc cached
+
+This requirs Yubikey manager v4+ and a Yubikey with firmware 5.2.3+
+
+Other options include Off(default), On, Fixed, Cached, Cached-Fixed
+

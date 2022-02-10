@@ -1,0 +1,62 @@
+SPELLING IN VIM
+===============
+
+To start a spellcheck in Vim:
+
+:spell!
+
+To move to next spelling error:
+
+]s	goto next error
+[s	goto previous error
+
+
+ADDING OR BLOCKING WORDS
+
+zg	add to dictionary
+zug	undo add to dictionary
+
+zw	add to bad word list
+zuw	undo add to bad word list
+
+
+CHANGE SPELLING LANG
+
+:set spelllang=es	to change to spanish spelling
+
+
+TURN OFF SPELL CHECKING
+
+:set nospell
+
+
+
+
+To prompt wih a list of words to correct to:
+
+z=
+:spellr		repeat for all misspellings
+
+You can also turn on spelling for certain types of files by adding the following to your .vimrc:
+
+autocmd BufRead,BufNewFile *.md setlocal spell
+autocmd FileType gitcommit setlocal spell
+
+
+Changing only words on the bad word list:
+
+]S	stop at next bad word
+[S	stop at previous bad word
+
+
+CLEANUP & COMPRESS SPELLFILE
+
+:runtime spell/cleanadd.vim
+
+
+SPECIFYING A SPELLFILE
+
+You can specify your spellfile with:
+
+set spellfile=$HOME/...../vim/spell/en.utf8.add
+

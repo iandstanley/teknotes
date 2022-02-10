@@ -1,0 +1,945 @@
+# My 'ed' notes
+
+Get a word count
+
+	w !wc -w
+
+
+Mark a range of lines
+
+	ka
+
+	kb
+
+	'a,'bw path/to/newfile
+
+
+Write HTML in markdown
+
+	w !pandoc % -o test.html
+
+
+Edited a file with ed(1) as a normal user but need to be root to save?
+
+	w !sudo tee % > /dev/null 
+
+
+Edit one file but save as another
+
+	$ ed filename.conf
+	a
+	some text
+	.
+	f new_filename.conf
+	w
+
+
+Fancy editing: Want to move down two lines and delete a line until the 
+end of the file using ed(1)?
+
+	.,$g/^/+s///\
+	+d
+
+	For every 6th line,
+
+	.,$g/^/+,+4s///\
+	+d
+
+	4 = 6 - (matching line + deleted line)
+
+
+Delete all the strings inside the " on all the lines?
+
+	,s/"[^"]*"/""/g
+
+
+You can suspend ed(1) by pressing Ctrl+Z
+
+	While suspended you can do whatever you want on the terminal.
+
+	Then to return to ed, run `fg`
+
+Built in help :)
+
+	!man ed
+
+
+Need a basic image editor for something like a quick crop?
+
+	!display file.png & 
+
+	# more advanced?
+	
+	!gimp file.jpg &
+
+	# edit your SVGs?
+
+	!inkscape file.svg & 
+
+
+Substitutions on specific lines
+
+	On a line containing fruits, do the substitution: 
+			
+	$ ed -s test.txt <<< $'/fruits/s/apple/banana/g\nw'
+
+	 On the 5th line after the line containing fruits, do the substitution:
+
+	$ ed -s test.txt <<< $'/fruits/+5s/apple/banana/g\nw'
+
+
+Deleting lines
+
+	# delete lines number 2 to 4 (2, 3, 4)
+	ed -s test.txt <<< $'2,5d\nw'
+
+	# delete all lines matching foobar
+	ed -s test.txt <<< $'g/foobar/d\nw'
+
+
+Moving text 
+
+	# moving lines 5-9 to the end of the file
+	ed -s test.txt <<< $'5,9m$\nw'
+
+	# moving lines 5-9 to line 3
+	ed -s test.txt <<< $'5,9m3\nw'
+
+Copying text
+
+	# make a copy of lines 5-9 and place it at the end of the file
+	ed -s test.txt <<< $'5,9t$\nw'
+
+	# make a copy of lines 5-9 and place it at line 3
+	ed -s test.txt <<< $'5,9t3\nw'
+
+
+Join all lines
+
+	…but leave the final newline intact. This is done by an extra command: j (join).
+
+	ed -s file <<< $'1,$j\nw'
+
+
+Yank lines into current context
+
+	2,3t.
+
+	to copy lines 2-3 and put them below the current line.
+
+
+To compare the before/after results of substituting in ed(1)
+
+	g/MATCH/n\
+	s//REPLACE/gn
+
+	(vi/vim users can also use the empty search pattern to reuse the 
+	search from the g// command)
+
+
+
+Fancy deletes
+
+	Want to delete even lines using ed(1)?
+
+		g/^/+d
+
+	Want to delete odd lines?
+
+		1d
+		g/^/+d
+
+	Delete lines starting with "a":
+
+		g/^a/d
+
+	Delete lines less than 3 characters long?
+
+		v/.../d
+
+		or for larger numbers
+
+		v/.\{3\}/d
+
+
+	/glazed/+;/donut/-d to remove everything after the next glazed, up 
+	to but excluding the subsequent donut.
+
+	Useful if you want to delete from the current line up to (but not 
+	including) the next line containing "donut"
+
+	.,/donut/-d
+
+
+Offset your / or ? search.
+
+	Normally when you search for /donut, you move to the line containing the next match.
+
+	To offset it it back a line
+
+	/donut/-
+
+	To offset it forward 2 lines, use
+
+	/donut/+2
+
+
+Hex editor-ish
+
+	w !hexdump -C
+
+In X, use the Compose key to add special characters. Examples:
+
+	.= 		• 	large bullet
+	.- 		·  	small bullet
+	L- 		£ 	pound
+	E= 		€ 	euro
+	--. 	– 	en-dash
+	--- 	— 	em-dash
+	o		ø	
+	a		æ
+	b		(backspace)
+	c 		¢
+	m		µ	mu
+	q		@	at
+	r		¶	paragraph
+	s		ß 	beta
+	z		«
+	x		»
+	u		↓
+	C		©
+	R		®
+	123		¹²³
+	5 6		½ ¾
+	
+
+Datestamp
+
+	r !date
+	r !date +\%c
+
+	join to previous line
+
+		a
+		The current timestamp is 
+		.
+		! date 
+		-,.j
+
+Time stamp
+	r ! date +'%H:%M'
+
+
+Underline a title
+
+	t.
+	s/./-/g
+
+
+Multiline insert
+
+	If you have N or more lines in your document, you can also abuse the 
+	"g" command to put content N times in the document.
+
+	Append "Hello ed!" 5 times to line 3:
+
+	1,5g/^/3s/Hello ed! /
+
+	Or on their own lines after #3:
+
+	1,5g/^/3a\
+	Hello ed!
+
+	Alternative ....
+
+	In case you need to insert "Hello ed" 10 times in your document:
+
+	r !yes "Hello ed" | head -10 | rs -C' ' 1
+
+	If you don't have rs(1), you can use an appropriately large value for fmt(1)
+
+	... | fmt -9999
+
+
+
+
+
+
+Echo filename
+
+	!echo %
+
+Some useful path modifiers:
+
+	r !echo $(realpath %)
+
+	r !echo $(basename %)
+
+	r !echo $(dirname %)
+
+	r !echo $(dirname $(realpath %))
+
+
+Create a python list
+
+	r !jot 10 | paste -sd, - | sed "s/,/', '/g;s/.*/['&']/"
+
+
+Comment out lines matching pattern
+
+	g/pattern/s/^/#
+
+
+Joining lines 
+	ed(1) also provides a "j" command to join lines.
+
+	3,6j
+
+	However ed doesn't add spaces or delimiters, so if you want them, add them before joining
+
+	4,6s/^/, /
+	3,6j
+
+
+
+Multiline search and replace
+
+	Limit a search and replace operation between lines matching 2 regex 
+	patterns using /pattern1/,/pattern2/s/search/replace/
+
+
+
+Fun with calendars
+
+	Need the date of Easter while editing your text?
+
+	! ncal -e
+
+	Need it in your document instead:
+
+	r !ncal -e
+
+	Need the Orthodox Easter date?
+
+	r !ncal -o
+
+	For a particular year?
+
+	r !ncal -o 2008
+
+
+Editing in a pipe (like vipe)
+
+	Feeling jealous of `vipe` users and want to edit text in a pipeline using ed(1)?
+
+	$ ... | (F=$(mktemp) ; cat > $F ; ed $F </dev/tty >/dev/tty ; cat $F ; rm $F) | ...
+
+
+Delete a match 
+
+	s/foo
+
+
+Print all lines upto and including match
+
+	1;?pattern@p
+
+Abandon edit and quit
+
+	ctrl-d  (beat that emacs)
+
+
+
+
+## Debugging your ed scripts
+
+	By default, ed is not very talkative and will simply print a "?" when an 
+	error occurs. Interactively you can use the h command to get a short 
+	message explaining the last error. You can also turn on a mode that 
+	makes ed automatically print this message with the H command. It is a 
+	good idea to always add this command at the beginning of your ed 
+	scripts:
+
+		bash > ed -s file <<< $'H\n,df'
+		?
+		script, line 2: Invalid command suffix
+
+	While working on your script, you might make errors and destroy your 
+	file, you might be tempted to try your script doing something like:
+
+		# Works, but there is better
+
+		# copy my original file
+		cp file file.test
+
+		# try my script on the file
+		ed -s file.test <<< $'H\n<ed commands>\nw'
+
+		# see the results
+		cat file.test
+
+	There is a much better way though, you can use the ed command p to print 
+	the file, now your testing would look like:
+
+		ed -s file <<< $'H\n<ed commands>\n,p'
+
+	the , (comma) in front of the p command is a shortcut for 1,$ which 
+	defines an address range for the first to the last line, ,p thus means 
+	print the whole file, after it has been modified. When your script runs 
+	sucessfully, you only have to replace the ,p by a w.
+
+	Of course, even if the file is not modified by the p command, it's 
+	always a good idea to have a backup copy!
+
+
+Insert another file
+
+	How do you insert another file? As with sed, you use the r (read) 
+	command. That inserts another file at the line before the last line 
+	(and prints the result to stdout - ,p):
+
+		ed -s FILE1 <<< $'$-1 r FILE2\n,p'
+
+	To compare, here's a possible sed solution which must use Bash 
+	arithmetic and the external program wc:
+
+		sed "$(($(wc -l < FILE1)-1))r FILE2" FILE1
+
+	# UPDATE here's one which uses GNU sed's "e" parameter for the s-command
+	#   it executes the commands found in pattern space. I'll take that as a
+	#   security risk, but well, sometimes GNU > security, you know...
+		sed '${h;s/.*/cat FILE2/e;G}' FILE1
+
+	Another approach, in two invocations of sed, that avoids the use of 
+	external commands completely:
+
+		sed $'${s/$/\\n-||-/;r FILE2\n}' FILE1 | sed '0,/-||-/{//!h;N;//D};$G'
+
+
+## Gotchas
+
+
+ed is not sed
+
+	ed and sed might look similar, but the same command(s) might act differently:
+
+	/foo/d
+
+	In sed /foo/d will delete all lines matching foo, in ed the commands 
+	are not repeated on each line so this command will search the next 
+	line matching foo and delete it. If you want to delete all lines 
+	matching foo, or do a subsitution on all lines matching foo you have 
+	to tell ed about it with the g (global) command:
+
+	echo $'1\n1\n3' > file
+
+	#replace all lines matching 1 by "replacement"
+	ed -s file <<< $'g/1/s/1/replacement/\n,p' 
+
+	#replace the first line matching 1 by "replacement"
+	#(because it starts searching from the last line)
+	ed -s file <<< $'s/1/replacement/\n,p'
+
+	an error stops the script
+
+	You might think that it's not a problem and that the same thing 
+	happens with sed and you're right, with the exception that if ed 
+	does not find a pattern it's an error, while sed just continues with 
+	the next line. For instance, let's say that you want to change foo 
+	to bar on the first line of the file and add something after the 
+	next line, ed will stop if it cannot find foo on the first line, sed 
+	will continue.
+
+	# Gnu sed version
+	sed -e '1s/foo/bar/' -e '$a\something' file
+
+	#First ed version, does nothing if foo is not found on the first line:
+	ed -s file <<< $'H\n1s/foo/bar/\na\nsomething\n.\nw'
+
+	If you want the same behaviour you can use g/foo/ to trick ed. 
+	g/foo/ will apply the command on all lines matching foo, thus the 
+	substitution will succeed and ed will not produce an error when foo 
+	is not found:
+
+	#Second version will add the line with "something" even if foo is not found
+	ed -s file <<< $'H\n1g/foo/s/foo/bar/\na\nsomething\n.\nw'
+
+	In fact, even a substitution that fails after a g/ / command does 
+	not seem to cause an error, i.e. you can use a trick like 
+	g/./s/foo/bar/ to attempt the substitution on all non blank lines
+
+
+here documents
+
+	shell parameters are expanded
+
+	If you don't quote the delimiter, $ has a special meaning. This 
+	sounds obvious but it's easy to forget this fact when you use 
+	addresses like $-1 or commands like $a. Either quote the $ or the 
+	delimiter:
+	
+	#fails
+	ed -s file << EOF
+	$a
+	last line
+	.
+	w
+	EOF 
+
+	#ok
+	ed -s file << EOF
+	\$a
+	last line
+	.
+	w
+	EOF 
+
+	#ok again
+	ed -s file << 'EOF'
+	$a
+	last line
+	.
+	w
+	EOF 
+
+"." is not a command
+
+	The . used to terminate the command "a" must be the only thing on 
+	the line. take care if you indent the commands:
+
+	#ed doesn't care about the spaces before the commands, but the . 
+	#must be the only thing on the line:
+
+		ed -s file << EOF
+		    a
+		my content
+		.
+		    w
+		EOF
+
+
+Delete all the strings inside the " on all the lines?
+
+	,s/"[^"]*"/""
+
+	optionally adding the /g flag in case you want to do it for all 
+	occurrences on each line, not just the first.
+
+
+Add a <h1> tag 
+
+	.s/\<.*\>/<h1>&<\/h1>/
+
+
+
+
+Insert the filename into a command use the % 
+
+	! echo "%"
+
+
+To generate foo1-foo10, there are many ways to do it
+
+	Or !awk 'BEGIN{for (i=1;i<=10;i++)print "const foo"i}'
+
+	Or !jot 10
+	1,10s/^/const foo/
+
+	(or use GNU `seq` rather than `jot`)
+
+
+Repeating substitutions in ed(1):
+
+	$ ed a.rb
+	,s/User/Account/
+	w
+	e b.rb
+	,s
+
+	Want to keep the search-term but change the replacement & flags?
+
+		s//other/g
+
+	Want to keep the replacement but change the search term?
+
+		,s/term2/%/g
+
+	Want to keep both and just change flags?
+
+		,s//%/gn
+
+
+To reverse the lines in a file in ed(1)
+
+	g/^/m0
+
+	will do the trick. If you want to reverse an arbitrary range such as lines 5-10, you can use
+
+	5,10g/^/m4
+
+
+Print this file
+
+	w ! lpr 
+
+	or 
+
+	! lpr %
+
+
+document statistics 
+
+	via wc(1), style(1), diction(1)
+
+
+Internet access
+
+	!gopher gopher://gopher.black/
+
+
+File manager
+
+	! mc
+
+
+Fix Debian update-alternatives 
+
+	ed -f /var/lib/dpkg/alternatives/editor << $'s/-100/100/'
+
+
+Version Control
+
+	w
+	! rcsdiff -u % 
+	! ci -l %
+
+
+Email
+
+	! mailx
+
+Recursive email
+
+	mailx can use ed for drafting emails. All this can be done inside ed
+
+GPG encryption
+
+	So then the question is can you do the same with gpg and it is still 
+	secure? Only in memory right? Since ed doesn't write out any swap 
+	files and such?
+
+	r !gpg --decrypt file.gpg
+	[edits here]
+	w !gpg --encrypt --output file.gpg
+	Q
+
+	To exit ed you must do Q (quit, no save).
+
+
+Edit a gzipped file
+
+	ed
+
+	r ! zcat file.gz
+
+	[edits here]
+
+	w ! gzip -c - > file.gz
+
+
+Fix Emacs
+
+	https://github.com/ryanprior/ed-mode
+
+Chess etc
+
+	! gnuchess
+
+	! gnushogi
+
+
+
+
+
+
+
+
+
+
+## Simulate other commands
+
+A simple grep
+
+	ed -s file <<< 'g/foo/p'
+
+	# equivalent
+	ed -s file <<< 'g/foo/'
+
+
+Word count
+
+	w ! wc -w
+
+
+Line count wc -l
+
+	Since the default for the ed "print line number" command is the last 
+	line, a simple = (equal sign) will print this line number and thus 
+	the number of lines of the file:
+
+	ed -s file <<< '='
+
+
+cat
+
+	Yea, it's a joke…
+
+	ed -s file <<< $',p'
+
+	…but a similar thing to cat showing line-endings and escapes can be 
+	done with the list command (l):
+
+	ed -s file <<< $',l'
+
+
+touch
+
+	ed file << wq
+
+
+emacs
+
+	! emacs # lol
+
+
+accounting system
+
+	! ledger -f % balance
+
+clock
+
+	date +'%H:%M'
+
+stopwatch 
+
+	! time read -p "Hit enter to stop timer " x
+
+Wikipedia
+
+	create a script wik in your path:
+
+	#!/bin/sh
+	lynx https\://en\.wikipedia\.org/w/index\.php?search="$1"
+
+	r ! wik "ed text editor"
+
+
+
+# Other
+
+finger
+
+	finger(1) looks at users' ~/.project (one line) & ~/.plan 
+	(multi-line) to let others know what you're doing.
+
+	$ echo "Project Underpants" > ~/.project
+	$ ed .plan
+	a
+	[x] collect underpants
+	[ ] determine Step 2
+	[ ] profit
+	.
+	wq
+	$ chmod +r ~/.p{roject,lan}
+	$ finger $USER
+
+	For finger(1)/fingerd(8) to read your .plan/.project files, you may 
+	need to grant read+execute permissions on your home directory:
+
+	$ chmod +rx ~
+
+	.plan files became (in)famous with @ID_AA_Carmack
+	's .plan updates while developing Quake
+
+
+ed(1) and the OpenBSD pf(1) firewall config
+
+	If using sudoedit to edit your pf.conf file, you can write to the 
+	(temp) file and then check it using "%" as a shorthand for the 
+	current filename:
+
+	w
+	!pfctl -nvf %
+
+	or if you're not sure you want to write it yet and just want to 
+	syntax/sanity-check it:
+
+	w !pfctl -nvf -
+
+
+
+
+
+Directory-editing in ed(1) 
+
+	generally involves reading in file-names to work on, manipulating 
+	that file-list into a series of commands, and then executing it
+
+	$ ed
+	r !ls
+
+	To delete just certain files:
+	v/to delete regex/d
+	g/to preserve regex/d
+	,w !xargs rm
+
+
+Pair Programming
+
+	If the other party is read-only, FreeBSD's script(1) provides the 
+	ability to write the session to a named pipe that someone else can 
+	`tail -f`
+
+	user1$ script -F /public/edsession.pipe ed file.txt
+
+	⋮
+
+	user2$ tail -f /public/edsession.pipe
+
+	⋮
+
+	user1$ rm /public/edsession.pipe
+
+	
+	Alternatively 
+
+	To share an editing session real-time, edit within a shared tmux or 
+	GNU screen session and use their screen-sharing functionalities.
+
+
+
+Screen casting
+
+	Dead simple ed(1) screencasts (in the Standard Text Editor)
+
+	Local recording:
+	$ script x.scr
+	$ ed file.txt
+
+	To play back:
+
+	$ cat x.scr
+
+	Alternatively use 
+
+	asciinema rec
+	ed file.txt 
+
+ 	...
+
+	^D or exit 
+	
+
+## File sizes
+
+		$ ls -l `which ed`
+		-r-xr-xr-x  2 root  wheel  51376 Apr  9 07:17 /bin/ed
+		$ ls -l `which nano`
+		-r-xr-xr-x  1 root  wheel  419744 Jul  4 19:03 /usr/local/bin/nano
+		$ ls -l `which vi`
+		-r-xr-xr-x  6 root  wheel  445824 Apr  9 07:24 /usr/bin/vi
+		$ ls -l `which vim`
+		-rwxr-xr-x  1 root  wheel  4048384 Jul  8 10:23 /usr/local/bin/vim
+		$ ls -l `which emacs-27.2`
+		-rwxr-xr-x  1 root  wheel  5438032 Jul  4 08:06 /usr/local/bin/emacs-27.2
+
+
+
+# Modern ed(1) with rlwrap(1)
+
+	You can wrap a command with rlwrap(1) to provide readline(1) editing 
+	as per a modern shell.
+
+
+	To run ed(1) with readline support
+
+	$ rlwrap ed -p '>' file.txt
+
+	You will see that you now have cursor/arrow key control, history and 
+	ctrl-r search
+
+
+# Web based ed(1) with gotty(1)
+
+	gotty(1) can be installed directly in FreeBSD or downloaded from 
+	github at https://github.com/yudai/gotty/releases/tag/v1.0.1
+
+
+	to run ed(1) in the browser
+
+	gotty -w ed <filename>
+
+	or even
+
+	gotty -w rlwrap -p '>' file.txt
+
+
+# Other oddities
+
+edbrowse - ed-like editor, web browser and mail client
+	https://edbrowse.org/
+
+
+# ed(1) conference
+
+https://twitter.com/ed1conf
+
+
+# latest version of ed 
+
+https://lists.gnu.org/archive/html/info-gnu/2021-01/msg00010.html
+
+# Aug 24
+
+Happy ED day to you. Today is the 0xED day of the year. How will you 
+celebrate?
+
+	$ (echo obase=16; date +%j) | bc
+
+# ed Humour
+
+	1973: Editing files is too dificult, here's ed 
+	1976: Editing files is too dificult, here's vi
+	1999: Editing files is too dificult, here's nano
+	2003: Editing files is too dificult, here's Notepad++
+	2013: Here's Docker, let's start troubleshooting config with cat <<EOF > $FILE
+
+
+	To stop your vim addiction:
+
+	$ echo q > ~/.vimrc
+
+# ed themes
+
+	I've organized these ed(1) themes into the following sections:
+
+	Dark:
+	$ tput AB 0 AF 7 md; ed file.txt; tput me
+
+	Light:
+	$ tput AB 7 AF 4; ed file.txt; tput me
+
+	Colorful:
+	$ ed file.txt | lolcat
+
+	Bonus: Icons
+	$ ed -p'Keyboard ' file.txt
+
+	Alternative
+
+	ed file1.txt | lolcat
+
+
+# Ed Mastery book review
+
+	gopher gopher://vernunftzentrum.de:70/0/ckeen/phlog/2018-04-05-Ed-Mastery:-A-review.md

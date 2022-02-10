@@ -1,0 +1,41 @@
+SSH LOGIN WITH YUBIKEY ======================
+
+PREREQUISITES
+
+# apt install libpam_yubico
+
+This creates the library /lib/security/pam_yubico.so
+
+
+CONFIGURING FILES
+
+# vi /etc/ssh/authorised_yubikeys
+
+	<username>:  <yubicoid>
+
+Where 'yubicoid' is the first 12 characters from the Yubico OTP
+output.  
+
+eg.
+	ryan: vvrelbuvjnir
+
+
+# vi /etc/pam.d/sshd
+
+	auth required pam_yubico.so id=clientid \
+		key=secret authfile=/etc/ssh/authorised_yubikey
+
+
+Where 'clientid' and 'secret' are obtained from Yubico. You will
+need to sign up for an API key to set these up.
+
+# vi /etc/ssh/sshd_config
+
+	ChallengeResponseAuthentication  yes 
+	UsePAM  yes
+
+# systemctl  restart  sshd
+
+You could also use sufficient instead of required if you don't want
+pam to check any more authorisation steps.
+

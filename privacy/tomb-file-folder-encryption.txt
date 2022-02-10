@@ -1,0 +1,8 @@
+TOMB file/folder encryption
+===========================
+
+Tomb uses tools already installed on most linux systems, in a similar
+way to Truecrypt.
+
+It also supports stenography and Yubikeys (through yubikey-luks).
+

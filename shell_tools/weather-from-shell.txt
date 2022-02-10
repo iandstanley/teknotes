@@ -1,0 +1,12 @@
+WEATHER FROM THE SHELL
+======================
+
+$ curl wttr.in
+
+$ curl wttr.in/Moscow
+
+$ curl wttr.in/ham
+for airport 'ham'
+
+see https://github.com/chubin/wttr.in
+

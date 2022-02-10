@@ -1,0 +1,78 @@
+
+MOTIF WINDOW MANAGER
+
+MWM is part of the OpenMotif Toolkit.
+
+There is an Enhanced Motif Window Manager at:
+
+	fastcode.org/emwm.html
+
+It is also available on GitHub.
+
+It fixes a few issues with MWM which occur with some modern apps
+eg. maximising a windows across multiple monitors.
+
+You should download:
+
+	emwm-src.tar.xz emwm-utils-src.tar.xz
+
+Every enhancement tested on FreeBSD & Linux
+
+
+
+## Installing MWM
+
+To install Motif Window Manager:
+
+	# pkg install open-motif
+
+Add the followng line to your .xinitrc:
+
+	exec mwm
+
+MWM desktop will then load on startx or XDM. Other login managers
+may require configuring.
+
+We need to modify:
+
+	.Xdefaults
+	.xinitrc	(or .xsession with XDM)
+	.mwmrc
+
+
+
+
+.Xdefaults	defines the look and feel of X11 client apps
+.xinitrc	sets up daemons and environment
+.mwmrc		defines Motif Window Manager, colors, keys and menus
+
+
+For example:
+
+.Xdefaults
+
+	Mwm*MultiScreen:	True
+	Mwm*clearText:		True
+	Mwm*XClock*clientDecoration:	Border
+	Mwm*background:		Black
+	Mwm*foreground:		Blue
+	Mwm*icon*foreground:	DarkSlateBlue
+	.
+	.
+	.
+
+
+.xinitrc
+
+	export LC_ALL=en_GB.UTF-8
+	export LANG=en_GB.UTF-8
+	export MM_CHARSET=UTF-8
+	export BROWSER=seamonkey
+	setxkbmap	gb
+	xsetroot	-gray
+	xv -quit -root ~/wallpapers/sea.gif &
+	xmmix -iconic & 
+	xclock &
+	exec mwm
+
+

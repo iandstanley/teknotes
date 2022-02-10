@@ -1,0 +1,21 @@
+KEEPING A FORKED GIT REPO IN SYNC
+=================================
+
+Add upstream as a remote:
+
+$ git remote add upstream  <upstream_git_repo>.git
+
+You can verify this with 'git remote -v'
+
+Update form upstream and merge:
+
+$ git fetch upstream
+
+$ git checkout master
+
+$ git merge upstream/master
+
+$ git push 
+
+You may then create a pullrequest.
+

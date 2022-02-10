@@ -1,0 +1,131 @@
+
+# SYSTEM V IPC
+
+## Semaphore
+
+A semaphore used to provide access to a shared data object for
+multiple processes.
+
+To obtain a shared resource a process needs to do the following:
+
+1.      Test semaphore that controls the resource.
+
+2.      If value of semaphore > 0, decrement the semaphore
+
+3.      If value == 0, sleep until value > 0
+
+Semaphores are obtained using semget(2), properties are controlled
+using semctl(2), operations on a semaphore are performed using
+semop(2).
+
+See sem_demo.c
+
+Whilst running we can execute  $ ipcs -s  to show the status of the
+semaphore.
+
+A user who is NOT the owner of a semaphore may note remove it.
+
+	owner$  ipcrm -s 702896
+
+Consider:       $ cat input | cat  > output
+
+Here the data flows out of the kernel into 'cat input' process then
+back into the kernel (via IPC - pipe, fifo or message queue) then
+back out into the 'cat > output' process then back into the kernel
+as it write to the file.
+
+We can improve on this by using shared memory cutting down on the
+expensive process <-> kernel transfer (in half) by using shared
+memory.
+
+
+## Shared Memory
+
+* fastest form of IPC
+
+* We will need to protect access to this shared memory - best way
+is to use a semaphore
+
+* For concurrent write access some sort of lcoking mechanism is
+needed
+
+* Use shmmat(2) to attach shared memory to a process address space
+
+* You can detach it using shmdt(2)
+
+* And shmctl(2) for shared memory operations
+
+	$ ipcs -ma      shows details of shared memory
+
+If we issue the program again we get the same output. In this way
+shared memory acts just like a file.
+
+
+## Message Queues
+
+* linked lists of messages stored in the kernel space
+
+* more specifically they are a FIFO
+
+* create, or open an existing queue using msgget(2)
+
+* add message at end of queue using msgsnd(2)
+
+* receive message from queue using msgrcv(2)
+
+* control queue properties using msgctl(2)
+
+The message itself is contained in a user defined structure, such
+as:
+
+	struct mymsg {
+
+		long mtype;     /* message type */
+
+		char mtext;     /* body of message */
+	};
+
+The only stipulation is that the first element MUST be a LONG
+defining the message type.
+
+	$ ipcs -qa      shows the details of the message queue
+
+if a queue is 'drained' msgrev(2) will block waiting for more data.
+
+Processes blocked waiting on waiting for messages receive the message
+in the order they requested them.
+
+If we need more features (including message priority) we should use
+POSIX message queues.
+
+
+## POSIX Message Queues
+
+mq(3) provides a real-time IPC interface similar to System V message
+queues. mq(3) adds some extra functionality and semantics to System-V
+message queues. These are now standardized and provide some notable
+features:
+
+* message queues are identified by a named identifier, so no ftok(3)
+needed.
+
+* named message queues may (or may not) be exposed in the filesystem
+(e.g. /dev/mqueue) which can come in handy.
+
+* mqsend(3) and mqreceive(3) allow both blocking and non-blocking
+calls
+
+* and mqsend(3) lets you specify a priority, equal priority messages
+are queued as a FIFO but higher priority messages are inserted
+before messages of lower priority
+
+* mq(3) provides an asynchronous notification mechanism mqnotify(3)
+
+
+## Summary
+
+System V IPC is old but not obsolete!
+
+Message queues as a service are quite popular way to implement the "pub sub" models eg. Apache Kafka, Java Message Service etc.
+
+

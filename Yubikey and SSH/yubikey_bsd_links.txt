@@ -1,0 +1,10 @@
+https://openbsdmailbox.blogspot.com/2018/07/re-state-of-yubikeyu2f-support-on.html
+
+https://undeadly.org/cgi?action=article;sid=20190302235509
+
+https://ports.to/path/security/yubico/yubikey-personalization-gui.html
+
+https://openbsdmailbox.blogspot.com/2018/12/yubikey-touch-not-working.html
+
+https://github.com/Yubico/yubikey-manager/issues/124
+

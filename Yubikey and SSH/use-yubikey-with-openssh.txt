@@ -1,0 +1,49 @@
+HOW TO USE YUBIKEY WITH OPENSSH 8,2+
+====================================
+
+In this article we will be using a Yubikey 4 for FIDO u2f authentication.
+But this process can also be used with later Yubikeys in the Yubikey
+5 series (inlcuding the Yubikey 5 blue Security Key which has SSH
+key support for 'ECDSA-SK' keys).
+
+For FIDO2 authentication you will need OpenSSH >= 8.2. To verify
+that you have a supported version of OpenSSH:
+
+$ ssh -V
+
+Now generate a ECDSA-SK -or- ED25519-SK keypair (the SK stands for
+'security key' ie hardware).
+
+Note ED25519-SK is only supported by Yubikeys with firmware 5.2.3+
+and are limited to the Yubikey 5 series or later.
+
+$ lsusb -v 2>/dev/null | grep -Az Yubico | grep "bcdDevice" \
+	awk '{print $2}'
+
+You will be able to see the firmware version for the Yubikey. 
+
+A Yubikey 4 may have a firmware version of 4.37 so we will have to
+use the ECDSA-SK key type rather than the ED25519-SK type. Some
+have claimed that the ECDSA-SK has a NSA backdoor, so you will need
+to use a newer Yubikey.
+
+See tinyurl/yk-nsa-backdoor
+
+$ ssh-keygen  -t ecdsa-sk  -f ~/.ssh/testkey
+  Generating public/private ecdsa-sk key pair.  
+  You may need to touch your authenticator.
+
+  Enter passphrase:  ____________________
+$
+
+Copy over your public key 
+
+$ ssh-copyid -i ~/.ssh/testkey.pub user@servername
+
+And test it:
+
+$ ssh -i ~/.ssh/testkey user@servername
+  Confirm prescence for key ECDSA-SK
+  SHA256: ...............................
+$
+

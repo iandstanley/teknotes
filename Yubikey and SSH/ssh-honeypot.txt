@@ -1,0 +1,50 @@
+SIMPLE SSH HONEYPOT
+===================
+
+You can use fail2ban to prevent brute forcing of accounts. But
+sometimes you want to punish those who attempt this and waste their
+time. This is the idea of a honeypot.
+
+The SSH protocol specification allows for a banner which is displayed
+to everyone who tries to connect to the ssh port.
+
+There is NO LIMIT to how long a banner can be OR how much time it
+can take to display.
+
+A guy called Chris Wellons took this idea and developed a piece of
+software that he called ENDLESS SSH.
+
+With Endless SSH you put your real ssh server on a different port
+and run endless-ssh on port 22.
+
+Everytime somebody tries to log into your server on port 22 they
+will be forced to read a very, very long text message that will
+never timeout or give an error message. This can lock up an attacker
+for hours or even days.
+
+For full details see github.com/skeeto/endlessh
+
+
+	$ git clone https://github.com/skeeto/endlessh
+
+	$ cd endlessh && make
+
+Debian based systems may need to install libc6-dev.
+
+Now put the binary into the path and install the service file.
+
+	# sudo cp util/endlessh.service /etc/systemd/system.conf
+
+Or you can use 'make install'.
+
+	# systemctl enable endlessh
+	# mkdir /etc/endlessh
+	# vim /etc/endlessh/config
+
+		Port 22
+	# systemctl restart endlessh
+
+Check it is running
+
+	$ netstat -tulpn | grep endlessh
+

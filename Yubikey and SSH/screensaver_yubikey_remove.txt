@@ -1,0 +1,67 @@
+
+https://pissedoffadmins.com/general/enable-disable-xscreensaver-with-an-insert-remove-of-a-yubikey.html
+
+# enable / disable xscreensaver with an insert / remove of a yubikey
+
+Sup all,
+
+as the title states, this article will go over how to automatically
+enable / disable xscreensaver on the insertion / removal of your
+yubikey. only caveat is that it will not lock the screen. this
+article assumes that your xscreensaver session will lock the screen
+after x amount of minutes (preferably < 5 minutes).
+
+## Udev
+
+i added these lines to file /etc/udev/rules.d/90-yubico-u2f.rules:
+
+SUBSYSTEM=="usb", ACTION=="remove", ENV{ID_VENDOR_ID}=="XXXX", ENV{ID_MODEL_ID}="XXXX", RUN+="/usr/local/bin/yubikey_ss.sh enable"
+SUBSYSTEM=="usb", ACTION=="add", ENV{ID_VENDOR_ID}=="XXXX", ENV{ID_MODEL_ID}=="XXXX", RUN+="/usr/local/bin/yubikey_ss.sh disable"
+
+for those lines to work we need to insert the yubikey and run
+
+	udevadm monitor --udev --property
+
+and grep both “ID_VENDOR_ID” and “ID_MODEL_ID” and replace the XXXX
+with the corresponding greps.
+
+then restart udev once the script is in place
+
+	yubikey_ss.sh
+
+next we will add /usr/local/bin/yubikey_ss.sh with these contents:
+
+	#!/usr/bin/env bash
+
+	_USER=$(ps -aux \
+	    | awk '$0 !~ /root/ && /session/ {print $1}' \
+	    | sed -n '1p')
+
+	case "$1" in
+	    enable)
+		/bin/su ${_USER} \
+		    -c "DISPLAY=:0 /usr/bin/xscreensaver-command -activate"
+		;;
+	    disable)
+		/bin/su ${_USER} \
+		    -c "DISPLAY=:0 /usr/bin/xscreensaver-command -deactivate"
+		;;
+	esac
+
+and make it executable.
+
+test to ensure that it works.
+
+Notes
+
+at this point, you should realize that you are just activating the
+screensaver and not locking it so the password will not be on unless
+you have the “Lock screen after” option enabled in
+
+	xscreensaver-command -demo
+
+set it to around 5 or less minutes. one if you are paranoid.
+
+	
+	
+	

@@ -1,0 +1,50 @@
+FIDO2 & Openssh 8.2
+===================
+
+With Openssh 8.2 we now gain support for using FIDO2 keys for
+authentication.
+
+To do this we need to generate an security key (type = ECDSA-SK,
+nb the -SK is for a security key).
+
+	$ ssh-keygen -t ecdsa-sk -f .ssh/fidokey
+
+This will generate a public/private key pair on the FIDO2 key (eg.
+Yubikey Blue security key).
+
+
+You may need to touch your fido2 authenticator to confirm user
+prescence and authorise key generation.
+
+	(press key)
+
+	Enter passphrase:
+
+	Your identification has been saved in .ssh/fidokey
+
+	Your public keyhas been saved in .ssh/fidokey.pub
+
+	The key fingerprint is
+
+	SHA256: ???????????????????????????????????????????
+
+
+Now add the ssh public key to your authorised_keys file:
+
+	$ cat .ssh/fidokey.pub >> .ssh/authorized_keys 
+
+and test:
+
+	$ ssh -i .ssh/fidokey localhost
+
+
+If this is all working properly you may wish to configure your
+.ssh/config for the hosts you want to use this key
+
+	$ vi .ssh/config
+
+		Host localhost
+		IdentityFile ~/.ssh/fidokey.key
+
+NB not all FIDO2 keys support this feature. All Yubikey series 5
+keys including the Blue Security key does.

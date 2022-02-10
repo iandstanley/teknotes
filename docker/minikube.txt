@@ -1,0 +1,21 @@
+https://minikube.sigs.k8s.io/docs/
+
+# Minikube clustering
+
+Welcome!
+
+minikube quickly sets up a local Kubernetes cluster on macOS, Linux, and Windows. We proudly focus on helping application developers and new Kubernetes users.
+
+Latest Release: v1.23.1 - Sep 17, 2021 (changelog)
+
+## Highlights
+
+* Supports the latest Kubernetes release (+6 previous minor versions)
+* Cross-platform (Linux, macOS, Windows)
+* Deploy as a VM, a container, or on bare-metal
+* Multiple container runtimes (CRI-O, containerd, docker)
+* Docker API endpoint for blazing fast image pushes
+* Advanced features such as LoadBalancer, filesystem mounts, and FeatureGates
+* Addons for easily installed Kubernetes applications
+* Supports common CI environments
+

@@ -1,0 +1,116 @@
+USING STICKY BIT TO CONTROL FILE PERMISSIONS
+============================================
+
+$ touch file1
+$ ls -l !$
+  ls -l file1
+  -rw-r--r--  1  tmp  users 0 Feb 18 08:10 file1
+
+$ umask 
+  0022
+$ umask 027
+
+$ touch file2
+$ ls -l !$
+  ls -l file2
+  -rw-r--r--  1  tmp  users 0 Feb 18 08:10 file1
+
+$ chmod 457 file1
+$ chmod u=r,g=rx,o=rwx file2
+$ ls -l file*
+
+And BOTH files will have r--r-xrwx permissions. These are obviously
+stupid permissions to set: 700 or 740 would make more sense (or
+600, 640 for non executable files).
+
+Even with these permissions of 457 I cannot write to file but I can
+delete the file as the delete properties are at the directory level.
+
+But can I change the file?
+
+$ vi file1
+~
+~
+~
+~
+E45 'readonly'
+
+Vi notifies me that the file is read only and I can't write to it.
+
+But if I use ':w!' the '!' allows me to write. Why is this?
+
+When you write to an existing file the files are created and deleted
+when using ':w!' via a temporary file which you can write to.
+
+$ su -
+# mkdir -m 770 /data  &&  chgrp users /data
+# touch /data/rootfile
+# exit
+$ touch /data/tuxfile
+
+Root's umask was unchanged at 644 and tux umask was changed to 640.
+
+So tux doesn't have permissions to write to rootfile BUT can delete
+it.
+
+This is the behaviour we want to prevent.
+
+We want to allow creates but STOP deletions, so we need to use the
+special bits.
+
+$ su - 
+# chmod o+t /data
+
+(or numerically)
+# chmod 1770 /data
+
+770 was the existing permissions and the leading 1 turns on the
+sticky bit for others
+
+# ls -l /data
+  drwxrwx--T  2 root users 4096 Feb 18 0820 /data
+
+The 'T' denotes the no exec, sticky. Use --t for exec sticky
+
+# touch /data/rootfile
+# exit
+
+$ ls -l
+  -rw-r--r-- root root ....... rootfile
+
+Tux can read from the file but won't be able to delete it despite
+create permissions on the directory.
+
+$ touch tux2
+$ ls -l tux2
+  -rw-r----- tux users ....... tux2
+
+$ rm rootfile
+  rm: cannot remove 'rootfile': Operation not permitted
+
+I cannot delete the file because it is being controlled by the
+sticky bit on the directory
+
+Other permissions: 
+
+	x       exec/search only if file is a directory or already
+		has execute perm for some user
+
+	4	setuid
+	2	setgid
+	1	restrict deletion (ie sticky bit)
+
+You can clear these with one of these commands:
+
+# chmod 00755 file
+# chmod =755 file
+
+For directories the sticky bit prevents unprivileged users from
+removing or renaming a file in the directory;  this is call the
+RESTRICTED DELETION FLAG and is commonly found on world writeable
+directories like /tmp.
+
+For regular files it simply saves the program's text image on the
+swap device so it will load more quickly, then it is called the
+STICKY BIT.
+

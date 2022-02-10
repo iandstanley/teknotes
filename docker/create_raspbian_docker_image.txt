@@ -1,0 +1,26 @@
+Minimal Raspbian stretch distro with non English locales and caches
+removed to reduce the 230MB size down to 130MB uncompress / 46MB
+compressed
+
+Made with the following commands:
+
+sudo debootstrap --variant=minbase --arch=armhf stretch raspbian-stretch
+http://archive.raspbian.org/raspbian
+
+sudo chroot raspbian-stretch apt install -y man-db
+
+sudo chroot raspbian-stretch locale-gen en_GB.UTF-8 && dpkg-reconfigure
+locales && ls /usr/share/locale | grep -v en | xargs rm -rf
+
+sudo chroot raspbian-stretch rm -rf /usr/share/doc/*
+/usr/share/common-licences/*
+
+sudo chroot raspbian-stretch ls /usr/share/man | grep -v man | xargs
+rm -rf
+
+sudo chroot raspbian-stretch apt-get autoremove -y && apt-get clean
+&& apt-get autoclean && apt-get purge
+
+sudo chroot raspbian-stretch rm -f /var/cache/apt/archives/.deb
+/var/cache/apt/archives/partial/.deb /var/cache/apt/*.bin
+

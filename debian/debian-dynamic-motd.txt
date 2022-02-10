@@ -1,0 +1,165 @@
+
+# Activate Debian 10 “Buster” Dynamic-motd
+
+I like dynamic motd because you can have information of your choice 
+about the system then your login. I have used some sort of motd on most 
+of my servers and I also wanted to use it on my newest server, a Debian 
+10.0.4 machine.
+
+It was not what simple.
+1. Are motd running?
+
+It seems like dynamic motd are turned off by default in Debian 10, we 
+can check if it is enabled or not by running this command.
+
+	systemctl status motd
+	   motd.service
+	   Loaded: masked (/dev/null)
+	   Active: inactive (dead)
+
+	# We can also chack with file command
+	file /lib/systemd/system/motd.service
+	/lib/systemd/system/motd.service: symbolic link to /dev/null
+
+	# just remove the file
+	rm /lib/systemd/system/motd.service
+
+	# reload daemon
+	systemctl daemon-reload
+
+Ok now we got motd running in Debian again, now we must activate for ssh 
+so it will show up then we log into the computer.
+
+## Config files
+
+We need to change two configuration files: sshd_config and pam.d/ssh
+
+First, we need to tell sshd_config to let pam control motd.
+
+	# Alter or add this lines in /etc/ssh/sshd_config
+	UsePAM yes
+	PrintMotd no
+
+Yes, it supposed to say “PrintMotd no” otherwise we will end up with 
+multiple motd than we are log in and one of them will not be dynamic.
+
+Don’t forget to reload ssh after you edited the config file
+
+	/etc/init.d/ssh reload
+
+The other file we need to edit is a pam config file for ssh
+
+	# alter or add this lines in /etc/pam.d/ssh
+
+	session    optional     pam_motd.so  motd=/run/motd.dynamic
+	# session    optional     pam_motd.so noupdate
+
+Now the system is prepared for running dynamic motd. Now we just need to 
+create our motd.
+
+## Dependencies
+
+First, we install the dependencies.
+
+	apt update && apt install figlet 
+	mkdir /etc/update-motd.d
+
+With all dependencies and catalog in place, we can now create our motd 
+files. I have not created this motd, I just added disk usage.
+
+ 
+	00-header
+
+	cat >> /etc/update-motd.d/00-header< EOF
+	#!/bin/sh
+	#
+	#    00-header - create the header of the MOTD
+	#    Copyright (c) 2013 Nick Charlton
+	#    Copyright (c) 2009-2010 Canonical Ltd.
+	#
+	#    Authors: Nick Charlton &amp;amp;amp;lt;hello@nickcharlton.net&amp;amp;amp;gt;
+	#             Dustin Kirkland &amp;amp;amp;lt;kirkland@canonical.com&amp;amp;amp;gt;
+	#
+	#    This program is free software; you can redistribute it and/or modify
+	#    it under the terms of the GNU General Public License as published by
+	#    the Free Software Foundation; either version 2 of the License, or
+	#    (at your option) any later version.
+	#
+	#    This program is distributed in the hope that it will be useful,
+	#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+	#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	#    GNU General Public License for more details.
+	#
+	#    You should have received a copy of the GNU General Public License along
+	#    with this program; if not, write to the Free Software Foundation, Inc.,
+	#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+	# [ -r /etc/lsb-release ] ; /etc/lsb-release
+
+	if [ -z "$DISTRIB_DESCRIPTION" ] ; [ -x /usr/bin/lsb_release ]; then
+	        # Fall back to using the very slow lsb_release utility
+	        DISTRIB_DESCRIPTION=$(lsb_release -s -d)
+	fi
+
+	figlet $(hostname)
+	printf "n"
+
+	printf "Welcome to %s (%s).n" "$DISTRIB_DESCRIPTION" "$(uname -r)"
+	printf "n"
+	EOF
+
+	10-sysinfo
+
+	cat >> /etc/update-motd.d/10-sysinfo< EOF
+	#!/bin/bash
+	#
+	#    10-sysinfo - generate the system information
+	#    Copyright (c) 2013 Nick Charlton
+	#
+	#    Authors: Nick Charlton &amp;amp;amp;lt;hello@nickcharlton.net&amp;amp;amp;gt;
+	#
+	#    This program is free software; you can redistribute it and/or modify
+	#    it under the terms of the GNU General Public License as published by
+	#    the Free Software Foundation; either version 2 of the License, or
+	#    (at your option) any later version.
+	#
+	#    This program is distributed in the hope that it will be useful,
+	#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+	#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	#    GNU General Public License for more details.
+	#
+	#    You should have received a copy of the GNU General Public License along
+	#    with this program; if not, write to the Free Software Foundation, Inc.,
+	#    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+	date=`date`
+	load=`cat /proc/loadavg | awk '{print $1}'`
+	root_usage=`df -h / | awk '/// {print $(NF-1)}'`
+	memory_usage=`free -m | awk '/Mem:/ { total=$2; used=$3 } END { printf("%3.1f%%", used/total*100)}'`
+
+	swap_usage=`free -m | awk '/Swap/ { printf("%3.1f%%", $3/$2*100) }'`
+	users=`users | wc -w`
+	time=`uptime | grep -ohe 'up .*' | sed 's/,/ hours/g' | awk '{ printf $2" "$3 }'`
+	processes=`ps aux | wc -l`
+	ip=`hostname -I | awk '{print $1}'`
+
+	echo "System information as of: $date"
+	echo
+	printf "System Load:t%stIP Address:t%sn" $load $ip
+	printf "Memory Usage:t%stSystem Uptime:t%sn" $memory_usage "$time"
+	printf "Usage On /:t%stSwap Usage:t%sn" $root_usage $swap_usage
+	printf "Local Users:t%stProcesses:t%sn" $users $processes
+	test=$(cat /proc/mounts | awk '{print $1}' | grep /dev/ | sort)
+	echo
+	printf "Disk usage:n"
+	df -h | grep -e 'sda' -e 'sdb' -e 'sdc' | sort
+	EOF
+
+lastly, we need to make the files executable
+
+	chmod +x /etc/update-motd.d/*
+
+Now you just need to log out and log in again to see your dynamic-motd. 
+If it’s not working, perhaps you need to reboot the computer to activate 
+the changes in pam.
+

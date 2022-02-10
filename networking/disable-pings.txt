@@ -1,0 +1,20 @@
+DISABLE PINGS TO YOUR SERVER
+============================
+
+To obscure or hide servers on the network we can block pings to
+stop trivial identification and also prevent ICMP DOS attacks.
+
+
+Not responding to pings makes servers less visible.
+
+Show the default settings:
+
+	# sysctl -ar 'icmp_echo'
+
+	net.ipv4.icmp_echo_ignore_all = 0
+	net.ipv4.icmp_echo_ignore_broadcasts = 1
+
+Change settings:
+
+	# sysctl -w net.ipv4.icmp_echo_ignore_all = 1
+

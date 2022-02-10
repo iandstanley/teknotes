@@ -1,0 +1,41 @@
+SIMPLELOGIN.IO
+==============
+
+Simplelogin protecs your privacy with email aliases.
+
+It has plugins for Chrome, Firefox and Safari.
+
+Apps are available for iOS, Google play and F-Droid.
+
+If an alias gets spammy you can easily block it.
+
+Simplelogin will forward emails securely onwards to you. 
+You simply hit reply to reply VIA simplelogin keeping 
+your personal email address hidden.
+
+You can also send emails to any email address from your
+alias.
+
+All simplelogin plans have infinite forwards/sends and
+unlimited bandwidth.
+
+You can create a directory and quickly create aliases
+without opening simplelogin we or mobile apps.
+
+Simplelogin PGP/GPG encrypts the emails it forwards to
+you using your own PGP/GPG key so only you can decrypt
+them.  Works perfectly with Protonmail & GPG etc.
+
+PRICING OPTIONS
+
+
+Free $0		- Fido/TOTP 2nd factor
+		- 15 aliases, 1 mailbox
+
+Premium $30 	- unlimited aliases
+(or $4 pcm)  	- unlimited mailboxes
+		- unlimited custom domains
+		- catchall domains
+		- 50 directories / usernames
+		- PGP encryption
+

@@ -1,0 +1,19 @@
+PIUS KEYSIGNING PARTY
+=====================
+
+Pius is made up of 3 programs to make your PGP/GPG keysigning activities easier.
+
+PIUS (PGP Individual UID Signer) helps attendees of PGP keysigning parties designed to take the pain out of the sign-all-the-keys part of PGP keysigning parties.
+
+PIUS-KEYRING-MANAGER
+
+This helps organizers of PGP keysigning parties. It allows you to build and manage party keyrings.
+
+It can parse CSV files and mailboxes looking for fingerprints and keys and build a keyring for you. It can also email anyone whose fingerprint didn't allow you to find a key. It also allows you to prune down keyrings of users who didn't attend the event.
+
+PIUS-PARTY-WORKSHEET
+
+This is also for organisersof PGP keysigning parties. It is a small utility to generate a worksheet based on the party keyring. 
+
+This worksheet can eb given to all attendees to help them verify keys and identities.
+

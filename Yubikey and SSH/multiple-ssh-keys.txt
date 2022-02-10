@@ -1,0 +1,26 @@
+MULTIPLE SSH KEYS
+=================
+
+You may need to have multiple ssh keys forsome reason. Maybe you
+are required to by work or by some seperation of concerns for
+security resaons.
+
+Say you already have a SSH key and want to add a second specifically
+for github.com.
+
+	$ ssh-keygen -t rsa -b 4096
+		-C "github ssh key" 
+		-f ~/.ssh/github.key
+
+	$ ls ~/.ssh
+
+		shows github.key and github.key.pub amoungst others
+
+	$ vi ~/.ssh/config
+
+	Add the following lines:
+
+		Host github.com
+		IdentityFile ~/.ssh/github.key
+		User git
+

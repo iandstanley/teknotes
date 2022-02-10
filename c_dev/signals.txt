@@ -1,0 +1,45 @@
+
+SIGNALS
+
+When we recieve a signal, we can:
+
+	ACCEPT THE DEFAULT and have the kernel do whatever is defined
+	as the default action for the signal. In most cases the
+	default action is to terminate the process.
+
+	IGNORE IT. Ignoring a signal requires a specific action (NB
+	some signals can't and shouldn't be ignored).
+
+	CATCH IT by specifying a function to handle the signal.
+
+	BLOCK IT. The delivery of the signal is POSTPONED until it
+	is unblocked.
+
+
+We can use signal(3) to tell our process how we want to handle
+signals.
+
+	void * signal(int sig, void (*func) (int)) (int);
+
+Here func can also be:
+
+	SIG_IGN to ignore the signal
+	SIG_DFL to use the default signal action
+	a function pointer to our signal handler
+
+On some systems after a signal handler was executed it was reset
+to SIG_DFL.
+
+
+
+Typedef'ing to simplify code:
+
+
+	#include <signal.h>
+
+	typedef void (*sig_t)(int);
+
+	sig_t signal(int sig, sig_t func);
+
+
+

@@ -1,0 +1,42 @@
+
+XORG XINPUT: TOGGLE ON/OFF ANY INPUT DEVICE
+
+
+e.g. temporarily disable touchpad, or disable a webcam for privacy.
+
+NB don't disable kayboard unless you have another input method
+available.
+
+
+(1)	install xinput
+
+(2)	list devices:
+
+	$ xinput list
+
+(3)     look for the if of the device. Note the ids will change
+	depending on  the order they are found by the bios or plugged
+	in.
+
+
+(4)	look at the properties of te device
+
+	$ xinput --list-props //
+	                       ^-- id or name
+
+	To disable/enable we need to look for the property:
+
+	'DeviceEnabled' (169)   - once again these can change with
+			  ^	 driver updates
+			  +--- id
+
+(5)	Change property to disable:
+
+	$ xinput --set-prop // "Device Enabled" 0
+			     ^--- id or name 
+
+(6)	To re-enable just change the property back to 1
+
+A good idea is to script the toggle
+
+

@@ -1,0 +1,153 @@
+# Using Ubuntu by default in Crostini
+
+When starting the default Crostini container Debian 9 (stretch) is run. 
+Whilst you can add containers of other distros it is also possible to 
+change to default container to Ubuntu or even potentially other distros. 
+This is because all the Crostini/Chrome integration packages are 
+publicly available as '.deb' packages.
+
+The process for creating an Ubuntu default container is quite detailed 
+but essentially consists of creating an Ubuntu container, preparing and 
+then adding the Crostini packages, setting the hostname and user 
+account, optionally installing additional packages. Then if the Ubuntu 
+container has been built on a different Linux machine export the 
+container as a compressed tarball, copy to the Chrome device and import 
+the tarball as an image. Finally move the current default container 
+sideways and replace it with the new Ubuntu container. The Crostini 
+packages need a preparatory step as although they install without issue 
+on Debian, with Ubuntu there is an installation issue with the 
+'cros-ui-config' package that needs resolving first. The following 
+commands detail the actual steps required.
+
+Start by entering the Chrome shell by pressing CTRL+ALT+T then enter the 
+VM:
+
+	vsh termina
+
+and clone a new Ubuntu container (e.g. eskimo):
+
+	lxc image copy ubuntu:18.04 local: --alias bionic
+	lxc launch bionic eskimo
+
+Next enter the new container and prepare for installing the Crostini 
+packages:
+
+	lxc exec eskimo -- bash
+
+	apt update
+	apt upgrade
+	echo "deb https://storage.googleapis.com/cros-packages stretch main" \
+		> /etc/apt/sources.list.d/cros.list
+	if [ -f /dev/.cros_milestone ]; 
+		then sudo sed -i "s?packages?packages/$(cat /dev/.cros_milestone)?" \
+		/etc/apt/sources.list.d/cros.list; 
+	fi
+	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1397BC53640DB551
+	apt update
+	apt install binutils
+	apt download cros-ui-config # ignore any warning messages
+	ar x cros-ui-config_0.12_all.deb data.tar.gz
+	gunzip data.tar.gz
+	tar f data.tar --delete ./etc/gtk-3.0/settings.ini
+	gzip data.tar
+	ar r cros-ui-config_0.12_all.deb data.tar.gz
+	rm -rf data.tar.gz
+
+If the container is being prepared externally on a Linux machine I've 
+found it is necessary set up some additional dependencies first:
+
+	mkdir -p /opt/google/cros-containers/bin/sommelier
+	mkdir -p /opt/google/cros-containers/lib/
+	apt install libgl1-mesa-dri
+	cp /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so /opt/google/cros-containers/lib/
+
+Now install the Crostini packages:
+
+	apt install cros-adapta cros-apt-config cros-garcon cros-guest-tools \
+		cros-sftp cros-sommelier cros-sommelier-config cros-sudo-config \
+		cros-systemd-overrides ./cros-ui-config_0.12_all.deb \
+		cros-unattended-upgrades cros-wayland # ignore any warning messages
+	apt install cros-guest-tools ./cros-ui-config_0.12_all.deb # ignore any warning messages
+	rm -rf cros-ui-config_0.12_all.deb
+	sed -i 's/Ambiance/CrosAdapta/' /etc/gtk-3.0/settings.ini
+	sed -i 's/ubuntu-mono-dark/CrosAdapta/' /etc/gtk-3.0/settings.ini
+	sed -i 's/gtk-sound-theme-name = ubuntu/gtk-font-name = Roboto 11/' \
+		/etc/gtk-3.0/settings.ini
+	sed -i '5d' /etc/gtk-3.0/settings.ini
+	sed -i -n '2{h;n;G};p' /etc/gtk-3.0/settings.ini
+
+Set the hostname:
+
+	sed -i '1cpenguin' /etc/hostname
+
+and set the user account ('linuxiumcomau' in this example):
+
+	killall -u ubuntu
+	groupmod -n linuxiumcomau ubuntu
+	usermod -md /home/linuxiumcomau -l linuxiumcomau ubuntu
+	usermod -aG users linuxiumcomau
+	loginctl enable-linger linuxiumcomau
+	sed -i 's/ubuntu/linuxiumcomau/' /etc/sudoers.d/90-cloud-init-users
+
+For full cursor support install the 'adwaita-icon-theme-full' package:
+
+	apt install adwaita-icon-theme-full
+
+Optionally install additional packages (e.g. a full desktop and a VNC server together with access):
+
+	apt install ubuntu-desktop^ lxde lxde-common tightvncserver
+
+Finally shutdown the new container:
+
+	shutdown -h now
+
+If the container is being built on on a different machine:
+
+	lxc publish eskimo --alias eskimo
+	lxc image export eskimo eskimo
+
+then copy the file 'eskimo.tar.gz' by USB to the Chrome device into the 
+default penguin container using the 'Files' app and then pull the file 
+from the container to the VM:
+
+	lxc file pull penguin/home/linuxiumcomau/eskimo.tar.gz $LXD_CONF
+
+Now on the Chrome device:
+
+	lxc stop --force penguin
+	lxc rename penguin google
+
+and finally either:
+
+	lxc rename eskimo penguin
+
+or for the remotely prepared container:
+
+	lxc image import $LXD_CONF/eskimo.tar.gz --alias eskimo
+	lxc init eskimo penguin
+
+Now reboot and try running the terminal to start the 'penguin' container.
+
+If Linux fails to start check container status with 'lxc list'. If it is 
+stopped then start the container with 'lxc start penguin'. Then login as 
+'linuxiumcomau' with the command 'lxc exec penguin -- /bin/login -f 
+linuxiumcomau' and this should startthe terminal. Thereafter is should 
+function as normal.
+
+The Crostini packages enable Chrome OS to become the desktop environment 
+for the Linux container:
+
+Currently the icons for Linux apps are jumbled in with the Chrome 
+applications however this will change in the next release (see below). 
+Also the Crostini integration relies on Chrome APIs (most likely OAuth 
+2.0 client IDs) which means that the integration on Chromium OS will 
+fail if they are not included (e.g. the build I provide in Part 2 or the 
+current CloudReady image from Neverware).
+
+So for testing I recompiled the latest Chromium OS source together with 
+my personal API keys and imported the 'eskimo' image previously created. 
+
+One point to note is that if the Linux container is accessed remotely 
+using VNC for example then remotely run applications get displayed 
+locally on the Chrome device: because this is a feature of using the 
+Crostini/Chrome integration.

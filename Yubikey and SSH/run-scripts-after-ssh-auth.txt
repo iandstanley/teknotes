@@ -1,0 +1,126 @@
+
+# How to Run Scripts after SSH Authentication
+
+https://geekthis.net/post/run-scripts-after-ssh-authentication/
+
+Our site remains ad-free thanks to our affiliates. This post's featured 
+affiliate is Fiverr. Fiverr connects businesses with freelancers 
+offering digital services in 300+ categories.
+
+The post is not sponsored by the above affiliate and the content here is 
+not representative of their company.
+
+After SSH authentication you may want to run a set of scripts for the 
+current user or for the server. These scripts could include logging SSH 
+user logins, mounting partitions or remote file systems, limiting how 
+many users can be on the system at a time, or any other script that 
+should trigger when a user signs onto the system. This tutorial will 
+outline how to update PAM (Pluggable Authentication Module) to run a 
+shell script after the user is successfully authenticated.
+
+While writing this tutorial, a fresh installation of Debian Stretch was 
+used for testing. The tutorial should be easily adaptable or work as-is 
+for other Linux distributions. Creating the Script
+
+The first part of this tutorial is to create the script you want to run 
+when a user is authenticated. This script can be anything that is 
+executable. For this tutorial, a basic shell script is going to be used 
+to log successful SSH logins and logouts. You can create this file in 
+any folder you want, but I suggest creating a new directory 
+/etc/pam_scripts and set the permission of the folder to 0755 and the 
+owner and group to root.
+
+It’s also important to set the script permissions to be executable and 
+to only allow the root user to write to the script by using the command 
+chmod 0700 <script> and chown root:root <script>. The script is going to 
+be executed by the root user; any modifications to the file from 
+untrustworthy users could cause irreversible damage.
+
+	#!/bin/sh
+
+	LOG_FILE="/var/log/ssh-auth"
+
+	DATE_ISO=`date --iso-8601="seconds"`
+	LOG_ENTRY="[${DATE_ISO}] ${PAM_TYPE}: ${PAM_USER} from ${PAM_RHOST}"
+
+	if [ ! -f ${LOG_FILE} ]; then
+		touch ${LOG_FILE}
+		chown root:adm ${LOG_FILE}
+		chmod 0640 ${LOG_FILE}
+	fi
+
+	echo ${LOG_ENTRY} >> ${LOG_FILE}
+
+	exit 0
+
+PAM sets many environment variables for you to use within your script. 
+Looking at the pam_exec(8) man pages will list all of the variables. To 
+name a few, you can access PAM_RHOST, PAM_RUSER, PAM_USER, and PAM_TYPE 
+which contains one of the module types: account, auth, password, 
+open_session and close_session. Configuring PAM
+
+PAM is used to handle authentication for multiple services on your 
+system, hence the name Pluggable Authentication Module. When you have 
+OpenSSH installed, a file should be created at /etc/pam.d/sshd that 
+controls how PAM will treat new connections and what rules are required 
+for authentication. In the current file, you will also be able to set 
+additional scripts to run as the authenticated user or as root.
+
+Open the file /etc/pam.d/sshd and add the following session line at the 
+bottom of the file. This line sets our shell script to execute as root 
+and the script is set as required. If the script can’t execute properly 
+or returns a non-zero exit code, the PAM-API will report that the module 
+failed to authenticate the user. You can set the control value to be 
+required, requisite, sufficient, optional, include and subtrack. It’s 
+suggested that you read the pam.d(5) man pages along with the 
+pam_exec(8) pages.
+
+	# Post Login Scripts
+	session required pam_exec.so /etc/pam_scripts/login-logger.sh
+
+# Troubleshooting
+
+If your script isn’t running when a user is signing in through SSH, 
+below are a few common mistakes. First, there is the option UsePam 
+inside of the sshd configuration file which decides if PAM should be 
+used or not. For Debian systems, this is set to yes, but other 
+distributions and operating systems may set this to no by default. 
+Changing UsePam could cause issues with your current authentication 
+process. Be sure to read what settings will be affected if you change 
+the UsePam option.
+
+If your script still isn’t running, make sure you set your shell script 
+to be executable. Run the command chmod +x <script> to set the file to 
+have the correct permissions to execute. Changing the permissions to 
+only allow the root user to edit the file should also be done.
+
+If the script is executing but you’re unable to log into your account, 
+then your script is most likely exiting with a non-zero value. Be sure 
+that you set your script to explicitly exit with the exit code that you 
+want. Avoid SSHRC, PROFILE, and ForceCommand
+
+There are other methods that may appear easier than modifying the PAM 
+configuration files, but many other methods can easily be bypassed by 
+the user, which can cause problems if your script is mandatory. A few 
+methods that can be easily bypassed include using the /etc/ssh/sshrc 
+file, using the /etc/profile file, and modifying the ForceCommand 
+setting for SSH.
+
+The global SSHRC file is bypassed if the user has a ~/.ssh/rc file. 
+According to the SSH documentation, /etc/ssh/sshrc only runs if the 
+local file doesn’t exist. If you have commands that are required to run 
+for all users, using the SSHRC file is a bad choice.
+
+As for the /etc/profile file, the script is only executed if the user is 
+logging in with a shell. SSH by default allows port tunneling and 
+forwarding. Both features do not require a shell to work, preventing 
+/etc/profile from executing if the -N argument is used with ssh. A user 
+could still access MySQL or other services without your script running 
+beforehand.
+
+Finally, the sshd configuration option for ForceCommand runs the script 
+as the user who just signed into the system. This could limit many 
+features you may want to run when the user signs into their account, 
+such as mounting partitions or limiting how many users can be on the 
+system at a single time.
+

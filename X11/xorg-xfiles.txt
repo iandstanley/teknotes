@@ -1,0 +1,92 @@
+
+# XORG XFILES
+
+
+The .xinitrc, .Xsession and .xprofile files appear to be basically
+the same thing. They do pretty much the same thing but in slightly
+different ways.
+
+
+## The .xinitrc file
+
+You can use just an .xinitrc if you don't use a display manager.
+The .xinitrc is used by 'xinit' or 'startx' when startxing Xorg.
+
+Your last line of .xinitrc should execute your window manager e.g.
+'exec dwm'.
+
+
+## The .Xsession file
+
+What about .xsession? .xsession is written line by line almost
+identical to .xinitrc but .xsession is used by a display manager.
+Typically you don't use them with *most* modern display managers.
+
+Prior to display managers being able to determine what graphical
+environments you actually ahev installed, it would actually look
+at your xsession files and use it's contents to let you choose from
+what environments you could log into.
+
+You could launch specific applications for Gnome, for example.
+
+Nowadays, selecting the graphical environment is typically done
+automatically so the xsession files see much less usage.
+
+
+## The .xprofile file
+
+The .xprofile file is used by a display manager (the login manager).
+It is bascially the same as the .xinitrc but without the final
+'exec' command which is chosen by the login manager (display manager).
+Some display managers choose to use an .xsession file instead.
+
+
+## The .Xauthority file
+
+The .Xauthority is not written to by hand. Xorg stores your login
+credentials in the form of a cookie and is used to authenticate
+your connection to the display.
+
+You need write permissions to this file else X11 freezes (you can
+use ctrl-c a couple of times to unfreeze and delete the .Xauthority
+file and restart your X server to regenerate the file).
+
+
+To show all of the cookies in the file:
+
+	$ xauth list
+
+The .Xauthority-c, .Xauthority-l, and .Xauthority-n are temporary
+files. So if they stay around then you have a problem with your
+.Xauthority file.
+
+
+## The .Xresources file
+
+The .Xresouces sets up a bunch of things like foreground and
+background colors, font dpi, and a series of other settings used
+by X11 applications on the system.  Sometimes  you have some low
+level settings for other applications like xcursor, xurxvt,
+xscreensaver, xclock, xpdf etc.
+
+Most terminals except urxvt and XTerm don't acknowledge .Xresources.
+most other apps ignore it.
+
+You can source the .Xresources file in your .xinitrc with the command:
+
+	xrdb -load ~/.config/X11/.Xresources
+
+## Managing keyboard mapping in X
+
+The program xmodmap file (which could be named anything) is generated
+by:
+
+	$ xmodmap  -pke > .xmodmap
+
+You can then edit the file to remap kays. 
+
+The xmodmap file is loaded in .xinitrc with:
+
+	xmodmap ~/.config/xmodmap & 
+
+

@@ -1,0 +1,53 @@
+CURL'ING WEBSITES
+=================
+
+$ curl wttr.in/Liverpool
+
+$ curl cheat.sh
+$ curl cheat.sh/rclone
+
+$ curl qrenco.de/www.youtube.com
+
+$ curl dict://dict.org/d:weather
+$ curl dict://dict.org/d:heisenbug:jargon
+$ curl dict://dict.org/d:daniel:easton
+
+$ curl dict://dict.org/show:db
+$ curl dict://dict.org/find:curl
+
+$ curl rate.sx
+$ curl rate.sx/eth
+$ curl rate.sx/btc@10d
+$ curl rate.sx/1btc
+
+If we use 'curl -F' we can fillout a form!
+
+$ curl -F 'shorten=https://youtube.com' \
+	https://0x0.st
+
+we can url shorten youtube.com
+
+$ curl -F 'file@comic.png' https://0x0.st
+
+$ curl -F 'file@debian-handbook.pdf' https://0x0.st
+
+	* file URLs are valid for at least 30 days
+	* shortened URLs do not expire
+	* TOR exit nodes are blocked
+
+You can also run your own server.
+
+See github.com/mia-o/0x0
+
+$ curl getnews.tech
+$ curl getnews.tech/battery
+
+If you use 'curl -L' then curl will attempt to follow
+location redirects.
+
+$ curl -L bit.ly/zAtVaXR
+
+Curl can also show some animations:
+
+$ curl parrot.live
+

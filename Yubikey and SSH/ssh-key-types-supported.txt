@@ -1,0 +1,98 @@
+SSH KEY TYPES
+=============
+
+(according to ssh.com)
+
+SSH supports the following public key algorithmns for authentication keys:
+
+	* RSA		at least 2048 bits; 4096 bits better
+	* DSA		NOT RECOMMENDED
+	* ECDSA		only 3 key sizes: 256, 384 & 521 bit sizes
+	* ED25519	new to openssh
+
+
+USAGE
+-----
+
+	$ ssh-keygen  -t rsa  -b 2048
+
+
+YUBIKEY USAGE
+-------------
+
+You can have resident ssh keys on your Yubikey (rather than using
+your GPG key if you prefer)
+
+Certain services now support SSH keys on Yubikeys (Yubikey 5 series
+including the Blue Security key)
+
+To get ths to work you will need to create an on-key ssh key:
+
+	$ ssh-keygen -t ecdsa-sk
+
+To get started you’ll need OpenSSH version 8.2 or later, and you’ll
+also need libfido2 installed. Windows users may need to use Cygwin
+for this.
+
+The option -t ecdsa-sk instructs OpenSSH to create an ECDSA key on
+a FIDO security key instead of a traditional private key file. You
+can also use -t ed25519-sk to create an EdDSA key instead, but this
+is not supported by all security keys.
+
+This will create two files in your SSH directory. The first is
+id_ecdsa_sk.pub, which is a normal OpenSSH public key file whose
+contents you’ll need to paste into the new SSH key form on GitHub.
+The second is id_ecdsa_sk which would usually contain the corresponding
+private key, but in this case it instead contains a “key handle”
+that references the security key. You’ll need to copy the id_ecdsa_sk
+file to each computer where you want to use this SSH key. Or, if
+your security key supports it, you can use a FIDO2 resident key.
+
+FIDO2 RESIDENT KEYS
+-------------------
+
+If your Yubikey supports a FIDO2 resident key:
+
+If your security key supports FIDO2 resident keys*, like the YubiKey
+5 Series, YubiKey 5 FIPS Series, or the Security Key NFC by Yubico,
+you can enable this when creating your SSH key:
+
+	$ ssh-keygen -t ecdsa-sk -O resident
+
+This works the same as before, except a resident key is easier to
+import to a new computer because it can be loaded directly from the
+security key. To use the SSH key on a new computer, make sure you
+have ssh-agent running and simply run:
+
+	$ ssh-add -K
+
+This will load a “key handle” into the SSH agent and make the key
+available for use on the new computer. This works great for short
+visits, but it won’t last forever – you’ll need to run ssh-add again
+if you reboot the computer, for example. To import the key permanently,
+instead run:
+
+	$ ssh-keygen -K
+
+This will write two files into the current directory: id_ecdsa_sk_rk
+and id_ecdsa_sk_rk.pub. Now you just need to rename the private key
+file to id_ecdsa_sk and move it into your SSH directory:
+
+$ mv id_ecdsa_sk_rk ~/.ssh/id_ecdsa_sk
+
+Passwordless MFA
+
+Passwordless multi-factor authentication is one of the greatest
+benefits of FIDO security keys, and it is now available for SSH
+too! If your security key supports FIDO2 user verification, like
+the YubiKey 5 Series, YubiKey 5 FIPS Series, or the Security Key
+NFC by Yubico, you can enable it when creating your SSH key:
+
+$ ssh-keygen -t ecdsa-sk -O verify-required
+
+This will configure the security key to require a PIN or other user
+authentication whenever you use this SSH key. Your SSH access is
+now protected with passwordless multi-factor authentication!
+
+
+source	https://www.yubico.com/blog/github-now-supports-ssh-security-keys/

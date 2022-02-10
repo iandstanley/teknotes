@@ -1,0 +1,33 @@
+
+USE ALTGR AS CAPSLOCK IN XORG
+
+There are a number of ways we can achieve this:
+
+(1)	$ setxkbmap -option "lv3:caps_switch"
+
+	See man xkeyboard-config
+
+(2)	$ xmodmap -e "key code 66 = ISO_level3_shift"
+
+(3)	For Gnome:
+
+	$ gsettings set org.gnome.desktop.input-sources \ 
+		xkb-options "['lv3:caps_switch']"
+
+You can also make this change permanent and system wide by editing
+/etc/X11/xorg.conf.d/90-custom-kbd.conf:
+
+	Section "Input Class"
+	Identifier "keyboard defaults"
+	MatchIsKeyboard "on"
+	Option "XkbOptions" "lv3:caps_switch"
+	EndSection
+
+
+(4)	try xmodmap -e "keysym 0xffe5 = Mode_switch"
+
+	or $ xmodmap -e "keycode 66 = Mode_switch"
+
+
+
+

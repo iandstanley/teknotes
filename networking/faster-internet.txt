@@ -1,0 +1,46 @@
+FASTER INTERNET ===============
+
+This can be done by increasing the size of the MTU (maximum
+transmission unit)
+
+What is the maximum data packet our computer can handle?
+
+* Tell the computer to set the MTU size
+
+eg. (on Windows)
+
+> netsh ipv4 show interfaces
+
+	MTU 576 ................... Ethernet
+
+Then run a download speedtest, result say = 148MBps
+
+> ping google.com -f -l 1492
+
+Packet needs to show being fragmented but DF set
+
+Then repeat lowering the packet size on each repeat to find out
+what packet size does not produce any fragmentation then stop.
+
+> ping google.com -f -l 1472
+
+Finally we have 0% packet loss and NO fragmentation.
+
+Now start increamenting the packet size by 1 to see when it fragments
+again.
+
+To calculate the MTU size:
+
+	1472    max unfragmented size
+	 +28    packet header size
+	---- 
+	1500    MTU size
+
+Now we need to tell the system to use it (ideally at the router).
+
+Switch MTU from auto to manual OR on each computer
+
+> netsh int ipv4 set subinterface "Ethernet" mtu=1500 store=persistent
+
+Now re-run the speed test and see the improvement.
+

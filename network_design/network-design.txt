@@ -1,0 +1,207 @@
+
+# Network Design 
+
+The following network design is documented to ease the management
+of the various servers, clients, devices, jails and VMs that would
+be used in the network.
+
+
+## Router
+
+My perimeter router defaults to 192.168.1.254/24. This is unsuitable
+for the proper managment of a fluctuating network.
+
+I have reconfigured the router to 192.168.1.254/16 allowing me
+several /24 sub-lans to organise upon.
+
+
+## Networks
+
+The following networks are have been defined for use with the various
+servers and services:
+
+
+	router		192.168.1.254/16
+	--------------------------------
+	server lan	192.168.10.0/16 
+	jails lan	192.168.20.0/16		(main server)
+			192.168.30.0/16		(other servers)
+	VMs lan		192.168.40.0/16		(main server)
+			192.168.50.0/16		(other servers)
+	Mainframes	192.168.60.0/16		(emulated mainframes)
+	Raspberry PIs	192.168.70.0/16		
+	Media lan	192.168.80.0/16		(TVs etc)
+	Ian's machines	192.168.90.0/16
+	DHCP		192.168.123.0/16
+
+## Scripts
+
+We will need the following scripts (or alternatively documented
+procedures):
+
+	- bring up and down each jail, VM or server
+	- a method or script to fetch the latest hosts file from
+	  the main server
+	- scripts to backup each jail, VM or server
+	- scripts to backup the backup server
+	- offsite backups scripts
+
+
+
+## Hosts file
+
+The following hosts file will be manually maintained on the main
+server under version control and migrated to those hosts that need
+it.
+
+	# Networks Layout:
+	# 
+	# 	router lan	192.168.1.0/16
+	#	server lan	192.168.10.0/16
+	#	jails lans	192.168.20.0/16 	(main server)
+				192.168.30.0/16 	(other servers)
+	#	VMs lan		192.168.40.0/16 	(main server)
+	#			192.168.50.0/16 	(other servers)
+	#	Mainframes	192.168.60.0/16a 	(on main server)
+	#	Raspberry PIs	192.168.70.0/16		
+	#	Media lan	192.168.80.0/16 	(TVs etc)
+	#	Ian's machines	192.168.90.0/16 	(laptop, desktop etc)
+	# 	DHCP		192.168.123.0/16	(Other laptops etc)
+
+	########################################################################
+	# border router
+	192.168.1.254	router gateway gw
+
+	########################################################################
+	# server lan	(192.168.10.0/16 network)
+	192.168.10.10	server server.local
+
+	########################################################################
+	# Jails on MAIN server 		(192.168.20.0/16 main server network)
+
+	##	DNS filter (PiHole or alternative)
+	192.168.20.1	dns dns.local  dnsfilter dnsfilter.local pihole pihole.local
+
+	##	Gopher servers
+	192.168.20.10	gopher gopher.local gopher.xxx		# main gopher server
+
+	## 	Webservers
+	192.168.20.20	relay relay.local relay.xxx		# relay server
+	192.168.20.30	www www.local www.xxx			# main webserver
+	
+
+	## 	Project Jails 		(one per project)
+	192.168.20.50	sabbath sabbath.local
+	192.168.20.51	revelation revelation.local
+	192.168.20.52	freedocs freedocs.local		# freebsd documentation team
+	192.168.20.53	freebsdports freebsdports.local 
+	192.168.20.54	opendocs opendocs.local		# openbsd documentation team
+	192.168.20.55	openbsdports openbsdports.local 
+	
+
+	##	TFTP, BOOTP server
+	192.168.20.88 	tftp tftp.local bootp bootp.local	# tftp/bootp server
+
+	## 	Version control servers
+	192.168.20.90	git git.local	
+	192.168.20.91	cvs cvs.local	
+	192.168.20.92	svn svn.local	
+
+	##	VPN server
+	192.168.20.99	vpn vpn.local vpn.xxx			# vpn server
+
+	## 	Certificate Authority
+	192.168.20.100	ca ca.local 		# certificate authority MAYBE A VM?
+
+	##	Backup server
+	192.168.20.123
+
+	## 	BBS system
+	##	Requires portforwarding of the following ports:
+	##	??????????????
+	192.168.20.150 	bbs bbs.local
+
+	## 	Game Servers	(eg Minecraft etc)
+	192.168.20.160	minecraft minecraft.local
+	192.168.20.161	civ civ.local
+
+	## 	Generic Jails on main server
+	192.168.20.200	server200	# generic/temporary jail on main server
+	192.168.20.201	server201	# generic/temporary jail on main server
+	192.168.20.202	server202	# generic/temporary jail on main server
+	192.168.20.203	server200	# generic/temporary jail on main server
+	192.168.20.204	server204	# generic/temporary jail on main server
+	192.168.20.205	server205	# generic/temporary jail on main server
+
+	# Jails on OTHER servers	(192.168.30.0/16 network)
+
+
+	########################################################################
+	# VMs on MAIN server 		(192.168.40.0/16 network)
+	192.168.40.1	demovm vm1
+
+	# VMs on other servers		(192.168.50.0/16 network) 
+
+
+	########################################################################
+	# Mainframes (on main server)	(192.168.50.0/16 network)
+	192.168.50.1	mvs mvs.local 		# main MVS server
+	192.168.50.10	vm370 vm370.local	# vm370 server
+
+
+	########################################################################
+	# Raspberry Pi machines		(192.168.70.0/16 network)
+
+	192.168.70.10	pizero2 pizero2.local
+	192.168.70.20	pi400 pi400.local
+	192.168.70.30	pi8gb pi8gb.local
+	192.168.70.40	pi4one
+	192.168.70.50	pi4two	
+	192.168.70.60	pi3bplus
+
+	## Pi Cluster
+	192.168.70.100	clusterpi
+	192.168.70.101	clusterzero1
+	192.168.70.102	clusterzero2
+	192.168.70.103	clusterzero3
+	192.168.70.104	clusterzero4
+	
+	## Pi 3aplus
+	192.168.70.100	pi3a1
+
+i	## Pi zeros
+	192.168.70.150	zero0 
+	192.168.70.151	zero1
+	192.168.70.152	zero2
+	192.168.70.153	zero3
+
+	## Pi 2
+	192.168.70.225	pi2
+
+
+	########################################################################
+	# Media	devices			(192.168.80.0/16 network)
+	192.168.80.1	samsungtv.local samsungtv
+	192.168.80.2	appletv appletv.local
+
+
+
+	########################################################################
+	# Ian's	devices			(192.168.90.0/16 network)
+
+	## Thinkpads
+	192.168.99.9	gandalf gandalf.local e145.local
+	192.168.99.99	ian ian.local mainlaptop x270 x270.local
+	192.168.99.98	ian2 ian.local mainlaptop x270b x270.local
+	192.168.99.97	ian3 ian.local mainlaptop x270c x270.local
+	192.168.99.96	ian4 ian.local mainlaptop x270d x270.local
+
+	192.168.99.100	frodo frodo.local acersp1
+
+
+
+	########################################################################
+	# DHCP				(192.168.123.0/16 network)
+	########################################################################
+	
+

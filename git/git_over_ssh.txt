@@ -1,0 +1,139 @@
+
+remote gpg-agent via ssh forwarding Calvin Ardi calvin@isi.edu March
+15, 2016
+
+gpg-agent does a good job of caching passphrases, and is essential
+when using an authentication subkey exported as an SSH public key
+(especially if used with a Yubikey).
+
+With gpg-agent forwarding, we can do things with gpg on a remote
+machine while keeping the private keys on the local computer, like
+decrypting files or signing emails.
+
+As of OpenSSH 6.7+ and GnuPG 2.1+, we can reliably do gpg-agent
+forwarding. This is tailored for OS X, but will probably work on
+GNU/Linux.
+
+If you already have gpg2 and keys setup, you'll probably want to
+skip to "Step 2: Using remote-gpg".
+
+Please send any comments, bugs, or fixes to calvin@isi.edu.  Install
+and configure software
+
+    install OpenSSH 6.7+ (MacPorts provides OpenSSH 7.2).
+
+    install GnuPG 2.1+ via source or GnuPG for OSX (this will
+    recommend that you remove GPG Suite, if installed) OS X and GPG
+
+    Getting GPG to work with OS X can be a frustrating exercise.
+
+    GPG Suite and MacPorts install GnuPG 2.0.x, which might be
+    insufficient. GnuPG for OSX has many versions of GnuPG 2.1.x.
+    At the time of writing, we'll use GnuPG 2.1.11-002, released
+    2016-Feb-10.
+
+    You will have to figure out the best configuration for yourself.
+
+    create symlinks to helpful utilities:
+
+    ln -s /usr/local/gnupg-2.1/bin/gpg-connect-agent \
+      /usr/local/bin/gpg-connect-agent
+    ln -s /usr/local/gnupg-2.1/libexec/gpg-preset-passphrase \
+      /usr/local/bin/gpg-preset-passphrase
+
+    GnuPG for OS X
+
+    By default, gpg2 will be installed to /usr/local/gnupg-2.1 and
+    create some symlinks to /usr/local/bin.
+
+    create your GPG config (~/.gnupg/gpg.conf) and keys (not covered
+    here)
+
+    create your gpg-agent config (~/.gnupg/gpg-agent.conf):
+
+    # use a GUI # pinentry-program
+    /usr/local/gnupg-2.1/bin/pinentry-mac.app/Contents/MacOS/pinentry-mac #
+    don't use a GUI pinentry-program /opt/local/bin/pinentry-curses
+    # set up just for forwarding extra-socket
+    /Users/username/.gnupg/S.gpg-agent-extra # each time cache is
+    accessed, reset the timer to this default-cache-ttl 600 # after
+    this time, expire cache entry max-cache-ttl 3600 # allows use
+    of `gpg-preset-passphrase` allow-preset-passphrase # outdated
+    options as of 2.1.11 #write-env-file #use-standard-socket
+
+    start or reload the agent with gpg-connect-agent. This can also
+    be used to manually clear the cache.
+
+    gpg-connect-agent reloadagent /bye
+
+Using remote-gpg
+
+remote-gpg, written by Dustin J. Mitchell, is a great tool that
+allows the user to control when gpg-agent is available.
+
+I've made some tweaks to Dustin's script, remote-gpg, to account
+for (1) different local and remote homedirs, (2) sleep before
+deleting remote socket (3) double-quotes to sh -c instead of
+single-quotes to expand local variables:
+
+#! /bin/bash
+
+# remote-gpg # original author: Dustin J. Mitchell <dustin@cs.uchicago.edu>
+
+set -e
+
+host=$1 if [ -z "$host" ]; then
+    echo "Supply a hostname" exit 1
+fi
+
+# our local and remote homedirs might be different # TODO remote
+homedirs can vary in paths, too REMOTE_HOME=/nfs/homes/username
+LOCAL_HOME=/Users/username
+
+# remove any existing agent socket (in theory `StreamLocalBindUnlink
+yes` # does this, but in practice, not so much) /opt/local/bin/ssh
+$host rm -f $REMOTE_HOME/.gnupg/S.gpg-agent /opt/local/bin/ssh \
+  -t -R
+  $REMOTE_HOME/.gnupg/S.gpg-agent:$LOCAL_HOME/.gnupg/S.gpg-agent-extra \
+  $host \ sh -c "echo; echo \"Perform remote GPG operations and hit
+  enter\"; \
+      read; \ sleep 2; \ rm -f $REMOTE_HOME/.gnupg/S.gpg-agent";
+
+    add the following ~/.gnupg/gpg-agent.conf (if you didn't
+    previously do it):
+
+    # use a GUI # pinentry-program
+    /usr/local/gnupg-2.1/bin/pinentry-mac.app/Contents/MacOS/pinentry-mac #
+    don't use a GUI pinentry-program /opt/local/bin/pinentry-curses
+    # set up just for forwarding extra-socket
+    /Users/username/.gnupg/S.gpg-agent-extra
+
+    on the local machine, run remote-gpg $HOSTNAME
+
+    on the remote machine, run the desired gpg2 operations
+
+    if your private keys have not already been loaded, you may or
+    may not get a passphrase prompt depending on which pinentry
+    you're using.
+
+    if using pinentry-mac (GUI), you will locally be prompted for
+    your passphrase (with gpg2 letting you know that it's for a
+    remote operation)
+
+    if using pinentry-curses (no GUI), you will not be prompted for
+    your passphrase and will need to "pre-seed" it with
+    gpg-preset-passphrase or the following:
+
+    gpg2 --output /dev/null --sign -u 0xKEY_ID /dev/null
+
+    when finished, go to the local window and press "Enter".
+
+    optionally, clear the password cache with gpg-connect-agent
+    reloadagent /bye
+
+Other Things
+
+I haven't tested this with authentication or encryption GPG subkeys
+with a Yubikey, yet.
+
+home. markdown source.

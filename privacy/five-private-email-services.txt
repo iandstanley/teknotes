@@ -1,0 +1,40 @@
+
+
+                     5 PRIVATE EMAIL SERVICES
+
+
+	STARTMAIL               (from Startpage, $60pa, unlimited
+				aliases, pgp support, 10GB). NOT
+				Oepn Source, no mobile clients and
+				custom domain support is extra. No
+				calendar support (but it is on their
+				radar!
+
+
+	FASTMAIL                Native mobile apps, aliases, calendars
+				from $3/mo, custom domain support
+				at higher levels. Not Open Source
+
+
+
+	TUTANOTA                Encrypt emails to others not using
+				Tutanota. Lack-lustre UI
+
+
+
+	CTEMPLAR                Self funded in ICELAND. Good wemail.
+				Open Source. ZERO DATA RETENTION
+				POLICY .... data is deletexd WHEN
+				you click delete. Zero access
+				encryption. Phishing & MITM attack
+				protection. Generous FREE account.
+				No calencar support. Email company
+				to get an invite code for free
+				account. Paid accounts get custom
+				domain support, self destructing
+				emails, delayed delivery, deadman
+				timer, catchall domains.
+
+
+
+	PROTONMAIL

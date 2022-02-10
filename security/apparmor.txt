@@ -1,0 +1,12 @@
+APPARMOR
+========
+
+Status
+------
+
+	# apparmor_status
+
+This shows how many security profiles are loaded and how many 
+are enforced.
+
+

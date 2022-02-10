@@ -1,0 +1,103 @@
+https://nixers.net/Thread-OTP-Authentication-with-the-YubiKey-on-OpenBSD
+
+#  Using the YubiKey to log into OpenBSD
+
+Well, it is UNIX for the practical and paranoid!
+
+So, using the YubiKey as log in authentication is reletively simple
+and if you're running a fairly recent release of OpenBSD, you've
+already got the necessary tools to acomplish this.
+
+When setting your system up as described in this post, instead of
+using your password, you'll use the YubiKey to pass a one time
+password. This can replace anywhere you used your password before;
+local login, SSH password login (there's a more sophisticated
+implementation of YubiKey auth with SSH however) and even sudo.
+
+Here's a clear and concice explaination of how this works, taken
+from the 'login_yubikey' manpage:
+
+    login_yubikey will read the user's UID (12 hex digits) from the file
+    user.uid, the user's key (32 hex digits) from user.key, and the user's
+    last-use counter from user.ctr in the /var/db/yubikey directory.
+
+    If user does not have a UID or key, the login is rejected. If user does
+    not have a last-use counter, a value of zero is used and any counter is
+    accepted during the first login.
+
+    The one-time password provided by the user is decrypted using the user's
+    key. After the decryption, the checksum embedded in the one-time
+    password is verified. If the checksum is not valid, the login is
+    rejected.
+
+    If the checksum is valid, the UID embedded in the one-time password is
+    compared against the user's UID. If the UID does not match, the login is
+    rejected.
+
+
+    If the UID matches, the use counter embedded in the one-time password is
+    compared to the last-use counter. If the counter is less than or equal
+    to the last-use counter, the login is rejected. This indicates a replay
+    attack.
+
+    If the counter is larger than the last-use counter, the counter is stored
+    as the new last-use counter, and the login is accepted.
+
+
+## Getting your UID and key
+
+In order to obtain your UID and key, you'll need to install the
+'yubikey-personalization-gui' package.  This will let you generate
+a paired UID and key, then write it to the YubiKey for use with
+'login_yubikey'.
+
+Once installed, run the application and select the first option at
+the top 'Yubico OTP', then select 'Quick'.  You'll be presented
+with a new screen. Under the 'Yubico OTP Parameters (auto generated)'
+section, unselect the 'Hide values' option. This will reveal the
+newly generated UID and key (this is auto generated upon each run
+of the application),
+
+## Using your UID and key with 'login_yubikey'
+
+Copy the 'Private Identity (6 bytes Hex)' value into a file named
+after your user in: /var/db/user.uid For example, mine is as follows
+'/var/db/phyrne.uid'.  Do the same for the key, copy the 'Secret
+Key (16 bytes Hex)', copy it into a file like so: /var/db/user.key
+(again, 'phyrne.key' in my case).
+
+Ensure the permissions on these files is set correctly, like so:
+
+	chown root:auth /var/db/yubikey/*
+	chmod o-rw /var/db/yubikey/*
+
+Now that you have these values recorded in the appropriate locations,
+write them to Slot 1 on your key (or if you'd prefer to keep Yubico's
+default config, write to Slot 2, however; each time you use the
+key, you will have to hold the touch finger pad for 4 seconds). You
+can write this config to the key by selecting 'Write configuration'
+and selecting the desired slot. This will also prompt where to save
+a CSV file of the config (something I'd deem unecessary, and a
+security risk) so just save it to your $HOME and remove it later.
+
+## Setting up 'login_yubikey'
+
+Now, to tie it all together!
+
+Edit the '/etc/login.conf' file and add 'yubikey' at the beginning
+of the 'auth-defaults' entry, like so:
+
+	# Default allowed authentication styles
+	auth-defaults:auth=yubikey,passwd,skey:
+
+You're all set!
+
+If you've followed the above steps, you should be good to go! Logging
+out should suffice, try logging back in (either through xdm or a
+TTY) with your password, it should prompt that login failed.  But
+if you touch the YubiKey, it should let you in ;)
+
+Have fun! I'm loving my YubiKey, I'll most likely do a short tutorial
+on propper use of multifactor authentication with the YubiKey and
+SSH some time soon.
+

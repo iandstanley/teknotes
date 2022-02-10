@@ -1,0 +1,482 @@
+
+# HOWTO – Setup a Fips Compliant Root Certificate Authority
+## Uusing OpenSSL and the True Random Number Generator (TRNG)
+
+For people wondering if the Raspberry Pi is a device on which you can 
+safely implement OpenSSL on, please read my previous article about 
+testing the True Random Number Generator on the Pi.
+
+Why am I selecting a Raspberry Pi to host my Certificate Authority on 
+one might ask?
+
+Because it’s safe, small, cheap, fit’s on my SD card which can be put 
+away on a safe place if not used… (want to do a double tier setup with 
+it), and it’s cheaper than buying a certificate from an official 
+provider.
+
+I did more or less the same setup on Windows 2012R2, this worked very 
+good, but it seems to have more overhead to set it up than a on a 
+Rapberry Pi.
+
+For people who are not really up to dat with what a Certificate 
+Authority is, it’s better to first read up on some readily available 
+resource before diving into this tutorial as to get a better 
+understanding how this whole puzzle fit’s together.  A suggestion for a 
+nice article on X.509 certificates: https://en.wikipedia.org/wiki/X.509
+
+So in this tutorial we will be building a Root Certificate authority on 
+our Raspberry Pi with the OpenSSL toolkit.
+
+
+First start off by downloading your copy of Raspbian Jessie Lite from 
+the Raspberry Foundation web site, write to SD card, boot it up, and log 
+in with username pi and raspberry as password.
+
+Let’s get our Raspbian OS up to date:
+
+    expand your SD card with raspi-config 
+    sudo apt-get update 
+    sudo apt-get -y dist-upgrade 
+    sudo apt-get install -y rpi-update 
+    sudo rpi-update
+
+The Raspbian Jessie Lite image from the raspberry pi foundation already 
+seems to contain an installed version of openssl, the modify date of my 
+Raspbian Jessie Lite image is 18/03/2016 and the installed openssl 
+version is OpenSSL 1.0.1k 8 Jan 2015.
+
+According to the openssl website this version will only be supported up 
+to end of 2016.
+
+For people wanting to compile a more recent version of OpenSSL, better 
+first check out the release strategy of OpenSSL and verify what suit’s 
+you best.
+
+In our tutorial, we will be compiling a FIPS 140-2 compliant module for 
+OpenSSL, a module compliant to the Federal Information Processing 
+Standard of America, in other words, verified source code.
+
+If you want to know what FIPS is actually all about, read up on 
+https://www.openssl.org/docs/fipsnotes.html which gives you a high level 
+overview on FIPS.
+
+First we will download the latest FIPS module source distribution 
+tarball:
+
+    wget https://www.openssl.org/source/openssl-fips-2.0.12.tar.gz
+
+Now we will verify the integrity of this download according to 
+instructions in the FIPS security policy at 
+https://www.openssl.org/docs/fips/SecurityPolicy-2.0.12.pdf (page 26)
+
+	openssl sha1 -hmac etaonrishdlcupfm openssl-fips-2.0.12.tar.gz  
+
+Now compare the resulting ‘digest ‘ with the ‘digest’ written down in 
+the security policy, this needs to be an exact match, or else your 
+download has been tampered with.
+
+Unzip, configure, build, and install the module.
+
+	gunzip -c openssl-fips-2.0.12.tar.gz | tar xf -
+	cd openssl-fips-2.0.12
+	./config
+	make
+	sudo make install 
+
+Ok, we now have OpenSSL and a FIPS 140-2 compliant module in place for 
+usage.
+
+In your home folder, (/home/pi in my case) create a folder which will 
+hold all the files for your Certificate Authority.
+
+	mkdir /home/pi/My-RootCA
+	cd /home/pi/My-RootCA
+	mkdir certs crl newcerts private
+	chmod 700 private
+	touch index.txt
+	echo 1000 > serial 
+
+Before we will start creating our certificate authority, we will build a 
+configuration file with configuration details of our certificate 
+authority.  It will contain details needed by OpenSSL to perform it’s 
+function.  Save this file to your folder containing your certificate 
+authority.
+
+
+	# OpenSSL Root Certificate Authority Configuration File.
+	 
+	[ openssl_conf_section ]
+	# Configuration module list
+	alg_section = evp_sect
+	 
+	[ evp_sect ]
+	# Set to “yes” to enter FIPS mode if supported
+	fips_mode = yes
+	 
+	[ ca ]
+	default_ca = CA_default
+	 
+	[ CA_default ]
+	# Directory and file locations.
+	dir               = /home/pi/My-RootCA
+	certs             = $dir/certs
+	crl_dir           = $dir/crl
+	new_certs_dir     = $dir/newcerts
+	database          = $dir/index.txt
+	serial            = $dir/serial
+	RANDFILE          = $dir/private/.rand
+	 
+	# The root key and root certificate.
+	private_key = $dir/private/My-RootCA.key.pem
+	certificate = $dir/certs/My-RootCA.cert.pem
+	 
+	# For certificate revocation lists.
+	crlnumber         = $dir/crlnumber
+	crl               = $dir/crl/My-RootCA.crl.pem
+	crl_extensions    = crl_ext
+	default_crl_days  = 90
+	 
+	# SHA-1 is deprecated, so use SHA-2 instead.
+	default_md        = sha512
+	name_opt          = ca_default
+	cert_opt          = ca_default
+	default_days      = 1825
+	preserve          = no
+	policy            = policy_strict
+	 
+	[ policy_strict ]
+	# The root CA should only sign intermediate certificates that match. 
+	# See the POLICY FORMAT section of `man ca`.
+	countryName             = match
+	stateOrProvinceName     = match
+	organizationName        = match
+	organizationalUnitName  = optional
+	commonName              = supplied
+	emailAddress            = supplied
+	 
+	[ policy_loose ]
+	# Allow the intermediate CA to sign a more diverse range of 
+	# certificates. See the POLICY FORMAT section of the `ca` man page.
+	countryName             = optional
+	stateOrProvinceName     = optional
+	localityName            = optional
+	organizationName        = optional
+	organizationalUnitName  = optional
+	commonName              = supplied
+	emailAddress            = optional
+	 
+	[ req ]
+	# Options for the `req` tool (`man req`).
+	default_bits        = 4096
+	distinguished_name  = req_distinguished_name
+	string_mask         = utf8only
+	 
+	# SHA-1 is deprecated, so use SHA-2 instead.
+	default_md          = sha512
+	 
+	# Extension to add when the -x509 option is used.
+	x509_extensions     = v3_ca
+	 
+	[ req_distinguished_name ]
+	countryName                     = Country Name (2 letter code)
+	stateOrProvinceName             = State or Province Name
+	localityName                    = Locality Name
+	0.organizationName              = Organization Name
+	organizationalUnitName          = Organizational Unit Name
+	commonName                      = Common Name
+	emailAddress                    = Email Address
+	 
+	# Optionally, specify some defaults.
+	countryName_default             = BE
+	stateOrProvinceName_default     = MyState
+	localityName_default            = MyCity
+	0.organizationName_default      = Private Individual
+	organizationalUnitName_default  = Crypto Security
+	emailAddress_default            = MyEmail@gmail.com
+	 
+	[ v3_ca ]
+	# Extensions for a typical CA (`man x509v3_config`).
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid:always,issuer
+	basicConstraints = critical, CA:true
+	keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+	authorityInfoAccess = caIssuers;URI:http://My.Server.net:8080/pki/My-RootCA.cert.pem
+	crlDistributionPoints = URI:http://My.Server.net:8080:8080/pki/My-RootCA.crl.pem
+	 
+	[ v3_intermediate_ca ]
+	# Extensions for a typical intermediate CA (`man x509v3_config`).
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid:always,issuer
+	basicConstraints = critical, CA:true, pathlen:0
+	keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+	authorityInfoAccess = caIssuers;URI:http://My.Server.net:8080/pki/My-IntermediateCA.cert.pem
+	crlDistributionPoints = URI:http://My.Server.net:8080/pki/My-IntermediateCA.cert.pem
+	 
+	[ usr_cert ]
+	# Extensions for client certificates (`man x509v3_config`).
+	basicConstraints = CA:FALSE
+	nsCertType = client, email
+	nsComment = “OpenSSL Generated Client Certificate”
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid,issuer
+	keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+	extendedKeyUsage = clientAuth, emailProtection
+	 
+	[ server_cert ]
+	# Extensions for server certificates (`man x509v3_config`).
+	basicConstraints = CA:FALSE
+	nsCertType = server
+	nsComment = “OpenSSL Generated Server Certificate”
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid,issuer:always
+	keyUsage = critical, digitalSignature, keyEncipherment
+	extendedKeyUsage = serverAuth
+	 
+	[ crl_ext ]
+	# Extension for CRLs (`man x509v3_config`).
+	authorityKeyIdentifier=keyid:always
+	 
+	[ ocsp ]
+	# Extension for OCSP signing certificates (`man ocsp`).
+	basicConstraints = CA:FALSE
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid,issuer
+	keyUsage = critical, digitalSignature
+	extendedKeyUsage = critical, OCSPSigning
+
+
+We will now start to build our Root Certificate Authority.
+
+First will generate an RSA key with random seed data taken from 
+/dev/hwrng (our Raspberry Pi random number generator).
+
+This key will be encrypted with the AES256 cipher and a seed password 
+that we set for it.
+
+Each time that we want to use this private key, we will need to provide 
+the password to decrypt the private key.
+
+Before commencing, you should remove and disable any network 
+connectivity to your Raspberry Pi, remove any connected network cables, 
+make sure you don’t have keyloggers and stuff, this for obvious reasons.
+
+	sudo openssl genrsa -aes256 -rand /dev/hwrng 
+		\ -out private/My-RootCA.key.pem 4096 
+
+Now that our private key is created, we will create a certificate for 
+our Root Authority using this private key.
+
+	req -config openssl.cnf -key private/My-RootCA.key.pem -new -x509 \
+		-days 3650 -sha512 -extensions v3_ca -out certs/My-RootCA.cert.pem 
+
+This concludes the configuration of the Root Certificate Authority, next 
+we will process the Intermediate Certificate Authority.
+
+
+Next is the set-up of the Intermediate Authority, the steps are 
+identical as above until the defenition of the config file.
+
+In your home folder, (/home/pi in my case) create a folder which will 
+hold all the files for your Certificate Authority.
+
+	mkdir /home/pi/My-IntermediateCA
+	cd /home/pi/My-IntermediateCA
+	mkdir certs crl newcerts private csr
+	chmod 700 private
+	touch index.txt
+	echo 1000 > serial
+	echo 1000 > crlnumber 
+
+Before we will start creating our certificate authority, we will build a 
+configuration file with configuration details of our certificate 
+authority.  It will contain details needed by OpenSSL to perform it’s 
+function.  Save this file to your folder containing your certificate 
+authority.
+
+	
+	# OpenSSL Intermediate Certificate Authority Configuration File.
+	 
+	[ openssl_conf_section ]
+	# Configuration module list
+	alg_section = evp_sect
+	 
+	[ evp_sect ]
+	# Set to “yes” to enter FIPS mode if supported
+	fips_mode = yes
+	 
+	[ ca ]
+	default_ca = CA_default
+	 
+	[ CA_default ]
+	# Directory and file locations.
+	dir               = /home/pi/My-IntermediateCA
+	certs             = $dir/certs
+	crl_dir           = $dir/crl
+	new_certs_dir     = $dir/newcerts
+	database          = $dir/index.txt
+	serial            = $dir/serial
+	RANDFILE          = /dev/hwrng
+	 
+	# The root key and root certificate.
+	private_key = $dir/private/My-IntermediateCA.key.pem
+	certificate = $dir/certs/My-IntermediateCA.cert.pem
+	 
+	# For certificate revocation lists.
+	crlnumber         = $dir/crlnumber
+	crl               = $dir/crl/My-IntermediateCA.crl.pem
+	crl_extensions    = crl_ext
+	default_crl_days  = 90
+	 
+	# SHA-1 is deprecated, so use SHA-2 instead.
+	default_md        = sha512
+	name_opt          = ca_default
+	cert_opt          = ca_default
+	default_days      = 1825
+	preserve          = no
+	policy            = policy_loose
+	 
+	[ policy_strict ]
+	# The root CA should only sign intermediate certificates that match.
+	# See the POLICY FORMAT section of `man ca`.
+	countryName             = match
+	stateOrProvinceName     = match
+	organizationName        = match
+	organizationalUnitName  = optional
+	commonName              = supplied
+	emailAddress            = supplied
+	 
+	[ policy_loose ]
+	# Allow the intermediate CA to sign a more diverse range of certificates.
+	# See the POLICY FORMAT section of the `ca` man page.
+	countryName             = optional
+	stateOrProvinceName     = optional
+	localityName            = optional
+	organizationName        = optional
+	organizationalUnitName  = optional
+	commonName              = optional
+	emailAddress            = optional
+	 
+	[ req ]
+	# Options for the `req` tool (`man req`).
+	default_bits        = 4096
+	distinguished_name  = req_distinguished_name
+	string_mask         = utf8only
+	# SHA-1 is deprecated, so use SHA-2 instead.
+	default_md          = sha512
+	# Extension to add when the -x509 option is used.
+	x509_extensions     = v3_ca
+	 
+	[ req_distinguished_name ]
+	countryName                     = Country Name (2 letter code)
+	stateOrProvinceName             = State or Province Name
+	localityName                    = Locality Name
+	0.organizationName              = Organization Name
+	organizationalUnitName          = Organizational Unit Name
+	commonName                      = Common Name
+	emailAddress                    = Email Address
+	 
+	# Optionally, specify some defaults.
+	countryName_default             = BE
+	stateOrProvinceName_default     = MyState
+	localityName_default            = MyCity
+	0.organizationName_default      = Private Individual
+	organizationalUnitName_default  = Crypto Security
+	emailAddress_default            = MyEmail@gmail.com
+	 
+	[ v3_ca ]
+	# Extensions for a typical CA (`man x509v3_config`).
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid:always,issuer
+	basicConstraints = critical, CA:true
+	keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+	authorityInfoAccess = caIssuers;URI:http://My.Server.net:8080/pki/My-RootCA.cert.pem
+	crlDistributionPoints = URI:http://My.Server.net:8080/pki/My-RootCA.crl.pem
+	 
+	[ v3_intermediate_ca ]
+	# Extensions for a typical intermediate CA (`man x509v3_config`).
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid:always,issuer
+	basicConstraints = critical, CA:true, pathlen:0
+	keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+	authorityInfoAccess = caIssuers;URI:http://My.Server.net:8080/pki/My-IntermediateCA.cert.pem
+	crlDistributionPoints = URI:http://My.Server.net:8080/pki/My-IntermediateCA.crl.pem
+	 
+	[ usr_cert ]
+	# Extensions for client certificates (`man x509v3_config`).
+	basicConstraints = CA:FALSE
+	nsCertType = client, email
+	nsComment = “OpenSSL Generated Client Certificate”
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid,issuer
+	keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+	extendedKeyUsage = clientAuth, emailProtection
+	 
+	[ server_cert ]
+	# Extensions for server certificates (`man x509v3_config`).
+	basicConstraints = CA:FALSE
+	nsCertType = server
+	nsComment = “OpenSSL Generated Server Certificate”
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid,issuer:always
+	keyUsage = critical, digitalSignature, keyEncipherment
+	extendedKeyUsage = serverAuth
+	 
+	[ crl_ext ]
+	# Extension for CRLs (`man x509v3_config`).
+	authorityKeyIdentifier=keyid:always
+	 
+	[ ocsp ]
+	# Extension for OCSP signing certificates (`man ocsp`).
+	basicConstraints = CA:FALSE
+	subjectKeyIdentifier = hash
+	authorityKeyIdentifier = keyid,issuer
+	keyUsage = critical, digitalSignature
+	extendedKeyUsage = critical, OCSPSigning
+
+We will also be needing a private key for our Intermediate Certificate 
+Authority, so we will generate one in the next step:
+
+	sudo openssl genrsa -aes256 -rand /dev/hwrng \
+		-out private/My-IntermediateCA.key.pem 4096 
+
+To also create a certificate for our Intermediate Authority, we will 
+need to make a certificate signing request which we will sign with our 
+root authority, since this is offline, we will need to copy this to usb 
+drive and copy it over to our root authority.
+
+	openssl req -config openssl.cnf -new -sha256 \
+		-key private/My-IntermediateCA.key.pem \
+		-out csr/My-IntermediateCA.csr.pem 
+
+On our Root authority, we will sign the Certificate Signing Request from 
+our Intermediate Certificate Authority, once transferred from usb 
+device.
+
+	openssl ca -config openssl.cnf -extensions v3_intermediate_ca \
+		-days 1825 -notext -md sha512 -in csr/intermediate.csr.pem \
+		-out certs/intermediate.cert.pem 
+
+For other parties to be able to verify the validity of our certificates 
+by checking revocation information, we will generate a Certificate 
+Revocation List on our Root Certificate Authority.
+
+	openssl ca -config intermediate/openssl.cnf \ -gencrl \
+		-out intermediate/crl/intermediate.crl.pem 
+
+Next you should copy the Root Certificate, Intermediate Certificate, and 
+Certificate Revocation List to the “authorityInfoAccess” and 
+“crlDistributionPoints” locations specified in your config files, so 
+other parties would be able to trust or validate this information.
+
+Now that we have authorized an Intermediate Certificate Authority in our 
+certificate chain, there is no more immediate need for our Root 
+Authority to stay online.
+
+It should be taken offline and stored in a physically secured location.  
+(like that coffee can buried in your backyard.)
+
+The Intermediate Certificate Authority in the chain can now be used to 
+sign any user or server certifcates.
+
+If the integrity of your Intermediate Certificate Authority is breached, 
+it will not damage the integrity of the Root Certificate Authority.

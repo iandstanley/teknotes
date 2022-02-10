@@ -1,0 +1,44 @@
+FIREJAIL
+========
+
+See firejail.wordpress.com and github.com/retblue/firejail
+
+Firejail is an SUID sandbox program that uses linux namespaces for 
+process isolation. Written in C with virtually no dependancies.
+
+$ firejail firefox
+$ firejail transmission-gtk
+
+$ sudo firejail /etc/init.d/nginx start
+
+Firejail is restricted so that your filesystem is mounted READ-ONLY
+by default (or even deny any access).
+
+You can sandbox *ANY* type of process: servers, gui apps even an entire 
+user login session.
+
+$ sudo apt install firejail
+
+Then configure the sandbox:
+
+$ sudo firecfg
+
+And then enable apparmor
+
+$ sudo apparmor_parser -r /etc/apparmor.d/firejail-default
+
+Then test
+
+Run firefox with firejail and checkout to see if you can see /home/ian or /dev
+
+Note how some things are restricted or missing (eg. .ssh or documents).
+
+eg. Bash has network access and other processes denied by default.
+So $ firejail bash cannot see the network.
+
+$ firejail --net=none ping bbc.co.uk
+
+If you have to use an unmaintained appimage:
+
+$ firejail --net=none --appimage kdenlive.appimage
+

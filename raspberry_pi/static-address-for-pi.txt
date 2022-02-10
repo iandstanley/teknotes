@@ -1,0 +1,16 @@
+STATIC IP ADDRESS FOR PI
+========================
+
+$ vi /etc/dhcpcd.conf
+
+	hostname	home.jesusdiedfor.me
+	interface	wlan0
+	static ip_address = 192.168.1.50/24
+	static routers = 192.168.1.1
+	static domain_name_servers = 9.9.9.9 1.1.1.1
+
+Don't forget to:
+
+# rm -rf /run/wpa_supplicant.conf
+# /etc/init.d/networking restart
+

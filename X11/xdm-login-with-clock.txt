@@ -1,0 +1,43 @@
+
+# XDM LOGIN MANAGER WITH DOCK ON LOGIN SCREEN
+
+	$ vi /usr/local/etc/X11/xdm/Xsetup_0
+
+	#!/bin/sh
+
+	#xconsole -geometry 480x130-0-0 -daemon -notify -verbose
+						-fn fixed -exitOnFail
+
+	xclock -digital -update 1 -fn 
+	  -adobe-times-medium-i-normal*-34-240-100-100-p-168-iso8859-1 
+	  -geometry +410+1 &
+
+
+
+	$ vi /usr/local/etc/X11/xdm-config
+
+	DisplayManager*authComplain: true
+	DisplayManager._0._setup: /usr/local/etc/X11/xsetup_0
+
+If you want to kill the clock when you login create a small script
+and call it from:
+
+
+	$ vi /usr/local//etc/X11/Xstartup
+
+	#!/bin/sh
+
+	sh /usr/local/etc/X11/kilclock &
+
+	exec /usr/local/bin/sessreg -a  -w /var/log/wtmp 
+		-u /var/run/wtmp -x /usr/local/etc/X11/Xservers 
+		-l $DISPLAY -h "" $USER
+
+
+	$ vi /usr/local/etc/X11/killclock
+
+	#!/bin/sh
+	killall -9 xclock
+
+
+

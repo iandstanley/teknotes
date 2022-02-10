@@ -1,0 +1,56 @@
+# Yubikey 5 NFC not working with yubioath-desktop, py-yubikey-manager and py-yubikey-manage-qt
+
+
+Hello all, my yubikey 5 NFC is not detected by 
+security/ypy-yubikey-manager (CLI) and security/yubikey-manager-qt (GUI) 
+on my FreeBSD 12.1. ykman-gui and ykman list does not detect my yubikey! 
+Code:
+
+	$ ykman list
+	Usage: ykman list [OPTIONS]
+	Try "ykman list -h" for help
+
+	Error: Failed to establish CCID context. Is the pcscd service running?
+
+
+My YubiKey 5 NFC is not recognized by security/yubioath-desktop (yubykey 
+authenticator) too.
+
+I read "Connecting to Yubikey..." on the yubykey authenticator window 
+when my yubikey 5 NFC to USB port is connected to USB port. I read "No 
+YubiKey detected" when is NOT connected. Maybe because yubioath-desktop 
+is not updated to at least version 5.0.3. 
+
+Code:
+	
+	Version 5.0.3 (released 2020-04-14)
+    macOS: Make the app available in the macOS App Store
+    Windows: Make the app available in the Microsoft Store (for Windows 10 20.04 and higher)
+    Linux: Make the app available in the Snap Store
+    Add support for YubiKey 5C NFC
+    Bugfix: Make sure the application is always visible on Windows
+
+
+I get right output using ykinfo -s -m -H -v -t -p and gpg --card-status. 
+It seems my yubikey is correctly recognized by FreeBSD but not by 
+py-yubikey-manager-qt and yubioath-desktop Code:
+
+	$ dmesg
+	ugen2.2: <Yubico YubiKey OTP+FIDO+CCID> at usbus2
+	ukbd2 on uhub2
+	ukbd2: <Yubico YubiKey OTP+FIDO+CCID, class 0/0, rev 2.00/5.27, addr 2> on usbus2
+
+
+What is wrong?
+
+
+It seems you need to set pcscd to run.
+
+In order to keep pcscd run on start, 
+
+	# sysrc pcscd_enable=yes 
+
+should do the trick (you would need to reload rc.conf by simply 
+rebooting). I have encountered the issue, and confirmed it worked.
+
+also don't forget to install pcsc-tools!

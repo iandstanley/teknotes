@@ -1,0 +1,109 @@
+# Creating Access Control Lists with PAM
+
+## Problem
+
+You would like to apply an access control list (ACL) to an existing 
+service that does not explicitly support ACLs (e.g., telnetd, imapd, 
+etc.). 
+
+## Solution
+
+Use the listfile PAM module.
+
+First, make sure the server in question uses PAM for authentication, and 
+find out which PAM service name it uses. This may be in the server 
+documentation, or it may be clear from examining the server itself and 
+perusing the contents of /etc/pam.d. For example, suppose you’re dealing 
+with the IMAP mail server. First notice that there is a file called 
+/etc/pam.d/imap. Further, the result of:
+
+	# locate imapd
+	...
+	/usr/sbin/imapd
+
+shows that the IMAP server is in /usr/sbin/imapd, and:
+
+	# ldd /usr/sbin/imapd
+	libpam.so.0 => /lib/libpam.so.0 (0x40027000)
+	...
+
+shows that the server is dynamically linked against the PAM library 
+(libpam.so), also suggesting that it uses PAM. In fact, the Red Hat 8.0 
+IMAP server uses PAM via that service name and control file (“imap”).
+
+Continuing with this example, create an ACL file for the IMAP service, 
+let’s say /etc/imapd.acl, and make sure it is not world-writable:
+
+	# chmod o-w /etc/imapd.acl
+
+Edit this file, and place in it the usernames of those accounts 
+authorized to use the IMAP server, one name per line. Then, add the 
+following to /etc/pam.d/imap:
+
+	account required /lib/security/pam_listfile.so file=/etc/imapd.acl \
+	item=user sense=allow onerr=fail
+
+With this configuration, only those users listed in the ACL file will be 
+allowed access to the IMAP service. If the ACL file is missing, PAM will 
+deny access for all accounts. Discussion
+
+The PAM " listfile” module is actually even more flexible than we’ve 
+indicated. Entries in your ACL file can be not only usernames 
+(item=user), but also:
+
+    Terminal lines (item=tty)
+
+    Remote host (item=rhost)
+
+    Remote user (item=ruser)
+
+    Group membership (item=group)
+
+    Login shell (item=shell)
+
+The sense keyword determines how the ACL file is interpreted. 
+sense=allow means that access will be allowed only if the configured 
+item is in the file, and denied otherwise. sense=deny means the 
+opposite: access will be denied only if the item is in the file, and 
+allowed otherwise.
+
+The onerr keyword indicates what to do if some unexpected error occurs 
+during PAM processing of the listfile module—for instance, if the ACL 
+file does not exist. The values are succeed and fail. fail is a more 
+conservative option from a security standpoint, but can also lock you 
+out of your system because of a configuration mistake!
+
+Another keyword, apply=[ user |@ group ], limits the restriction in 
+question to apply only to particular users or groups. This is intended 
+for use with the tty , rhost, and shell items. For example, using 
+item=rhost and apply=@foo would restrict access to connections from 
+hosts listed in the ACL file, and furthermore only to local accounts in 
+the foo group.
+
+To debug problems with PAM modules, look for PAM-specific error messages 
+in /var/log/messages and /var/log/secure. (If you don’t see the expected 
+messages, check your system logger configuration. [Recipe 9.28])
+
+Note that not all module parameters have defaults. Specifically, the 
+file, item, and sense parameters must be supplied; if not, the module 
+will fail with an error message like:
+
+	Dec 2 15:49:21 localhost login: PAM-listfile: Unknown sense or sense 
+	not specified
+
+You generally do not need to restart servers using PAM: they usually 
+re-initialize the PAM library for every authentication and reread your 
+changed files. However, there might be exceptions.
+
+There is no standard correspondence between a server’s name and its 
+associated PAM service. For instance, logins via Telnet are actually 
+mediated by /bin/login, and thus use the login service. The SSH server 
+sshd uses the same-named PAM service (sshd), whereas the IMAP server 
+imapd uses the imap (with no “d”) PAM service. And many services in turn 
+depend on other services, notably system-auth. See Also
+
+See /usr/share/doc/pam-*/txts/README.pam_listfile for a list of 
+parameters to tweak.
+
+
+https://www.oreilly.com/library/view/linux-security-cookbook/0596003919/ch04s03.html

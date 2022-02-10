@@ -1,0 +1,44 @@
+https://itectec.com/superuser/linux-re-indent-shell-script/
+
+I have a large shell script that uses a mixture of spaces and tabs. I want to re-indent
+the whole file based on syntax, like Eclipse's Format. Is there a program (beautify ?) that will do this ?
+
+I'm having a hard time figuring out the logic with everything jammed together
+e.g.
+
+if [ "$CANCELLATION" ]
+then
+	while test $num -gt 0
+	do
+	if [ "$cjb" -gt 0 ]
+
+
+Solution
+
+	press Ctrl-space at the top of the file
+	move the cursor to the bottom of the file
+	press Alt-X and type untabify then return
+	press Alt-X and type indent-region then return
+
+This will get rid of tabs and indent everything properly.
+
+If you need to do this more often and do not use Emacs as your
+editor, you might want to pack it all into a script:
+
+#!/usr/bin/emacs --script
+
+(setq require-final-newline 'visit)
+
+(defun indent-files (files)
+	(cond (files
+	(find-file (car files))
+	(untabify (point-min) (point-max))
+	(indent-region (point-min) (point-max))
+	(save-buffer)
+	(kill-buffer)
+	(indent-files (cdr files)))))
+
+(indent-files command-line-args-left)
+
+;; EOF ;;
+

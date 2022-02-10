@@ -1,0 +1,134 @@
+USING A YUBIKEY AS A SECOND FACTOR FOR LUKS
+===========================================
+
+from:  https://infosec-handbook.eu/blog/yubikey-luks
+
+LUKS is a platform independant specification for hard disk encryption.
+We can add 2nd factor auth to an existing LUKS partition. Technically
+LUKS sends a challenge to the Yubikey and he Yubikey send an expected
+repsonse to LUKS and the partition is decrypted.
+
+You need:
+
+	root access
+	1 free LUKS slot
+	Yubikey with a free slot
+	the package 'yubikey-luks' 0.5.1+
+
+1. Use 'fdisk -l' to identify the name of your partition.
+
+2. LUKS offers 8 key slots for 8 different passwords (or keys in
+files)
+
+	$ sudo cryptsetup  luksDump /dev/<partition>
+
+To show all 8 key slots (either 'in use' [enabed], or 'free'
+[disabled]).
+
+3. Generate a new, strong challenge password.
+
+4. Configure your Yubikey
+
+	$ ykpersonalize -2 -ochal-resp -ochal-hmac \
+		-o hmac-lt64 -oserial-api-visible
+
+5. Customize the configuration file of Yubikey-LUKS
+
+	$ sudo vi /etc/ykluks.cfg
+
+Here you can setup 3 different values.
+
+(i) "WELCOME-TEXT="     The text visible on the screen when you
+			have to insert your Yubikey and provide
+			your password.  Only useful as a prompt for
+			humans.
+
+(ii) "CONCATENATE="     Changes the key written to the LUKS key
+			slot
+
+			=0 (default) only the response of the
+			   Yubikey is written to the LUKS key slot
+
+			=1 The challenge password + the Yubikey
+			response are written to the LUKS slot eg.
+			'challengepassword01234567890ABCDEF'
+
+(iii) "HASH="           This option changes whether the cleartext
+			password or it's has value is used as a
+			challenge for the Yubikey
+
+			=0 (default) challenge in cleartext =1
+			challenge is a hash value (SHA256) of your
+			challenge password
+
+6. Write your configuration to a free LUKS slot and set your
+passwords.
+
+	$ sudo yubikey-luks-enroll -d /dev/partition -s freekeyslot
+
+After entering the command the tool needs two passwords
+
+(i)  enter your Challenge TWICE
+(ii) finally enter AN EXISTING LUKS password once (a previously
+     used passphrase
+
+     eg. the backup password.
+
+If you want to reconfigure a key slot that is already in use, append
+the  option '-e' to clear the LUKS slot before setting up the new
+Yubikey configuration.
+
+7. Modify your /etc/crypttab file to use the Yubikey
+
+	$ sudo vi /etc/crypttab
+
+and add 
+
+	keyscript=/usr/share/yubikey-luks/ykluks-keyscript
+
+Look for a line similar to 
+
+	cryptroot /dev/partition ...
+	luks, ...
+
+and add the keyscript phrase above after "luks,"
+
+Save the file and close editor.
+
+	$ sudo update-initramfs -u
+
+	  update-initramfs: Generaating /boot/initrd.img-5.3.0-kali3-amd64
+
+8. Reboot your device and test your passwords. You should be able
+to enter any passphrases that were previously configured or use the
+challenge response from the connected Yubikey.
+
+OPTIONAL STEP 1:	Enable and start the module yubikey-luks-suspend
+
+			This module locks your LUKS partitions and
+			wipes keys from memory on suspend
+
+	$ sudo systemctl enable yubikey-luks-suspend
+	$ sudo systemctl start yubikey-luks-suspend
+
+OPTIONAL STEP 2:	Set or modify other LUKS keys
+
+	Add a LUKS key:
+
+	Â$ sudo cryptsetup luksAddKey /dev/partition -s freekeyslot
+
+	Modify a LUKS key:
+
+	$ sudo cryptsetup luksChangeKey /dev/partition -s keyslotinuse
+
+	Remove a LUKS key:
+
+	$ sudo cryptsetup luksRemoveKey /dev/partition
+
+	Alternatively just trash the keyslot:
+
+	$ sudo cryptsetup luksKillSlot /dev/partition -s keyslotinuse
+
+WARNING: There is a command called luksErase which immediately WIPES
+ALL keyslots making the partition unusable.
+

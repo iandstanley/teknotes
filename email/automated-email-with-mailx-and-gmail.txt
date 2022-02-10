@@ -1,0 +1,50 @@
+# mailx – Send automated Linux email with gmail
+
+When something on my Linux servers needs to send email (WordPress, 
+Nagios, cron scripts, etc), I use mailx. With the spam filters everyone 
+has a lot of my automated emails haven’t been reaching their 
+destination. I’ve done the SPF rules and making sure my forward matches 
+my reverse DNS lookups; even have done DKIM. Can’t seem to find a 
+reliable option with sending email from the command line without it 
+getting flagged for spam.
+
+The fix was for me to use mailx with a gmail Account profile. This way 
+any email sent from the system will get sent through the gmail servers. 
+Since I host my email domain with GSuite, this was an easy win. I simply 
+made a noreply mailbox, setup 2 factor authentication on it and then 
+used a password for less secure apps. The rest is pretty simple!
+
+## Install mailx
+
+I’m performing this install on Ubuntu 16.04
+
+	sudo apt-get install heirloom-mailx
+
+Create the gmail account for mailx
+
+Add the following information into ~/.mailrc with nano ~/.mailrc
+
+	account gmail {
+	    set smtp-use-starttls
+	    set ssl-verify=ignore
+	    set smtp-auth=login
+	    set smtp=smtp://smtp.gmail.com:587
+	    set from="noreply@yourdomain.com(Your Real Name)"
+	    set smtp-auth-user=noreply@yourdomain.com
+	    set smtp-auth-password=your_less_secure_apps_password
+	    set ssl-verify=ignore
+	}
+
+Change the settings above to match your requirements. Save and send 
+yourself a test message with:
+
+	echo -e "Mail body text" | mailx -A gmail -s "Mail subject" your@email
+
+You should receive your email soon from your gmail account!
+
+For automated system-wide emails to be sent correctly you need to login 
+as root. You can sudo su to get access as root and then repeat this 
+process.
+
+This has helped keep my automated emails from being flagged as spam. 
+Hope this helps you too!

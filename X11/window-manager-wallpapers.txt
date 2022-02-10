@@ -1,0 +1,18 @@
+WINDOW MANAGER WALLPAPERS
+
+1.      Install 'feh'
+
+2.      Add to your .xinitrc
+
+	~/.fehbg
+
+3.      Create the file ~/.fehbg containing:
+
+#!/bin/sh feh --no-fehbg --bg-fill \
+'/usr/home/ian/.wallpapers/star-trek/startrek04.jpeg'
+
+
+
+An alternative is to look at xwallpaper which adds to your .xprofile
+
+

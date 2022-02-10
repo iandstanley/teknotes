@@ -1,0 +1,36 @@
+
+# XORG - NO 3 BUTTON MOUSE
+
+
+What is your options for middle clock?
+
+(1)     In most X11 programs, ShiftInsert should work -- it pastes
+	from the same source "PRimARY" selection that XTerm copies
+	to.
+
+	If you need to paste to Firefox or Chromium you will need
+	a program that synchronises both selections (such as
+	userbase.kde.org/Klipper, Parcellite/Clipit for Gnome, or
+	loliclip [generic] ... search for clipboard manager).
+
+(1a)    Alternatively, configure XTerm to copy to the 'CLIPBOARD'
+	selection instead:
+
+	$ vi ~/.Xresources
+
+		XTerm*vt100*translations:	#override \n\
+		Shift <key> Delete: insert-selection(SELECT) \n\
+		Shift Ctrl <key> C: select-end(CLIPBOARD) \n\
+		Shift Ctrl <key> V: insert-selection(CLIPBOARD) \n\
+		Shift Ctrl <key> N: spawn-new-terminal() \n\
+
+		XTerm*selectToClipboard: true
+
+	$ xrdb -merge ~/.Xresources
+
+
+(2)     Clock BOTH mouse buttons, of configure other key combo in
+	.Xresources
+
+
+	

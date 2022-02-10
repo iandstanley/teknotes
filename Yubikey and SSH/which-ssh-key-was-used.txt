@@ -1,0 +1,235 @@
+# Can I find out which ssh key was used to access an account?
+
+https://unix.stackexchange.com/questions/15575/can-i-find-out-which-ssh-key-was-used-to-access-an-account#15586
+
+Is it possible to find out which ssh key was used to access an account? 
+I have an account on a server that I let several (trusted!) people have 
+access to via ssh. I'd find it useful to be able to know who logged in 
+and when. I have root access so I can look at the logs, but there 
+doesn't seem to be anything there. Is there some configuration switch 
+that will put some way of identifying the key in the logs?
+
+----
+
+Is it possible to find out which ssh key was used to access an account? 
+I have an account on a server that I let several (trusted!) people have 
+access to via ssh. I'd find it useful to be able to know who logged in 
+and when. I have root access so I can look at the logs, but there 
+doesn't seem to be anything there. Is there some configuration switch 
+that will put some way of identifying the key in the logs? There's an 
+OpenSSH feature request about this: Please add pubkey fingerprint to 
+authentication log message:
+
+	
+	As a pubkey is effectively a multiplexing of multiple sysadmins on a 
+	single user it would be very nice to have the pubkey fingerprint 
+	written per default in the authentication log line.
+
+	Most of the time this is the reason pubkeys are forbidden for root, 
+	as it's not clear who logged in.
+
+	There where patches for this at various companies though i've never 
+	seen them beyond the log lines which included the pubkey 
+	fingerprint.
+
+
+		It's already there, you just need to set LogLevel=verbose.  See 
+		auth2-pubkey.c:
+
+		verbose("Found matching %s key: %s", key_type(found), fp);
+
+		$ sudo /usr/local/sbin/sshd -De -p 2022 -o loglevel=verbose
+		Found matching RSA key: [fingerprint]
+		Accepted publickey for dtucker from 127.0.0.1 port 43578 ssh2
+
+	Yes i know, though would it be possible to have the pubkey 
+	fingerprint on the same log line
+
+	eg. like username [ssh-pubkey fingerprint]
+
+	It's a bit awkward to have to parse multiple lines including keeping 
+	context (the pid) to see if a user possible logged in or not :/ (and 
+	most scripts just do it wrong).
+
+	The fact that it's a multi line log entry makes it more difficult to 
+	parse. This is a concern for everyone doing log analysis (with a 
+	SIEM for example). If I turn on the verbose option, I break the 
+	existing parsers for openSSH logs. All those are usually single line 
+	events. This is a multi-line event. Besides using the verbose option 
+	makes sshd a lot more chatty, having the key fingerprint on the log 
+	in line would be a lot nicer.
+
+		As of openssh-6.3 it will look like this:
+
+		Jul 12 11:04:02 host sshd[1409]: Accepted publickey for djm from 
+		172.16.32.11 port 41228 ssh2: RSA 
+		79:fb:ff:ea:15:56:f7:03:b5:4a:e1:04:e2:79:84:ac
+
+		There is a bit more information printed for certificates too.
+
+
+If you go into the sshd config file (usually /etc/ssh/sshd_config) and 
+change the LogLevel directive to VERBOSE:
+
+	LogLevel VERBOSE
+
+...you can see something like this in the logs:
+
+    Jun 24 22:43:42 localhost sshd[29779]: Found matching RSA key: 
+    d8:d5:f3:5a:7e:27:42:91:e6:a5:e6:9e:f9:fd:d3:ce
+    
+	Jun 24 22:43:42 localhost sshd[29779]: Accepted publickey for caleb 
+	from 127.0.0.1 port 59630 ssh2
+
+
+	
+For printing fingerprint of current session: 
+
+	sed -ne "/sshd.$PPID.:.*matching DSA key/{s/^.* //g;p;q}" /var/log/auth.log
+
+This will only list the fingerprint. If you want to get fingerprint, you can run 
+
+	ssh-keygen -E md5 -lf /root/.ssh/authorized_keys
+
+
+
+## Some scripts for proper installation
+
+There is a full useable method to track/log ssh connections by key with 
+expention to username. Introduction
+
+In addition to @Caleb's answer, I would like to share some little tricks 
+there:
+
+Note: I'm working on Debian 6.0.
+
+### Server installation
+### SSHD Log level
+
+First ensuring that server config has sufficient logging level:
+
+as root, this will set and active verbose logging:
+
+	sed '/^[^#]*LogLevel.*\(QUIET\|FATAL\|ERROR\|INFO\)/{s/^/# /;h;s/$/\nLogLevel VERBOSE/};${p;g;/./!{iLogLevel VERBOSE'$'\n;};D}'  -i /etc/ssh/sshd_config
+
+Could be written:
+
+	sed '
+	     /^[^#]*LogLevel.*\(QUIET\|FATAL\|ERROR\|INFO\)/{
+	        s/^/# /;
+	        h;
+	        s/$/\nLogLevel VERBOSE/
+	    };
+	    ${
+	        p;
+	        g;
+	        /./!{
+	            iLogLevel VERBOSE
+	        };
+	        D
+	    }'  -i /etc/ssh/sshd_config
+
+or in a sed script:
+
+	#!/bin/sed -f
+	/^[^#]*LogLevel.*\(QUIET\|FATAL\|ERROR\|INFO\)/{
+	    s/^/# /;
+	    h;
+	    s/$/\nLogLevel VERBOSE/
+	};
+	${
+	    p;
+	    g;
+	    /./!{
+	        iLogLevel VERBOSE
+	    };
+	    D
+	}
+
+Which could be run as:
+
+	patchSshdConfigLogLevel.sed -i /etc/ssh/sshd_config
+
+Then for activating this:
+
+	service ssh restart
+
+## Syslog: making fingerprints user readable
+
+Now take fingerprints in user readable file:
+
+	echo ':msg, regex, "Found matching .* key:" -/var/log/sshdusers.log' \
+	    > /etc/rsyslog.d/ssh_key_user.conf 
+	echo ':msg, regex, "Accepted publickey for" -/var/log/sshdusers.log' \
+	    >> /etc/rsyslog.d/ssh_key_user.conf 
+
+	service rsyslog restart
+
+Try to (re-)login from ssh to ensure new file sshdusers.log is created (and contain something), then
+
+	chmod 644 /var/log/sshdusers.log
+
+Last step: making them rotate.
+
+Add in /etc/logrotate.d/:
+
+	cat >/etc/logrotate.d/sshdusers <<eosshdusers
+	/var/log/sshdusers.log {
+	  rotate 3
+	  daily
+	  compress
+	  missingok
+	  postrotate
+	        touch /var/log/sshdusers.log
+	        chmod 644 /var/log/sshdusers.log
+	        /usr/lib/rsyslog/rsyslog-rotate
+	  endscript
+	  notifempty
+	}
+	eosshdusers
+
+## Usage
+
+This will print current sessions's fingerprint:
+
+	sed -ne "/sshd.$PPID.:.*matching .SA key/{s/^.* //g;h};\${x;p}" /var/log/sshdusers.log
+
+	sed -ne "/sshd.\($(($(ps ho ppid $PPID)))\|$PPID\).:.*\(Accepted publickey\|matching .SA key\)/{s/^.* //g;h};\${x;p}" /var/log/sshdusers.log
+
+## Plug-in for .bashrc
+
+And finally, there is a little add-on to put at the end of your /etc/bash.bashrc or user's .bashrc :
+
+	ssh_oPwd=$OLDPWD
+	ssh_oUmask=$(umask)
+	umask 077
+	ssh_tempdir=$(mktemp -d /tmp/ssh-id-XXXXXXX)
+	cd $ssh_tempdir || exit 1
+
+	ssh_crtFp=$(
+	    sed -ne "/sshd.\($(($(ps ho ppid $PPID)))\|$PPID\).:.*\(Accepted publickey\|matching .SA key\)/{s/^.* //g;h};\${x;p}" /var/log/sshdusers.log
+	)
+	for ((ssh_i=1;ssh_i<=$(wc -l <$HOME/.ssh/authorized_keys);ssh_i++));do
+	    export ssh_line="$(sed -ne ${ssh_i}p <$HOME/.ssh/authorized_keys)"
+	    echo "$ssh_line" >tempKey
+	    export ssh_lFp=($(ssh-keygen -l -f tempKey))
+	    if [ "${ssh_lFp[1]}" == "$ssh_crtFp" ] ;then
+	        export SSH_KEY_USER=${ssh_line##* }
+	        break
+	      fi
+	  done
+
+	cd $OLDPWD
+	OLDPWD=$ssh_oPwd
+	rm -fR $ssh_tempdir
+	umask $ssh_oUmask
+	unset ssh_lFp ssh_line ssh_i ssh_crtFp ssh_tempdir ssh_oUmask ssh_oPwd
+
+so after re-login from SSH, you will see:
+
+	set | grep ^SSH
+	SSH_CLIENT='192.168.1.31 43734 22'
+	SSH_CONNECTION='192.168.1.31 43734 192.168.1.2 22'
+	SSH_KEY_USER=user@mydesk
+	SSH_TTY=/dev/pts/2
+

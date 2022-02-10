@@ -1,0 +1,88 @@
+
+# OpenBSD encrypted disk install
+
+## Boot from USB
+
+Boot to installation program:
+
+	(I)nstall, (U)pgrade, (A)utoinstall or (S)hell?
+
+Enter 's' to get a root shell
+
+
+## Create disk device
+
+You will usually have a disk sd0 (or on an older machine may be a
+wd0).
+
+You can check by running one of:
+
+	# dmesg | grep wd0
+	# dmesg | grep sd0
+
+You should seean entry for your harddisk that matches your BIOS
+results
+
+	# cd /dev
+	# sh MAKEDEV wd0
+
+Then we randomize the bytes on the WHOLE drive to disguise how much
+encrypted data is on the disk.
+
+	# dd if=/dev/urandom of=/dev/rwd0c bs=1m
+	                               ^--------- for wd0 disk
+
+This will take some time even on smaller disks. wait()
+
+
+## Write MBR to disk
+
+	# fdisk -iy wd0
+
+
+## Label the disk
+
+	# disklabel -E wd0
+	Label editor
+	wd0>			a a
+	offset: [64]		<enter>
+	size: [625137281]	*
+	FS Type: [4.2BSD]	RAID
+	wd0*>			w
+	wd0>			q
+	No label changes
+	#
+
+Disklabel says no label changes because we have already written
+them to disk.
+
+
+## Create the encrypted drive
+
+	# bioctl -c C -l wd0a softraid0
+
+	New Passphrase:
+	Re-type passphrase:
+
+	sd1: at scsibus1 targ 1 lun0 <OPENBSD, SR CYPTO, 006>
+	sd1: 385242 MB, 512 bytes/sector, 625136753 sectors
+	softraid0: CRYPTO volume attached as sd1.
+	#
+
+
+## Create actual drive on sd1
+
+	# cd /dev
+	# sh MAKEDEV sd1
+	# dd if=/dev/zero of=/dev/rsd1c bs=1m count=1
+	  1+0 records in
+	  1+0 records out
+	  1048576 bytes transferred in 0.112 secs
+	# exit
+
+
+## Now our drive is encrypted we can run the install:
+
+	(I)nstall, (U)pgrade, (A)utoinstall or (S)hell?
+
+

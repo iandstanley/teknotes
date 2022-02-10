@@ -1,0 +1,217 @@
+# Encryption Part 4 - Sign Git Commits and SSH with PIV
+
+In part three I detailed how to create a secure environment and
+then how to create a master GPG key and then create signing,
+encrypting, and authentication subkeys that exist only on the smart
+card. I then detailed how to install Keybase and then import this
+externally generated PGP public key.
+
+In the fourth and final installment of this encryption series, I
+will explain:
+
+* How you can now use this new PGP key to sign git commits
+* How to import public keys & smart card stubs to another computer
+* How to use the smart card for SSH authentication using PIV
+
+## Using GPG to Sign Git Commits
+
+It is very easy to spoof who made a commit with git, by simply
+changing the email. If you were to then push this commit to GitHub,
+GitHub would then associate that commit with the other account as
+users are only identified by an email address in Git. Consider what
+would happen if a bad actor pushed a security hole into the source
+code of your team's software project and made it look like you added
+that code. That wouldn't be very good.
+
+So how is this rectified? Well, you can make it a practice to always
+sign your git commits. If your private key exists only on your smart
+card, making a push to the git server would require (a) inserting
+the smart card, and (b) unlocking it with the PIN. The smart card
+locks after three unsuccessful PIN attempts so even if the smart
+card were stolen, and your git login details were stolen and the
+stolen key was not yet revoked it would be impossible to brute force
+the PIN to unlock the card. That is a solid amount of security!
+
+To use our newly installed GPG key to sign all git commits it is
+quite simple:
+
+	$ gpg --list-secret-keys --keyid-format LONG
+	/Users/brandon/.gnupg/pubring.kbx
+	---------------------------------
+	sec#  rsa4096/E870EE00 2018-05-01 [SC]
+	      Key fingerprint = <FINGERPRINT>
+	uid                 [ultimate] Jim Smith <your@email.com>
+	ssb>  rsa4096/F9E3E72E 2018-05-01 [E]
+	ssb>  rsa4096/F9E3E725 2018-05-01 [S]
+	ssb>  rsa4096/F858E768 2018-05-01 [A]
+
+	$ git config --global user.signingkey E870EE00
+	$ git config --global commit.gpgsign true
+
+Now you can import the key into GitHub:
+
+	open https://github.com/settings/keys
+
+## Click "New GPG key"
+
+	keybase pgp export | pbcopy
+
+You can now paste the key and save.
+
+You should now be able to sign commits from the command line. You
+will be asked to insert the smart card key and enter the PIN. The
+PIN will be cached until the key is removed so you don't have to
+continually enter it.
+Sign Commits from Tower
+
+If you use Tower for git operations there are a few extra steps
+required:
+
+Add no-tty to your GPG configuration, to allow Tower to use it:
+
+	echo no-tty >> ~/.gnupg/gpg.conf
+
+And then configure Tower to use the correct gpg executable:
+
+	git config --global gpg.program $(which gpg)
+
+## Using GPG
+
+Enabling no-tty is necessary for Tower to work with gpg signing.
+Unfortunately, this breaks gpg commands in the command line. If you
+have an issue with "no terminal at all requested," comment out the
+line no-tty from ~/.gnupg/gpg.conf. Once you are done performing
+gpg operations in the command line you will have to uncomment the
+line again for it to function in Tower as usual.  Use Another
+Computer
+
+Keybase makes it really easy to manage your public key. To use gpg
+on a second computer, ensure GPGTools and Keybase is installed and
+then run these commands:
+
+	keybase pgp export | gpg --import
+
+Now your public key is in your gpg keychain. Now you need to import
+the stubs from the smart card. Simply insert it and run:
+
+This will generate the stubs required on the computer. You can now
+repeat the steps above to configure git commits on this second
+machine.
+
+## SSH with PIV
+
+While technically it's certainly possible to authenticate SSH
+sessions using GPG, gpg-agent does not always play well with
+ssh-agent.
+
+Using PIV for authenticating SSH remains the recommended solution.
+Only RSA keys are supported so we can't use ECC for authentication.
+The 4096 key size is not supported by PIV so we must use RSA2048.
+This should be sufficient for most cases.
+
+Install yubico-piv-tool:
+
+	$ brew install yubico-piv-tool
+
+Note that Homebrew must be installed first for this to work.
+
+Generate a private key using the management key:
+
+	$ yubico-piv-tool -s 9a -a generate -k --pin-policy=once \
+	--touch-policy=never --algorithm=RSA2048 -o public.pem
+
+Create a self-signed certificate. I could have made a certificate
+signing request to be signed by an internal CA but this should be
+sufficient. The only use for this self-signed certificate is to
+make the PIV/PKCS#11 lib happy:
+
+	$ yubico-piv-tool -a verify-pin -a selfsign-certificate \
+	-s 9a -S '/CN=ssh/' --valid-days=1000 -i public.pem \
+	-o cert.pem
+
+Enter your normal Yubikey PIN.
+
+Import the self-signed certificate:
+
+	yubico-piv-tool -k -a import-certificate -s 9a -i cert.pem
+
+Enter the Management key
+
+Install Opensc and save its location to a variable:
+
+	brew install opensc
+	export OPENSC_PK=$(brew --prefix opensc)/lib/opensc-pkcs11.so
+
+Now export the file, and add a comment to better identify it:
+
+	ssh-keygen -D $OPENSC_PK -e > yubikey-ssh.pub
+	vi yubikey-ssh.pub
+
+Note: the above command will export all keys stored on the Yubikey
+device. So if you have multiple keys you will need to edit the file
+to include only the public key that is associated with the private
+key we just generated.
+
+Once in the editor, you can type A, followed by the comment, followed
+by Esc ZZ to exit and save.
+
+View the random art for fun:
+
+	ssh-keygen -lv -f yubikey-ssh.pub
+
+To check the slot status (optional):
+
+	yubico-piv-tool -a status
+
+Move the public key to the authorized_keys file on the server
+
+You could copy the file public key id to your clipboard in the
+terminal quite easily:
+
+	cat yubikey-ssh.pub | pbcopy
+
+If you are moving it to an unRAID server do the following:
+
+    Append the public key file to /boot/config/ssh/root.pubkeys
+
+    Copy /etc/ssh/sshd_config to /boot/config/ssh
+
+    Modify /boot/config/sshd_config to set the following line:
+
+	AuthorizedKeysFile      /etc/ssh/%u.pubkeys
+
+If you are using a more traditional Linux server, the file to append
+should be ~/.ssh/authorized_keys
+
+Authenticate to the server with the new key
+
+You can verify that you can log in to the server with the new key
+that exists on the smart card
+
+	ssh -I $OPENSC_PK user@remote.example.com
+
+This is pretty awesome. Now let's setup ssh-agent so we don't need
+to keep typing the PIN every time we connect to a new server. The
+PIN will be cached by ssh-agent after the first PIN entry as long
+as the smart card remains connected to your system.
+Make ssh-agent work in MacOS 10.12
+
+I found the solution to this issue here:
+
+	rm /usr/local/lib/opensc-pkcs11.so
+	cp -a $OPENSC_PK /usr/local/lib/opensc-pkcs11.so
+	ssh-add -s /usr/local/lib/opensc-pkcs11.so
+
+I would recommend setting that last command as an alias. This way,
+it is as simple as typing loadkey after restart or inserting the
+key. In my bash profile I have:
+
+	alias loadkey='ssh-add -s /usr/local/lib/opensc-pkcs11.so'
+	alias unloadkey='ssh-add -e /usr/local/lib/opensc-pkcs11.so'
+
+You can now confirm that the correct public key has been added:
+
+Now to log in to the server you simply type an ssh command as usual:
+
+	ssh user@remote.example.com
+

@@ -1,0 +1,115 @@
+
+# XTerm as your daily driver
+
+XTerm has 3 menus with the mouse clicks and control key.
+
+$ vi .Xresources
+
+
+	!## enable a color supporting XTerm 
+	XTerm.termName	xterm-256-color
+
+	!## set XTerm window size
+	XTerm*VT100.geometry 130x50
+
+	XTerm*faceName: DejaVu Sans Mono REgular
+	XTerm*faceSize:	14
+
+	!## VT Font Name 
+	XTerm*faceSize1:	8
+	XTerm*faceSize2:	10
+	XTerm*faceSize3:	12
+	XTerm*faceSize4:	16
+	XTerm*faceSize5:	22
+	XTerm*faceSize6:	24
+
+
+$ xrd -load ~/.Xresources
+
+$ vi .Xresources
+
+	XTerm*vt100.scrollbar:	false
+	!## don't scroll with new input
+	XTerm*scrollTtyOutput:	false
+
+	!## scroll Shift-PgUp, Shift-PgDown or mouse-wheel by default
+
+	XTerm*savelines:	15000
+
+	! Resume Trailing Spaces
+	XTerm*trimSelection:	true
+
+	! keybindings
+	XTerm*vt100.translation:	#override \n\
+
+	Ctrl <key> - : smaller-vt-font() \n\
+	Ctrl <key> + : larger-vt-font() \n\
+	Ctrl <key> 0 : set-vt-font() \n\
+	Ctrl Shift <key> c : copy-se;ection(CLIPBOARD) \n\
+	Ctrl Shift <key> v : insert-selection(CLIPBOARD) \n\
+
+	! color theme
+	! (see github.com/olstenlark/urx64-xterm-snazzy/ )
+	XTerm*underlineColor:	#eff0eb
+	!black
+	XTerm*color0:
+	XTerm*color8:
+	! red
+	XTerm*color1:
+	XTerm*color9:
+	! green
+	XTerm*color2:
+	XTerm*color10:
+	yellow
+	XTerm*color3:
+	XTerm*color11:
+	! blue
+	XTerm*color4:
+	XTerm*color12:
+	! magenta
+	XTerm*color5:
+	XTerm*color13:
+	! cyan
+	XTerm*color6:
+	XTerm*color14:
+	! white
+	XTerm*color7:
+	XTerm*color15:
+
+	XTerm*title:	XTerminal
+	XTerm*background:	#5e81ac
+	XTerm*foreground:	#033303
+
+	XTerm*background:	black
+	XTerm*foreground:	green
+
+	! width of scrollbar ?
+	XTerm*thickness:	6
+
+
+	! See
+	!	wiki.archlinux.org/index.php/XTerm
+	!	lukas.zapletalovi.com/203/07/hidden-gems-of-xterm.html
+	!	futurile.net/2016/06/14/xterm-setup-and-truetype-font-configuration
+	!	futurile.net/2016/06/15/xterm-256color-themes-molokai-terminal-theme
+	!	github.com/gotbletu/shownotes/blob/master/xterm-xresources.md
+	
+
+	! disable fullscreen hotkey (if using weechat, mc ... etc)
+	XTerm*fullscreen: never
+
+	! enable alt key
+	XTerm*metaSendsEscape:	true
+
+	! fix backarrowKey (for Emacs)
+	XTerm.vt100.backarrowKey: false
+
+	XTerm.ttyModes:		erase	^?
+
+	! scarygliders.net/2011/12/01/customize-xterm-the-original-and-best-terminal/
+
+	! gotbletu has themes in config 
+
+
+
+

@@ -1,0 +1,217 @@
+
+CLANG TOOLING
+"""""""""""""
+
+
+Common tools:
+
+* clang compiler frontend	--\__ static 
+* clang static analyser 	--/   analysis
+* clang-format			coding style
+* clang-tidy			static analysis/linter/refactoring
+* scan-build			static analyser
+* clazy				static analysis, Qt centric
+* Clang sanitizers		dynamic analysis
+
+
+CLANG COMPILER
+''''''''''''''
+
+Clang also parses doxygen style comments:
+
+	@param foo .......
+	@return ..........
+
+and detects where the docs != the function declarations.
+
+	-Weverything is too noisy and shouldn't be enabled by default
+
+	-Wall
+	-Wextra
+
+	Plus many familiar options like pedantic
+
+
+CLANG STATIC ANALYZER
+'''''''''''''''''''''
+
+* Takes a little more timeand looks deeper than clang compiler.
+Slower than compilation an dhigher rate of false positives.
+* Runs from shell (scan-build) results in a webview or text
+
+Checkers: 	core checkers; c++ checkers; dead code checkers; 
+		security checkers; unix checkers
+
+		For a full list:
+
+		$ scan-build -h
+
+
+
+$ clang++ --analyze -Xanalyzer -analyzer-output=text \
+	clang_sa_warnings 01.cpp
+
+Also would choose -analyzer-output=html
+
+We can use xdg-open to open. We can also use scan=view.
+
+If you run scan-build on whole project you can also set an index
+page to the results.
+
+
+	cd to build directory
+	clean build directory
+
+	$ scan-build cmake /path/to/src
+	$ scan-build make
+
+	This compiles and analyzes source code
+
+NB      scan-build overrides cc and ccx to use a fake compiler. The
+	fake compiler then executes original compiler and then
+	static analyzer
+
+
+
+Most useful scan-build options:
+
+	-h list available options & checkers
+	-enable-checker [checker-name]
+	-o <html output dir>
+
+
+
+CLANG-TIDY
+""""""""""
+
+Static analysis, linter and refactoring.
+
+* detect bug prone coding patterns
+* enforce coding conventions
+* advocate modern maintainable code
+* easy to extend w/ custom checks => enforce company code checks
+
+So we have Clang, Clang SA and Clang-tidy
+
+* clang
+	* if check is generic enough
+	* targets buggy code 
+	* low false positives
+
+* Clang SA
+	* if control-flow analysis needed
+
+* Clang-tidy
+	* inter style checks
+	* coding style checks
+	* code readability checks
+
+Clang-tidy has several builtin checks
+
+	$ clang-tidy --list-checks -checks='*'
+
+Clang-tidy can run checks from Clang SA and is also extensible.
+
+Checks categories include:
+	* cert		related to CERT secure coding guidelines
+	* performance
+	* readability
+
+
+	$ clang-tidy clang-tidy-warnings 01.cpp
+
+
+To run across whole project:
+
+* PRE-REQUISITE needs a compilation database in build dir
+* clang-tidy is single threaded. Needs a wrapper script to run in
+parallel
+
+	$ run-clang-tidy.py
+
+	after running 
+
+	$ cmake -DCMAKE_EXPERT_COMPILE_COMMANDS=ON
+
+
+CMake can also generate the compilation database automatically.
+
+	$ cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+	This creates a json file
+
+
+Clang-tidy can auto-modernize code:
+
+	$ clang-tidy checks=*.modernize clang-tidy modernize \
+		01.cpp --fix
+
+This can be done over a whole code base with run-clang-tidy. Edits
+are deferred until every file has been parsed.
+
+
+Cmake can generate the compilation database by default.
+
+For build systems which don't generate one use bear(1):
+	$ bear make
+or write your own.
+
+Also see kdab.com/tag/clang/
+
+
+
+CLAZY
+"""""
+
+Clazy: 
+	* finds common bugs and performance pitfalls in Qt and C++
+	code
+	* intro kdab.com/use_static_analysis_improve_performance
+	* github.com/KDE/clazy
+	* integrated into QtCreator IDE
+
+Clang-tidy is for C++
+
+Clazy is for Qt/C++
+
+Clazy can fix automatically some issues.
+
+
+
+CLANG-FORMAT
+""""""""""""
+
+Clang-format can:
+
+	* automate code formatting
+	* supports different style guides
+	* fine tuning of formatting rules
+	* uses clang lexer
+	* can be parameterised via cli or config file
+	* less configurable than other formats for fine tuning eg
+	uncrustify
+	* offers script for patch reformatting (clang-format-diff.py)
+
+	eg if you have a pull request or a patch, you can run
+	clang-format-diff.py on the patch to bring it into style.
+
+
+	$ clang-format style='Mozilla' -i clanf-format example.cpp
+
+
+
+CLANG SANITIZERS
+""""""""""""""""
+
+	* address memory error detection
+	* thread detect data races
+	* undefined check code for undefined behaviour
+	* and more with mixed maturty level
+	* fast -- address sanitizer only 2-3x slower than native
+	code (cf vagrant 40x slower)
+	* inserts into source code directives
+
+
+
+
+

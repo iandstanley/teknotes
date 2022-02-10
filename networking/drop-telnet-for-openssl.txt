@@ -1,0 +1,82 @@
+DROP TELNET FOR OPENSSL
+=======================
+
+A basic usage for telnet to check a port connection is like this:
+
+$ telnet mail.example.com 25
+  Trying 98.76.54.32
+  Connected to example.com
+  Escape character is '^]'
+
+However, this will not work properly for SSL connections.
+
+Instead invoke:
+
+$ openssl s_client -connect example.com:80
+  CONNECTED (00000003)
+  14036897352512: error 14081908: SSL [...]
+  no peer certificates available.
+  No client certificate CA names sent
+  SSL handshake has read 5 bytes and written 309 bytes
+  Verification: OK
+  New, (NONE), Cipher is (NONE)
+  Secure Renegotiation is NOT supported
+  Compression: NONE
+  Expansion: NONE
+  No ALPN negotiated
+  Early data was not sent 
+  Verify return code: 0 (OK)
+$ 
+
+This is little more than a targetted ping.
+
+
+With encrypted ports on a webserver:
+
+$ openssl s_client -connect example.com:443 --showcerts
+  [....]
+  0080  - 52 cd bd 95 3d ......		R...=.-?
+  0090  - ..................... 	........
+  00a0  - .....................		........
+  00b0  - .....................		........
+
+  Start time: 1619661100
+  Timeout: 7200 (Dec)
+  Verify return code: 0 (OK)
+  Exnteded master secret: no
+  Max Early Data: 0 
+  .....
+  read R BLOCK
+
+If you act properly you can send HTTP signals to the server:
+
+  [.....]
+  GET / HTTP/1.1
+  HOST: example.com
+
+and press 'return' TWICE to get example.com/index/html
+
+
+ON AN EMAIL SERVER
+------------------
+
+You will need your test username and password BASE64 encoded:
+
+$ perl -MMIME::BASE64 -e 'print encode_base64("username");'
+$ perl -MMIME::BASE64 -e 'print encode_base64("password");'
+
+$ openssl s_client -starttls smtp -connect email.example.com:587
+> ehlo example.com
+> auth login
+
+(paste in your BASE64 encoded username and password here)
+
+> mail from: noreply@example.com
+> rcpt to: admin@example.com
+> data 
+> subject: Test 001
+This is a test email
+.
+>quit
+
+

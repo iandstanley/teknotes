@@ -1,0 +1,139 @@
+
+
+			MEMORY ALLOCATION
+
+
+There are 2 main ways in which memory is allocated and organised
+in C: the stack and the heap.
+
+Memory is effectively an ordered list of locations to store data
+(numbers) that each have a unique sequential memory address.
+
+
+REGULAR variables are stored on the Stack. 
+
+- As our program needs more memory for variables, the data is
+  'stacked' in order right next to the existing memory allocated
+  for existing variables.
+
+	memory		STACK		int main() {
+	address
+
+	2000		a=4		int a = 4;
+	2001		b=7		int b = 7;
+	2002		c=8		int c = 5 + b - a; }
+					
+		|
+		|
+		v
+
+If C was in a function then it would be added to the stack when we
+enter the function and removed when we return from the function.
+
+
+
+                          STACK VS HEAP
+
+
+The STACK is ordered and has a fixed size that doesn't change.
+
+	eg.	floats = 4 bytes, doubles = 8 bytes
+		arrays = sizeof(elements) * no_of_elements
+
+Exactly when & what order the things are plaed on the stack depends
+on how functions are called and when they return.
+
+When a function is called, its local variables are placed on the
+stack, and removed when they return.
+
+- The stack also includes other information such as memory locations
+  for return values etc.
+
+Things on the HEAP can have different sizes and those sizes can change.
+
+The HEAP is more adhoc and less ordered.
+ 
+- The HEAP is for dynamic allocation of memory
+
+- We can request blocks of memory that are different sizes AT RUNTIME.
+
+	- We are given a block of memory and set a pointer (in our
+	  stack) to point to this memory.
+
+	- We can also resize this block of memory as needed.
+
+- Blocks of data on the HEAP can be different sizes and aren;t
+  necessarily in order. Blocks can move if resized and the resulting
+  holes refilled later.
+
+
+
+                              MALLOC
+
+We request a block of memory on the HEAP with several functions:
+
+	- malloc(), calloc, realloc()
+
+We can create a dynamic array by creating a block of memory for
+#elements * sizeof element.
+
+
+Malloc(no_of_bytes) allocates no_of_bytes worth of space on the
+HEAP and returns a VOID POINTER (ie a typeless pointer) to the block
+of memory.
+
+
+
+
+                      GROWING STACK AND HEAP
+
+The stack grows downward and the heap grows upwards.
+
+
+Q.      Won't memory become full if a program runs long enough and
+	keeps allocating memory? Technically yes.
+
+
+Memory locations on the stack are freed whenever a function returns
+and it's local variables drop out of scope.
+
+
+RECURSION:
+
+What happens if our function allocates local variables and calls
+itself recursively 1,000,000 times?
+
+
+
+                       WHAT ABOUT THE HEAP?
+
+We have to take care here as well.
+
+With the HEAP we have to manage memory manually and free up variables
+when not in use.
+
+If we forget to free the space and then don't have the pointer
+anymore (eg. forget to free() before the pointer dropped out of
+scope). Now we have memory that we don't know where it was so cannot
+reallocate it.
+
+Manual memory management helps as improve performance at the expense
+of risking memory leaks if we make a mistake in the code.
+
+A 'slow' memory leak can be difficult to detect manually (see
+Valgrind).
+
+Also a pointer may point to memory that already has been freed. Or
+a program may attempt to free() memory that's already been freed
+(In this case, make sure that you set the pointer to NULL after
+calling free() to prevent errors).
+
+C is a Systems Programming Language for low level programming.
+That's why it has low level memory management.
+
+Other languages have garbage collector processes that constantly
+check if variables are no longer used and reap the memory back. But
+this process slows the program down.
+
+
+

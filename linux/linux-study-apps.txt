@@ -1,0 +1,10 @@
+Linux Bible Study Apps
+======================
+
+Debian has a number of bible study applications in it's repository:
+
+	Bibletime 
+	Xiphos
+
+Bibletime is easier and more extensive. Both use e-sword resources.
+

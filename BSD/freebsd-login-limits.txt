@@ -1,0 +1,25 @@
+FREEBSD LOGIN LIMITS
+
+
+With pam_tally2 to limits failed login attempts.
+
+
+	# ed /etc/pam.d/common-auth
+
+	Add to top of file:
+
+		auth required pam_tally2.so deny=3 \
+			unlock_time=300
+
+This setups up user blocking after 3 failed attempts.
+
+
+	# pam_tally2 -u tux
+	  tux	4  .............
+		^
+		+------ failed attempts
+
+	# pam_tally2 -r -u tux
+		(resets user login attempts)
+
+

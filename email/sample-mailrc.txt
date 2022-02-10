@@ -1,0 +1,25 @@
+set verbose
+account bell {
+set smtp-use-starttls
+set smtp=smtp://smtp-mail.outlook.com:587
+set smtp-auth=login
+set smtp-auth-user=$USERNAME@bell.net
+set smtp-auth-password=$PASSWORD
+set from="$NAME <$USERNAME@bell.net>"
+set nss-config-dir=/etc/openldap/certs
+set ssl-verify=ignore
+
+set folder=imaps://$USERNAME@imap-mail.outlook.com:993/INBOX
+}
+
+account hotmail {
+    set MAIL=imaps://username%40hotmail.com@imap-mail.outlook.com
+    set imap-use-starttls
+    set password-username%40hotmail.com@imap-mail.outlook.com="secret"
+    set smtp="smtp-mail.outlook.com:587"
+    set from="My Name <username@hotmail.com>"
+    set smtp-use-starttls
+    set smtp-auth="login"
+    set smtp-auth-user=username@hotmail.com
+    set smtp-auth-password="secret"
+    }

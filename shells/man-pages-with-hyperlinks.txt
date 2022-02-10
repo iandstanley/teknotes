@@ -1,0 +1,6 @@
+W3MMAN - MAN PAGES WITH HYPERLINKS
+==================================
+
+Pressing 'h' shows << ^v which is clickable
+
+You may also click on links.

@@ -1,0 +1,37 @@
+GPG Verify
+==========
+
+Download sha256sum.txt and the SHA256 signature sha256sum.txt.gpg
+
+Get the SHA256 of the iso file with
+
+$ sha256sum -b *.iso
+
+Confirm that the sha256 sum is the same as that in the sha256sum.txt
+file
+
+Get the public keys 
+
+$ gpg --keyserver keyserver.ubuntu.com \
+	--recv-key "27DE B156 ....... AB09"
+
+-or-
+
+$ gpg --keyserver keyserver.ubuntu.com \
+	--recv-key A25BAE09
+
+List the key for this fingerprint:
+
+$ gp g--list-key --with-fingerprint A25BAE09
+
+Verify that this is the right key.
+
+Verify the downloaded files
+
+$ gpg  --verify sha256sum.txt.gpg sha256sum.txt
+
+Verify that the key used was A25BAE09
+
+
+See https://www.howtogeek.com/246332/how-to-verify-a-downloaded-linux-iso-file-wasnt-tampered-with/
+

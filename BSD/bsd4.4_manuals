@@ -1,0 +1,70 @@
+https://www.usenix.org/legacy/publications/BSD.html
+
+# USENIX - 4.4 BSD Manuals
+
+The USENIX Association and O'Reilly & Associates have published the
+final, definitive release of the Berkeley version of UNIX, which
+has been the basis for many commercial UNIX variants. Written by
+the Computer Systems Research Group at the University of California,
+Berkeley, the complete five volume set includes a CD-ROM can be
+ordered directly from USENIX. USENIX members receive a special
+discount.
+
+Below is a brief summary of each volume.
+
+## 4.4BSD User's Reference Manual (URM)*
+898 pp. ISBN 1-56592-075-9, June 1994
+
+This volume (URM) collects the manpages for the more than 284 user
+programs that make up the user portion of the 4.4BSD UNIX release
+(section 1 of the traditional UNIX Reference Manual), plus additional
+pages for games (section 6 of the traditional manual) and miscellaneous
+information (section 7, which includes mostly information on troff
+macro packages and other text processing information.) URM is useful
+even if you don't use the BSD version of UNIX. Many of the commands
+are compatible with the POSIX standard and thus identical to those
+in other UNIX versions. Because 4.4BSD includes many freeware
+programs that are available but not documented in other versions
+of UNIX, you may find yourself turning first to this book to look
+up options for programs like Perl, GNU emacs, compress, patch, g++,
+or kerberos.
+
+## 4.4BSD System Manager's Manual (SMM)
+646 pp. ISBN 1-56592-080-5, May 1994
+
+SMM includes manpages for system administration commands (section
+8 of the online reference manual), plus supplementary documents
+useful to system administrators.
+
+## 4.4BSD Programmer's Supplementary Documents (PSD)
+606 pp. ISBN 1-56592-079-1, June 1994
+
+In this volume, you'll find useful papers on such tools as the gdb
+and adb debuggers, source code control systems RCS and SCCS, lex
+and yacc, and the m4 macro processor. You'll also find such historical
+documents as Dennis Ritchie and Ken Thompson's classic first paper
+about UNIX and Kernighan and Ritchie's classic introduction to UNIX
+programming.
+
+On a more up to date note, this book also includes a two part
+tutorial on interprocess communication (IPC) under 4.4BSD UNIX.
+
+## 4.4BSD Programmer's Reference Manual (PRM)*
+868 pp. ISBN 1-56592-078-3, June 1994
+
+PRM collects the manpages for the various UNIX programming libraries,
+plus related information for programmers. It consists of sections
+2 through 5 of the online manpage collection:
+
+(2) UNIX System Calls
+(3) C Library Subroutines
+(4) Special Files (device interfaces)
+(5) File Formats
+
+## 4.4BSD User's Supplementary Documents (USD)
+686 pp. ISBN 1-56592-076-7, June 1994
+
+This volume, the User's Supplementary Documents, collects papers
+relating to miscellaneous "user" tools, principally text editors
+and document processors.
+

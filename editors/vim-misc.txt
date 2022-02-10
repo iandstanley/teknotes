@@ -1,0 +1,190 @@
+VIM
+===
+
+:echom		send message
+:messages	show messages
+
+if filereadable(".vimscripts_file")
+	so .vimscript_file
+endif
+
+
+set exrc	read `pwd`/.vimrc
+
+set secure	is commonly used with above 
+
+
+au BufNewFile,BufRead *pathposusingglobbing \
+	setlocal setting=value
+
+
+let d = system('basename `pwd`')
+
+let d = substitute(d,'\n\+$','','')
+
+if d = 'sabbath'
+	echom	"we are here"
+endif
+
+
+:mkview		create a view
+
+:mkvimrc	create a .vimrc from current settings
+
+
+:mks[ession][!] [file]	write a vimscript file to save current session 
+
+You can then reload the session using:
+
+	$ vim -S session.vim
+
+
+function! SomeCheck()
+	if filereadable("specificfile")
+		echo "specific file exists"
+	endif
+endfunction
+
+Here the function! denotes that the function is allowed to reload
+
+:pwd 		prints current working directory
+
+
+llet s = getcwd(winnr)
+
+
+:so % 		source current file
+
+
+
+
+^d or <tab>	search for tag names
+^i or :tag	go forward
+^t or ^o	go backward
+^]		jump to definition/open help tag
+
+
+:h quickref		show quickref
+:h usr_41.txt		show help file section #41
+
+
+:autocmd BufRead ~/archive/* set readonly
+:autocmd BufWritePost	~/.vimrc so ~/.vimrc
+:autocmd BufRead */doc/*.txt set tw=72
+
+
+:h events		see available events, eg
+
+	TerminalOpen
+	TerminalWinOpen
+	FocusGained
+	FocusLost
+
+
+VIM VARIABLES
+
+g:globalvariable	any situation, mode, or buffer; often used to memorize plugin loading
+
+s:scriptvariable	local to script file
+
+$VARIABLES		all env variables from shell
+
+			eg :echo($PAGER)
+
+&setoptionvariable
+@regsitervariable
+
+			eg. setup a macro ina register
+
+			:let@d='ggdG'
+			:echo(@d)
+
+let			updates a variable state
+execute			evals a string as an ex (:) command
+normal!			executes a commadn as if a user typed it
+eval			evaluates a string as VimScript
+
+for example:
+
+	execute ":w ".expand('%')
+	
+	normal! gg=G
+
+	execute "normal! ".comamnds
+
+	eval('let @r="gg=G"')
+
+
+:map <f12> :h<cr>
+:imap <c-c> <esc>:w<cr>
+:nmap ZJ JZZ
+
+
+cabbrev W w
+abbrev teh the
+iabbrev yo you
+
+:h abbrev
+
+Vim Plugins
+-----------
+
+
+" PluginA.vim
+function! s:BeepBoop()
+	echo('beep')
+endfunction
+
+nmap ge :call <SID>BeepBoop()<cr>
+
+" PluginB.vim
+function! s:BeepBoop()
+	echo('beep')
+endfunction
+
+
+The <SID> prefix ensures that the function name used is unique by expanding to <SNR>
+
+<SID> and function s:name make function names more reliable and explicit.
+
+" Plugin.vim
+noremap <unique> <Plug> Pluginfunct
+	:call <SID>Vimscriptfn()<CR>
+
+" keybindings.vim
+:nmap -p <Plug>Scriptfunc
+
+
+PLUGIN DESIGN
+-------------
+
+2 main types:	global and filetype specific
+
+GLOBAL PLUGIN
+
+1.doc 		expose your plugin within
+2.autoload	the plugin and autoload
+3.plugin	everything else
+
+
+FILETYPE PLUGIN
+
+aka ftplugin. eg Vim-ruby.vim for supporting ruby.
+
+1.doc
+2.ftdetect
+3.ftplugin
+4.syntax
+
+see :h ftplugin for details
+
+
+LOADING PLUGINS
+
+Plugins should memorize themselves to make sure they are not loaded twice.
+
+if exists(g:loaded_gitgutter")
+	finish
+endif
+let g:loaded_gitgutter = 1
+

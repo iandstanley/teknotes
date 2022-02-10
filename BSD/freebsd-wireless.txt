@@ -1,0 +1,23 @@
+FREEBSD WIRELESS
+
+
+	# sysctl  net.wlan.devices
+
+	  net/wlan/devices	ath0
+
+
+	# ed /etc/rc.conf
+
+	  wlan_ath0="wlan0"
+	  ifconfig_wlan0="WPA SYNCDHCP"
+
+	# ed /etc/wpa_supplicant.conf
+
+	  network={
+		ssid="my-wifi"
+		psk="LDtRs3pq"
+	  }
+
+	# service netif restart
+	# sleep 10
+	# ping google.com

@@ -1,0 +1,5 @@
+STOP A LINUX USER LOGGING IN 
+============================
+
+$ sudo chsh -s /bin/false baduser
+

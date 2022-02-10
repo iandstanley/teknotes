@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Configure Yubikey and generate PKCS #11 keys 
+echo "Setting the YubiKey to be a U2F device and behave as a smart card"
+ykpersonalize -m 86
+
+if [[ $# -eq 1 ]] && [[ "$1" = "first-run" ]]
+then
+  echo "Please set a new managment key:"
+  yubico-piv-tool -aset-mgm-key || true
+
+  echo "Please set the device PIN:"
+  yubico-piv-tool -achange-pin -P123456
+
+  echo "Please set the device PUK:"
+  yubico-piv-tool -achange-puk -P12345678
+fi
+
+echo "Please confirm the PIN is set correctly:"
+pkcs15-tool --verify-pin
+
+echo "Gnenerating RSA keypair..."
+yubico-piv-tool -s 9a -a generate -k --pin-policy=once --touch-policy=always --algorithm=RSA2048 -o public.pem
+
+echo "Please touch the device."
+
+echo "Generating self-signed SSH key..."
+yubico-piv-tool -a verify-pin -a selfsign-certificate -s 9a -S '/CN=ssh/' --valid-days=365 -i public.pem -o cert.pem
+
+echo "Importing self-signed key..."
+yubico-piv-tool -k -a import-certificate -s 9a -i cert.pem
+
+echo "Exporting public key for PKCS#11..."
+ssh-keygen -D /usr/local/opt/opensc/lib/pkcs11/opensc-pkcs11.so -e
+
+echo "Exporting public key..."
+ssh-keygen -i -m PKCS8 -f public.pem
+
+echo "Please confirm the public key status:"
+yubico-piv-tool -a status
+
+# https://github.com/Yubico/yubico-piv-tool/issues/118
+cp /usr/local/lib/libykcs11.dylib /usr/local/lib/libykcs11_NOTALINK.dylib
+ssh-add -s /usr/local/lib/libykcs11_NOTALINK.dylib
+
+echo "Please confirm the key has been added to SSH:"
+ssh-add -L
+
+GITHUB_USERNAME=$(git config --get github.user)
+echo "You can now add the following to ~/.ssh/config:"
+echo <<- EOF
+Host github.com
+PKCS11Provider /usr/local/opt/opensc/lib/pkcs11/opensc-pkcs11.so
+Port 22
+User $GITHUB_USERNAME
+EOF

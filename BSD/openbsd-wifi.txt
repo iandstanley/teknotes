@@ -1,0 +1,51 @@
+
+# WHAT ABOUt WIFI ON OPENBSD?
+
+
+(1)     You've installed OpenBSD and booted it up for the first
+	time. Here's how you can get wifi set up.
+
+	# ifconfig
+
+	This lists your network interfaces. Wifi devices should be
+	indicated as "nwid" or "IEEE802.11" listed beneath it.
+
+	eg. we could see "bwfm0"
+
+	To be sure we can type:
+
+		# whatis bfwm
+
+		bwfm(4) - Broadcom and Cypress IEEE 802.11a/ac/b/g/n
+		wireless network device.
+
+	If you don't have a supported wifi device we recommend
+	purchasing a EDIMAX EW-7811Un v2 USB wireless device. If
+	you plug in an EDIMAX EW7811 you will see the ifconfig
+	report a device 'urtwn0'
+
+
+(2)	We may need to update the firmware for the device:
+
+		# fw_update
+
+	Then reboot your machine:
+
+		# reboot
+
+
+(3)	Then configure your wifi device:
+
+	# echo nwid mywifi wpakey mywifipassword > /etc/hostname.urtwn0 
+
+		(or bwfm0 or whatever the device name is)
+
+	# echo inet autoconf >> /etc/hostname.urtwn0
+
+
+	And save a copy of your ethernet config:
+	
+	# mv /etc/hostname.bse0 /etc/hostname.bse0.bak
+
+
+

@@ -1,0 +1,27 @@
+VIM 8's built-in package manager
+================================
+
+$ mkdir -p ~/.vim/pack/plugins/start
+
+$ cd ~/.vim/pack/plugins/
+
+$ git clone https://github.com/tpope/vim-markdown.git
+
+....
+....
+
+To generate documentation helptags run ONCE inside vim
+
+:helptags  ~/.vim/pack/plugins/start/vimwiki/plugin
+
+
+
+ADD TO .bashrc THIS FUNCTION
+
+export VIMPLUGINS=~/.vim/pack/plugins/start
+	viminstallplugin() {
+	pushd $VIMPLUGINS
+	git clone $*
+	popd
+}
+

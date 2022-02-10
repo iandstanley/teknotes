@@ -1,0 +1,27 @@
+GPG FOR WINDOWS
+===============
+
+Use gpg4win (https://gpg4win.org)
+
+This will install the windows version of GPA and also Kleopatra.
+
+Kleopatra is easy to use and straightforward for new users (it is
+also available on different platform and supports Yubikeys).
+
+
+GPG FOR MACOS
+=============
+
+Here you have a choice:
+
+For a tightly integrated gui approach try GPGSUITE
+(https://gpgtools.org)
+
+This is only available with a $21/yr support plan.
+
+For command line only you can:
+
+	$ brew install gnupg
+
+This requires homebrew (see brew.sh)
+

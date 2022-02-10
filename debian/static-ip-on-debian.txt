@@ -1,0 +1,13 @@
+STATIC IP ON DEBIAN
+===================
+
+$ sudo -e /etc/network/interface
+
+	iface eth0 inet static
+		address 192.168.1.150/24
+		gateway 192.168.1.254
+
+Reboot server or restart networking
+
+You may also configure MTU for network performance, see 'man 5 interfaces'
+

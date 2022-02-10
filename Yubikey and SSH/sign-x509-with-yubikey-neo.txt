@@ -1,0 +1,105 @@
+
+# Sign x095 certificates with a Yubikey Neo
+
+## GnuPG 2.1.0beta2 supports signing certificates in batch mode:
+
+Support X.509 certificate creation.
+
+Using "gpgsm --genkey" allows the creation of a self-signed 
+certificate via a new prompt.
+
+Using "gpgsm --genkey --batch" should allow the creation of 
+arbitrary certificates controlled by a parameter file. An example 
+parameter file is
+
+Key-Type: RSA
+Key-Length: 1024
+Key-Grip: 2C50DC6101C10C9C643E315FE3EADCCBC24F4BEA
+Key-Usage: sign, encrypt
+Serial: random
+Name-DN: CN=some test key
+Name-Email: foo@example.org
+Name-Email: bar@exmaple.org
+Hash-Algo: SHA384
+not-after: 2038-01-16 12:44
+
+This creates a self-signed X.509 certificate using the key given by 
+the keygrip and using SHA-384 as hash algorithm. The keyword 
+signing-key can be used to sign the certificate with a different 
+key. See sm/certreggen.c for details.
+
+
+## I got it working, here are the steps involved (Do not do this on your
+production system!)
+
+    You need libksba >= 1.3 (get it here)
+
+    Get the 2.1 beta 3 from ftp://ftp.gnupg.org/gcrypt/gnupg/unstable/
+
+    Create a key which will be used for signing (that's the CA key which 
+    in the real application will never leave your Open PGP card / 
+    Yubikeo NEO) - if you want to use a password (recommended if you 
+    still want to use this in production), remember that you must setup 
+    pinentry to work without your console, i.e. either use a graphical 
+    one or use screen and set GPG_TTY to the other tty when you use 
+    pinentry-curses (note to self: when the prompt shows, hit enter once 
+    to actually activate it and not use your passphrase as a cleartext 
+    command...)
+
+    Create a key which will used for the certificate (I don't know if 
+    you can also use gpgsm to sign other CSRs, you'll probably have to 
+    extract the public key in that case) (I used one main key for the CA 
+    and its subkey for the certificate)
+
+    Obtain the Key-Grips: Either check the filenames in 
+    ~/.gnupg/private-keys-v1.d and deduce it from the creation date, or 
+    run gpg2 -K --with-key-data, search for the line containing the key 
+    ID (not the entire fingerprint, that is somehow split up and 
+    scrambled) and check the next line starting with grp:::
+
+    Create a self-signed CA certificate with the following batch input:
+
+    Key-Type: RSA
+    Key-Grip: E9CE7D421500AD119A4E308BC34317710AA2D57F #(replace with CA keygrip)
+    Key-Usage: cert
+    Serial: random
+    Name-DN: CN=Test Root CA
+    Hash-Algo: SHA512
+    not-after: 2038-01-16 12:44
+
+and run gpgsm --gen-key --batch --output CA.crt < batchinputfile
+
+    Create a signed certificate with the following batch input:
+
+    Key-Type: RSA
+    Key-Grip: E308BC34317710AA2D57FE9CE7D421500AD119A4 #(replace with keygrip)
+    Key-Usage: sign, encrypt
+    Serial: random
+    Name-DN: CN=Tester
+    Issuer-DN: CN=Test Root CA
+    Hash-Algo: SHA512
+    not-after: 2038-01-16 12:44
+    Signing-Key: E9CE7D421500AD119A4E308BC34317710AA2D57F #(replace with CA keygrip)
+    Authority-Key-Id: E9CE7D421500AD119A4E308BC34317710AA2D57F #(replace with CA keygrip)
+
+and run gpgsm --gen-key --batch --output cert.crt < batchinputfile
+
+Some more information on possible batch parameters can be found here 
+(incomplete doc) and in certreqgen.c; you should also manually include 
+basicConstraints via Extension, which is by default omitted if you 
+specify an Issuer-DN, as can be seen in the source.
+
+
+Thanks for pointing out that this is feasible. Frankly speaking, gpgsm 
+is really not good at managing general purpose X.509 certificates. Some 
+behavior is implicit. (e.g. keyUsage based on cert/sign/...) The 
+supported keywords are rather limited (e.g. no IPaddress SAN). Of course 
+one can compose desired X.509 extension and pass to gpgsm via Extension: 
+<oid> C|c|N|n <hex>. It's just tedious and duplicate what openssl is 
+capable of. And I ran into a bug when signing RSA leaf with ECC CA. 
+(patch sent, no idea when it will get merged)
+
+Current gpgsm implementation requires private key of leaf certificate. 
+You're out of luck if you only have CSR to be signed. This restriction 
+can be lifted by convert the public key to S-expression and put it under 
+~/.gnupg/private-keys-v1.d/<KeyGrip>.key

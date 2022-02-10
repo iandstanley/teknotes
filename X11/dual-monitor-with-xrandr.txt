@@ -1,0 +1,39 @@
+
+DUAL MONITOR SUPPORT WITH XRANDR
+
+
+List connected displays and resolutions:
+
+	$ xrandr
+
+
+$ vi multimonitor
+
+	#!/bin/sh
+
+	# change the two screens below to match your screen
+	intern="eDPI"
+	extern="HDMI1"
+
+	case "$1" in
+
+		"disconnect" ) 	
+			xrandr --output "$extern" --off \
+				--output "$intern" --auto ;;
+
+		"extra" )	
+			xrandr --output "$extern" --set-audio \
+				force-dvi --mode 1920x1080 && \
+			xrandr --output "$intern" --auto \
+				--output "$extern" --right-of "$intern" ;;
+
+		"duplicate" ) 
+			xrandr --output "$extern" --set-audio \
+				force-dvi --mode 1920-1080 && \
+			xrandr --output "$intern" --auto \
+				--output "$extern" --same-as "$intern";;
+
+		* )	notify-send "Multimonitor" "Unknown Operation";;
+	esac
+
+

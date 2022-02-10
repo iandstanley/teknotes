@@ -1,0 +1,83 @@
+# Microsoft Surface Go Linux Instructions
+
+These instructions are for setting up Endeavour OS on Surface Go. While you can stick with default Xfce desktop, I suggest installing Gnome desktop for better touchscreen experience once Endeavour is installed.
+
+## What You Need
+
+Surface Go Tablet
+USB C to USB A Adapter
+USB Stick
+USB Ethernet Dongle
+Turn off Secure Boot Access Surface Pro BIOS
+
+## Make sure the Surface Pro device is turned off.
+Hold the volume-up button.
+Press and release the power button.
+When the Surface logo appears, release the volume-up button.
+The Surface UEFI firmware interface screen will be displayed and you can make changes.
+Turn off secure boot
+
+## Installation
+
+Download Endeavour OS and burn it to USB drive
+Use the USB C to USB adapter to plug-in the USB drive
+Install Endeavour OS
+Update pacman -Syuu
+
+## Get WiFi To Work
+
+Download this file to your Downloads folder: http://www.killernetworking.com/support/K1535_Debian/board.bin
+sudo rm /lib/firmware/ath10k/QCA6174/hw2.1/board.bin
+sudo cp ~/Downloads/board.bin /lib/firmware/ath10k/QCA6174/hw2.1
+sudo rm /lib/firmware/ath10k/QCA6174/hw3.0/board.bin
+sudo cp ~/Downloads/board.bin /lib/firmware/ath10k/QCA6174/hw3.0
+restart
+
+## Setup Auto-rotate Screen
+
+trizen -S iio-sensor-proxy-git
+trizen -S screenrotator-git
+trizen -Ss arch-linux-surface
+pacman -Ss arch-linux-surface
+
+## Install Gnome
+
+sudo pacman -S Gnome
+sudo pacman -S chrome-gnome-shell
+
+## Keyboard
+Settings > Devices > Turn On-screen Keyboard on or Off > Shift + Super + K
+
+## Mouse
+
+Settings > Mouse & Touchpad > Tap To Click
+Enable Bluetooth
+
+Install blueman
+Install bluez-utils
+systemctl enable bluetooth.service
+systemctl start bluetooth.service
+
+## Enable Touchscreen Gestures In Firefox
+
+Make sure dom.w3c_touch_events.enabled is either set to 1 (enabled) or 2 (default, auto-detect).
+Add MOZ_USE_XINPUT2 DEFAULT=1 to /etc/security/pam_env.conf and then logout or reboot your system for the changes to take effect.
+Firefox toolbar
+
+In a new tab, type or paste about:config in the address bar and press Enter. Click the button accepting the risk.
+In the filter box, type or paste ‘devp’ and pause while the list is filtered
+Double-click layout.css.devPixelsPerPx and change its value to 1.5 and click OK. That corresponds to 150% of the classic font size.
+Too big? Try 1.25
+Too small? Try 2.0
+
+## Display
+
+Set Scale 200%
+Install Steam For Gaming
+
+flatpak install steam
+
+## What Doesn’t Work
+
+Camera’s do not function but this is not critical for me but might be for some.
+On-screen keyboard works but doesn’t feel as well integrated as other tablets like an iPAD. With that being said Surface is really ideal with the keyboard case.

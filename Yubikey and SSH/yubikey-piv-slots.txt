@@ -1,0 +1,44 @@
+YUBIKEY PIV SLOTS
+=================
+
+A PIV enabled Yubikey NEO holds 4 distinct slots for certificates
+and a Yubikey 4 or 5 holds 24.  Each of these slots is acapable of
+holding an X509 certificate together with it's accompanying private
+key.
+
+The PIN policy for these slots described here are based upon the
+PIV standards (This can be changed on the Yubikey 4 & 5).
+
+Slot 9A		PIV Authentication
+		This is used for system login.
+		The end user PIN is required. Once PIN has been
+		provided multiple private key operations may be
+		performed without additional cardholder consent.
+
+Slot 9C		DIGITAL SIGNATURE
+		Used for digitally signing and requires end user
+		PIN. This PIN must be used every time.
+
+Slot 9D		KEY MANAGEMENT
+		This is used for encryption for confidentiality eg.
+		emails and files. End user PIN is required for all
+		operations (multiple operations without re-authentication
+		are possible).
+
+Slot 9E		CARD AUTHENTICATION
+		Used for additional physical access applications
+		(eg PIV enabled door locks). End User PIB is NOT
+		required.
+
+Slots 82-95	RETIRED KEY MANAGEMENT
+		(ONLY AVAILABLE ON YUBIEKY 4 & 5)
+		These are meant for previously used MANAGEMENT KEYS
+		to decrypt earlier documents or emails.
+
+Slot F9		ATTESTATION
+		(ONLY AVAILABLE ON YUBIEKY 4 & 5)
+		Used to attest other keys and not cleared on reset
+		(but can be overwritten).
+
+
+

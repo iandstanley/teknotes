@@ -1,0 +1,44 @@
+
+https://www.tarsnap.com/utility.html
+
+# Tarsnap Utility
+
+Tarsnap is priced as a utility: You pay for what you use. Use twice
+as much storage and bandwidth? You'll pay twice as much. Use only
+10 MB of bandwidth and 20 MB-months of storage? You'll pay less
+than one cent. Since making money from rounding errors doesn't seem
+fair, Tarsnap's accounting is performed in attodollars ($10-18) and
+rounded in the user's favour.
+
+Most physical utilities, like electricity, natural gas, and water,
+have fixed monthly fees for "being hooked up to the grid" in addition
+to their usage-based fees. Tarsnap doesn't — because, let's face
+it, there is no physical grid to be hooked up to. Having accounts
+sit around idle doesn't add any significant cost to keeping the
+service running — so why should you pay for it either?
+
+Similarly, many online services offer a selection of fixed-price
+monthly "plans" to choose from; these have two major disadvantages.
+First, they force you to predict how much usage you'll have ahead
+of time; and second, unless you're incredibly lucky, you'll always
+be paying for some capacity which you're not using. This second
+issue is particularly pronounced for small users, who often use
+only a very small fraction of the quotas permitted under typical
+monthly plans.
+
+Thanks to Tarsnap's linear pricing scheme and its lack of fixed
+monthly fees, over half of Tarsnap users spend under $1 per month
+on storing their backups. This would be economically unfeasible if
+every user's credit card was billed each month; instead, Tarsnap
+works on a prepaid model (like prepaid mobile phones). Before you
+can start using Tarsnap, you need to deposit $5 or more into your
+Tarsnap account; and then you can add more money whenever you want.
+Just like a mobile phone, if your account balance falls below zero,
+your account will be disabled; if your account balance stays below
+zero for more than a week, your account will be permanently removed.
+
+We have collected a few examples of deduplication efficiency, which
+illustrates how much money our linear pricing can save.
+	
+	
+	

@@ -1,0 +1,106 @@
+
+# NETBSD DOCUMENTATION
+
+NetBSD comes with a bunch of technical articles and research papers
+that are still relevant today.
+
+Documentation is already installed into /usr/share/doc/
+
+## Folder Layout
+
+	/usr/share/doc
+		|
+		+--- papers	published papers
+		|
+		+--- psd	programmer supplementary docs
+		|
+		+--- reference	a few reference documents
+		|
+		+--- smm	system manager manuals
+		|
+		+--- usd	user supplementary docs
+
+
+## Formatting of Documentation
+
+If we take a look at one of these documents:
+
+	$ vi papers/mckusick84-ffs/mckusick84-ffs.txt
+
+We see that there is a bunch of control characters all over the
+text. This documentation is formatted with the system document
+formatting tools.
+
+If we use a pager that can properly display the document:
+
+	$ more papers/mckusick84-ffs/mckusik84-ffs.txt
+
+Now we see bold, underlines and other formats in the text properly.
+
+
+## Contents of Documentation Folders
+
+You will find that most of the names on the papers are familiar. 
+
+eg.
+
+	$ more papers/morris78-password/morris78-password.txt
+
+This is a paper on password security by Ken Thompson and Robert
+Morris Snr (who later became chief scientist at NSA and whose son
+Robert Tapping Morris later releaed the infamous Morris worm).
+
+There is an introduction to the UNIX shell by Steven R. Bourne
+(reference/ref1/sh/sh.txt).
+
+There is a vi/ex reference manual (reference/ref1/vi/vi.txt). 
+
+We also find the seminal IPC BSD Tutorial
+(reference/ref3/sockets/sockets.txt).
+
+Also the advanced IPC tutorial
+(reference/ref3/sockets-advanced/sockets-advanced.txt).
+
+There's the Berkeley Software Architecture Manual which describes
+all of the system calls and the overall architecture of the system
+(reference/ref3/sysman/sysman.txt).
+
+In the User Supplementary directory we see Brian Kerninghan's "Unix
+for Beginners - Second Ed." (usd/begin/begin.txt).
+
+Another file is the Vi Quick Reference (usd/vi/summary.txt) as well
+as a more detailed Vi Tutorial (usd.vivitut.txt) by Bill Joy the
+author of Vi.
+
+## Sources
+
+All of these guides are found in /usr/share/doc/ but as we have the
+source for the OS we also have the source for the documents.
+
+	$ cd /usr/src/share/doc/
+
+	$ ls
+
+	cvs	 README.docdirs	psd	standards
+	makefile papers		smm	usd
+
+The README gives all the various documentation directories and an
+idea of what other documentation is available.
+
+It also notes that some of the historical documents are missing.
+
+These documents are often written using the various *roff macros
+and can be typeset and formatted for displays using groff(1),
+nroff(1) and troff(1).
+
+	$ cd /usr/src/share/doc/
+
+	$ nroff -ms papers/beyond4.3/beyond43.ms > /tmp/beyond43.ps
+
+# See Also
+
+* troff.org/54.pdf
+* Formatted seminal IPC tutorials from /usr/share/doc/reference/ref2/sockets
+* stevens.netmeister.org/631/ipc.pdf
+* stevens.netmeister.org/631/ipctut.pdf
+

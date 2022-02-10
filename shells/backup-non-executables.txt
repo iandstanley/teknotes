@@ -1,0 +1,7 @@
+BACKUP NON-EXECUTABLES
+======================
+
+$ find /app -executable -type f  > excl.txt
+
+$ tar c --exclude-from excl.txt -f backup.tar
+
