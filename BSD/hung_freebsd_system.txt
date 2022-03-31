@@ -1,0 +1,126 @@
+
+
+
+                       HUNG FREEBSD SYSTEM
+                    (from Handbook 12.13.2.3)
+
+
+
+Most system hangs are a result of lost interrupts, or an interrupt
+storm. Chipsets may have problems based on boot, how BIOS configures
+interrupts, correctness of APIC (MADT), or SCI routing.
+
+
+                        INTERRUPTS STORMS
+
+Interrupts Storms can be distinguished from lost interrupts by
+checking:
+
+	$ vmstat -i
+
+If counter increases > 2 /second then you have an Interrupt Storm.
+
+If hung CTRL-ALT-ESC on console to get into DDB and type:
+
+	> show interupts
+
+When dealing with interrupt problems, try disabling APIC support
+with:, try disabling APIC support with:
+
+	hint.apic.0.disable="1"
+
+in '/boot/loader.conf'.
+
+
+
+
+
+                              PANICS
+                     (see Handbook 12.13.2.4)
+
+
+Panics are relatively rare for ACPI.
+
+First, isloate the steps to reproduce the panic. If possible get a
+stacktrace.
+
+Follow the advice for enabling 'options' DDB and setting up a serial
+console or setup a 'dump' partition.
+
+To get a backtrace in DDB, use 'tr' (get at least top 5 and last 5
+lines).
+
+
+
+
+
+
+                               ACPI
+                     (see Handbook 12.13.2.2)
+
+Use 
+	# sysctl hw.acpi
+
+to check suspend related items.  Use 
+
+	# acpiconf -s 
+
+to test S3, S4, and S5.
+
+
+Test S1 first as this is most likely.
+
+Common problem with suspend/resume is that many drives do not
+save/restore or reinitialize firmware, registers or device memory.
+
+
+Try:
+
+	# sysctl debug.bootverbose = 1
+	# sysctl debug.acpi.suspend_bounce = 1
+	# acpiconf -s3
+
+This test emulates the suspend/resume cycle of all device drivers
+without going into S3 state.
+
+If that works you can configure 'suspendonlidclose':
+
+	# sysctl hw.acpi.lid_switch_state=S3
+
+or, add it to /etc/sysctl.conf.
+
+
+
+
+
+                   BIOS CONTAINS BAD BYTE CODE
+                     (see Handbook 12.13.2.6)
+
+
+	eg. 	ACPI-1287 Error ...........
+
+
+
+
+                          DUMP ASL
+                      (see Handbook 12.13.3)
+
+
+	# acpidump -td > my.asl
+
+
+
+Some versions of asl versions assume user is running Windows.
+
+To override this, set:
+
+	hw.acpi.osname="Windows 2009"
+
+in '/boot/loader.conf'
+
+
+
+
+
+
+

@@ -1,0 +1,299 @@
+
+
+		       CGI PROGRAMMING IN C
+
+Implements POST & GET methods (as far as we care).
+
+CGI in C is more maintenance intensive but can be both faster and
+more secure (when written well).
+
+CGI causes script/program to be executed by webserver and also
+receive it's parameters.
+
+Other options are available including: ASP, mod_perl, ColdFusion,
+AJAX etc.
+
+On a server, a CGI program would usually reside in /cgi-bin/. The
+source commonly resides in /cgi-src/, but this shouldn't be readable
+across the web.
+
+CGi programs read STDIN and respond to STDOUT.
+
+The first line returned should be:
+
+	Content-type: text/plain
+
+	Or for outputting HTML:
+
+	Content-type: text/html
+
+
+
+
+
+
+			 /* democgi.c */
+
+#include        <stdio.h>
+
+int main() {
+
+	printf("Content-type: text/plain\n\n"); printf("Hello
+	world");
+}
+
+
+
+	$ cc -o demo democgi.c 
+
+	$ mv demo /var/www/cgi-bin/ 
+
+	$ firefox http://localhost/cgi-bin/demo
+
+
+If we do a view-source in the browser all we see is "Hello world"
+
+
+
+We could also output this in HTML by replacing the second printf
+command with:
+
+	printf("<html><head><title>democgi</title></head><body>");
+	printf("Hello world"); printf("</body></html>");
+
+Recompile and reload page.
+
+
+
+			    FUNCTIONS
+
+We should create functions to keep typing and typos to a minimum.
+Reuse, reuse, reuse.
+
+
+int main() {
+
+	header("text/html"); 
+	startpage("Page title");
+	printf("Hello world");
+	endpage();
+};
+
+int header(char * mime) {
+	printf("Content-type: %s\n\n", mime);
+	return 0;
+};
+
+int startpage(char * title) {
+	printf("<html><head>");
+	printf("<title>%s</title>", title);
+	printf("</head><body>");
+	return 0;
+};
+
+int endpage() {
+	printf("</body></html>");
+	return 0;
+}
+
+We really should put the extra functions in a library to do standard
+templating for cross-site reuseability.
+
+
+
+                     HTML FORM HANDLING IN C
+
+
+Forms have a method:
+
+	method = post	input comes to us via STDIN
+	method = get    input comes via an environment 
+			variable 'QUERY_STRING'
+
+
+
+                          EXAMPLE FORM:
+
+
+	<html><head><title>C Progamming Forms</head>
+	<body>
+	<form action="myform" metod="get">
+	Firstname:
+	<input type="text" name="firstname">
+	<br>
+	Lastname:
+	<input type="text" name="lastname">
+	<input type="submit" value="clickme">
+	</form>
+	</body></html>
+
+
+The action is the C program to run. In our case 'myform.c' is
+compiled to 'myform' which is run by the webserver.
+
+
+                          /* myform.c */
+
+#include	<stdio.h>
+#include	<stdlib.h>
+#include	<stddef.h>
+#include	<string.h>
+
+
+int main(int argc, char **argv, char **envp) {
+
+	char *Qptr, sep;
+
+	header("text/html");
+
+	startpage("C Programming form handler");
+
+	if (Qptr = getenv("QUERY_STRING")) {
+
+		/* assuming the 'get' form worked */
+
+		char Buffer[256];
+		char * Token;
+		char Firstname[80], Lastname[80];
+
+		strncpy(Buffer, Qptr, 255);
+
+		Token = strtok(Buffer, "&");
+
+		sscanf(Token, "firstname=%s", Firstname);
+		printf("<p>firstname given as %s", Firstname);
+
+		Token = strtok(NULL, "&");
+		sscanf(Token, "lastnaem=%s", Lastname);
+		printf("<p>lastname given as %s", Lastname);
+	}
+
+	else		/* query didn't come through at all */
+
+		printf("<p>Oops we didn't get a QUERY_STRING");
+	}
+	endpage();
+}
+
+int header(char * mime) {
+	printf("Content-type: %s\n\n", mime);
+	return 0;
+};
+
+int startpage(char * title) {
+	printf("<html><head>");
+	printf("<title>%s</title>", title);
+	printf("</head><body>");
+	return 0;
+};
+
+int endpage() {
+	printf("</body></html>");
+	return 0;
+}
+
+
+
+
+When out form uses the get method we get an environment variable
+named QUERY_STRING that contains everything after the ? in the URL.
+
+	http://localhost/cgi-bin/myform?firstname=Tim&lastname=Scott
+
+Note we have to split the string on the '&' and the '=' using
+strtok() and sscanf().
+
+We need not account for the encoded chars in the string.
+
+This is A way to do it, NOT necessarily the BEST WAY!
+
+
+
+               EXAMINING ALL ENVIRONMENT VARIABLES
+
+
+When any CGi request is made, a set of environment variables are
+passed to the CGI script.
+
+The variables starting with HTTP are all set by the browser and
+should be taken with a pinch of salt.
+
+The variables starting with REMOTE are set by your server describing
+where the client is from.
+
+The variables starting with SERVER are also set by your server and
+are more trustworthy.
+
+
+The REQUEST_METHOD must be checked to see where information will
+come from.
+
+If PUT then STDIN will have CONTENT_LENGTH of data on it
+
+If GET then the QUERY =_STRiNG environment variable will have the
+data
+
+
+
+                          /* envvar.c */
+
+#include	<stdio.h>
+#include	<stdlib.h>
+#include	<stddef.h>
+#include	<string.h>
+
+int main(int argc, char ** argv, char ** envp) {
+
+	header("text/html");
+
+	startpage("C Programming CGI environment variables");
+
+	for ( ; *argv ; argv++ )
+		printf("Argv:%s </br>", argv);
+
+	for ( ; *envp ; envp++ )
+		printf("Envp: %s</br>", envp);
+
+	endpage();
+};
+
+/* other functions as before, or via library */
+
+Note: depending on the webserver, the CGi developer may need to
+specifically name the program with a .exe or .cgi extension:
+
+	$ cc -o demo.cgi demo.c
+
+
+
+                       METHODS GET VS POST
+
+GET (default) - should only be used if form processing is a pure
+query type (official recommendation).
+
+However, there are problems related to long URLs and non-ascii
+character repertoires.
+
+This can mean it can be necessary to use "POST" even for idempotent
+(query-style) processing.
+
+'GET' encodes the data in the url (by the common ?variable=value
+nomenclature, whereas 'POST' may involve ANYTHING, like storing or
+updating data, or ordering a product, or sending an email.
+
+In the HTTP specificatons (RFC 2616) the word idempotent is defined
+as:
+
+	"Methods can also have the property of 'idempotent' in that
+	(aside from error, or expiration issues) the side-effects
+	of N>0 identical requests is the same as for a single
+	request."
+
+A 'GET' request can mostly be cached for common queries. Whereas a
+'POST' request can hardly be cached.
+
+The encoding for both GET and POST depends on the ENCTYPE attribute.
+
+
+
+

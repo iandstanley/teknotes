@@ -1,0 +1,8 @@
+Wed Feb 16 13:18:11 UTC 2022
+This ia a sample file which I am going to import into syslog()
+
+With logger(1) you can add a text file to the system log with the -f flag:
+
+	$ logger -f import_into_syslog.txt
+
+

@@ -1,0 +1,33 @@
+
+
+
+                            CLANG-TIDY
+                        (clang lint tool)
+
+
+
+$ clang-tidy --dump-config - --
+
+Clang-Tidy reads .clang-tidy
+
+
+$ clang-tidy-3.8  -check=*  -p ./ ../src/main.cpp
+
+	build directory -------^
+
+If you want to check headers:
+
+	-header-filters=.*
+
+We can also get clang-tidy fix errors with:
+
+	-fix
+
+
+
+CHECK your output with diff as some odd things can happen.
+
+Don't use -fix on multiple files simultaneously
+
+
+

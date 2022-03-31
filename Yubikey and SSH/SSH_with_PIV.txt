@@ -1,0 +1,13 @@
+If you are using SSH with Smart Card (PIV), and adding the card to ssh-agent with
+ssh-add -s /usr/lib64/pkcs11/opensc-pkcs11.so
+you may get the error
+sign_and_send_pubkey: signing failed: agent refused operation
+from ssh if the PIV authentication has expired, or if you have removed and reinserted the PIV card.
+
+In that case, if you try to do another ssh-add -s you will still get an error:
+Could not add card "/usr/lib64/opensc-pkcs11.so": agent refused operation
+
+According to RedHat Bug 1609055 - pkcs11 support in agent is clunky, you instead need to do
+
+ssh-add -e /usr/lib64/opensc-pkcs11.so
+ssh-add -s /usr/lib64/opensc-pkcs11.so

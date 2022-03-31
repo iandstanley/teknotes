@@ -1,0 +1,83 @@
+
+
+
+                           CLANG FORMAT
+
+
+
+	clang-format -style=STYLE -dump-config > .clang-format
+
+Where STYLE is one of:
+
+	LLVM
+	Google
+	Chromium
+	Mozilla
+	WebKit
+	Microsoft
+	GNU
+	or 'InheritParentConfig' 
+	   which reads config from ../.clang-format
+
+Style can also be specified manually with a series of keyLvalue
+pairs:
+
+	-style='{key1:value1, key2:value2, ...}'
+
+
+$ clang-format-11 --style = <file> -i /path/to/file.cpp
+
+See clang.llvm.org/docs/ClangFormat.html
+
+
+
+$ less _clang_format
+
+
+	BasedOnStyle:		WebKit
+	CommentPragmas:		"^!|^:"
+	PointersBindToType:	false	# ' ' between typ and str
+	BreakBeforeBinaryOperators:	Nonassignment
+	BreakBeforeBraces:	Custom
+	BraceWrapping
+		...
+		...
+		AfterFunction: true
+		...
+		...
+
+
+$ vi .git/hooks/pre-commit-clang-format.py
+
+	import subprocess
+	output = str( subprocess.check_output["git". 
+		"clang_format", "--diff"] ))
+
+	if 'clang-format did not modify any file' not in output
+		and 'no modified file to format' not in output:
+
+		print ("Run git clang-format, add the modified files, then commit\n";
+		exit(1)
+	else:
+		exit(0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

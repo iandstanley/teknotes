@@ -1,0 +1,65 @@
+
+	REFER bibliographic database
+
+	%A	Author (can be repeated for multiple authors)
+	%B	Title of book
+	%C	City
+	%D	Date of publication, date of 'impress' or 'unknown'
+	%E	Editor
+	%G	US Gov ordering no.
+	%I	Publisher (issuer)
+	%J	Journal name
+	%K	Keywords for searching
+	%L	Label
+	%N	Journal issue no.
+	%O	Other information
+	%P	Page no. (can be m-n)
+	%Q	Name of author, if author is not a person
+	%S	Series name
+	%T	Title of article in a book or journal
+	%V	Volume no.
+	%X	Annotation
+
+
+
+                         REFER CITATIONS
+
+	.[ opening-text
+	flags keyword
+	fields
+	.] closing-text
+
+
+The default database is /usr/dict/papers/Ind
+
+You can set env variable REFER to set default database.
+
+
+Other tools:
+
+
+                             INDXBIB
+
+Make inverted index for bibliographic databases
+
+
+
+                              LKBIB
+
+Search bibliographic databases:
+
+	$ lkbib [-n] [-i fields] [-p filename] [-tn] keywords
+
+Where [-tn] = 6, by default (minimum n number of chars to match).
+
+
+
+                             LOOKBIB
+
+	$ lookbib [-i string] [-tn] filename
+
+Makes a prompt on STDERR and reads from STDIN a line of keywords
+
+
+
+

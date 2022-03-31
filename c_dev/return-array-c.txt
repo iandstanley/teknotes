@@ -1,0 +1,172 @@
+
+
+                       RETURNING ARRAY IN C
+
+
+Look at the following program:
+
+
+	char * return_string() {
+		char buffer[] ="This is a lcoal char buffer";
+		return buffer;
+	}
+
+	int * return_int_array() {
+		int_arr[] = {9,1,3);
+		return int_arr;
+	}
+
+	int main() {
+
+		int a[10];
+		a = return_int_array();
+		return 0;
+	}
+
+Consider the function return_int_array(),the author was trying to
+return an array int_arr.
+
+This you cannot do in C:
+
+(i)	because arrays are not first class citizens in C
+
+(ii)    they are trying to return a local variable (something that
+	is allocated on the stack). The compiler will probably warn
+	you against this because the stack area may get reused after
+	return statement.
+
+(iii)   we are also trying to assign the return value to a[10] and
+	you cannot do this in C because arrays are not modifiable
+	lvalues (See lvalues and rvalues in C/C++): You cannot
+	modify an array after declaration ie you cannot change it
+	to an int a[3] for example.
+
+
+The return_string() function is another beginner mistake trying to
+return a string.
+
+We will look at 6 possible solutions and compare them.
+
+
+                          6 ALTERNATIVES
+
+1. 	RETURN A STRING LITERAL
+
+	char * func() {
+		return "Returned string";
+	}
+
+	+ simplest
+	- only works for strings
+	- cannot be used if you need to calculate the string
+	- string literals can be stored in readonly memory 
+	- cannot overwrite (with some compilers)
+	- probably better off using a macro instead
+
+
+
+2.	USE A GLOBALLY DECLARED ARRAY
+
+	char global_array[100];
+
+	char * func() {
+		...
+		...
+		global_arr[i] = 'Q';
+		...
+		return global_arr;
+	}
+
+	+ contents can be calculated
+	- anyone can modify the global array
+	- overwritten on next call to function (caller needs to
+	  copy return value)
+	- large buffers can be wasteful
+
+
+
+3.	USE A STATIC ARRAY
+
+	char * func() {
+		static char static_array[100];
+		...
+		return static_array;
+	}
+
+	+ only those with the pointer will be able to modify array
+	- overwritten on next cal to function 
+	- large buffers can be wasteful
+	+ can be accessed outside the function by dereferencing the
+	  returned pointer
+
+	The static array is not stored on the volatile stack but
+	in the DATA SEGMENT of the process.
+
+
+4.	EXPLICITLY ALLOCATE MEMORY TO HOLD RETURN VALUE
+
+	char * func() {
+		char * buffer = malloc(100);
+		...
+		return buffer;
+	}
+
+	+ every invocation creates a new buffer (not overwritten
+	  on subsequent calls)
+	+ uses dynamic allocation with malloc (or similar)
+	- memory management issues
+		* memory freed while still in use
+		* memory leaks (no longer in use, but still held)?
+
+
+5.	CALLER ALLOCATES MEMORY TO HOLD RETURN VALUE
+
+	void func(char *result, int size) {
+		...
+		strncpy(result, "Returned string", size);
+	}
+
+	int main(void) {
+		char * buffer = malloc(size);
+		func(buffer, size);
+		...
+		free(buffer);
+	}
+
+	* for safety provide a count of the size of the buffer (like
+	  fgets in stdlib)
+
+	+ simplified memory management (free & malloc written by
+	  same agent);
+	+ return from function call can be used as a status code.
+
+	This is the best in the industry practice.
+
+
+
+6.	WRAP YOUR ARRAY IN A STRUCT AND RETURN THAT
+
+	#define	size	100
+
+	struct Data {
+		char buffer[size];
+	}
+
+	struct Data func() {
+		struct Data d;
+		strncpy(d.buffer, "Returned string", size);
+		return d;
+	}
+
+	+ NO memory management
+	- FIXED size array ONLY
+	- costly for large arrays
+	+ struct Data d is reserved on the stack which can be
+	  returned.
+
+	This makes people wary of this solution for large arrays
+	but it is a very viable one.
+
+
+
+

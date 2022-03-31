@@ -1,0 +1,54 @@
+
+
+			   STATIC IN C
+
+
+In C you can make a global variable static.  You can make a function
+statuc.  You can make a local variable static.
+
+
+Using 'static' in C affects the scoping of the item.
+
+
+
+	       STATIC (GLOBAL VARIABLE / FUNCTION)
+
+This is only visible within it's translation unit (similar to
+'private' in other languages).
+
+	$ vi display.c
+
+	static int counter = 0;
+
+	static int inCount (int arg) {
+		.....
+	}
+
+Here counter and inCount() are NOT VISIBLE to code in main.c
+
+
+
+		     STATIC (LOCAL VARIABLE)
+
+
+If a LOCAL variables declared STATIC then the variable is PERSISTENT
+across function calls and only visible within it's own function (In
+some ways it's a little like a global but private variable).
+
+You can also have the same name as a global variable in the function
+(but this is not recommended).
+
+
+
+			 USES of 'STATIC'
+
+
+- persistent variable that is only used by one function
+
+- allows you to make more modular code in C by using static global
+variables and static functions.
+
+	eg. a library has static bool isValid() which doesn't clash
+	with my own function of the same name as long as they are
+	both static.
+

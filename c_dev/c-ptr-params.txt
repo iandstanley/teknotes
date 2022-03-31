@@ -1,0 +1,177 @@
+
+
+       DESIGN PRINCIPLES OF C FUNCTIONS WITH PTR PARAMETERS
+
+
+Because C makes us manage our allocationof different types of
+variables in different ways that gives us concern over how and when
+we allocate and deallocate memory. Mishandling this allocation can
+cause fatal crashes or undefined random behaviour in our code.
+
+Here we discuss some design best practices and some of the problems
+that can occur.
+
+We will be much more intentional on how we use function parameters
+and how we use parameters that involve pointers to structures and
+what extra additional restrictions/constraints we can place upon
+them to give us more confidence in the programs we write.
+
+
+	#include "point.h"
+
+	int main() {
+
+		Point a = Point_print(1.0, 2.0);
+		Point_print(&a);
+	}
+
+
+If we modify point.c to increment the x value of the point them the
+second call to Point_print() would reveal that somewhere in our
+code mutated our local variable.
+
+
+When we define our functions that take pointers, if we don't intend
+to mutate the passed variable we should pass it as a 'const':
+
+	void Point_print( const Point* self );	// C99
+
+This is not a silver bullet but informs the programmer of the
+INTENTION of the parameter passed.
+
+By declaring the parameter as a const, the compiler shows you were
+your code is in error if you attempt to modify the parameter.
+
+We have used a stronger statement/advertising about the function
+definition.
+
+
+BEST PRACTICE:
+
+	Always declare pointer parameters as 'const' unless you
+	plan to modify them. If you need to mutate it, you should
+	think carefully/very critically about the design.
+
+
+
+Q. WHAT ARE THE IMPLICATIONS OF TE FOLLOWING FOUR FUNCTION SIGNATURES?
+
+	Point add1(const Point *a, const Point *b);
+	Point add2(const Point *a, Point *b);
+	Point add3(Point *a, const Point *b);
+	Point add4(const Point *a, const Point *b, Point *out);
+
+What can you infer from these definitions?
+
+
+
+                     STRUCTURES AS PARAMETERS
+
+
+A struct arguement's members are copied to a parameter's members.
+
+- ie we are using pass-by-value
+
+- complete copies are made into the function call frame just like
+  primitives (impossible with memory managed language objects like
+  Java and Python).
+
+
+Using struct pointers is often PREFERRED over STRUCTS
+
+- usually more efficient to copy a pointer than every member of a
+  large struct
+
+- you must be careful and intentional with the use of struct pointers.
+
+	BE INTENTIONAL WHEN YOU WANT MUTABLE PARAMS
+
+
+Two common patterns:
+
+1.	OOP-like: first parameter point to the subjct being mutated
+	(often naming it 'this' or 'self' as they are not C keywords):
+
+	void Point_change(Point *self, double x, double y) {
+		self->x += x;
+		self->y += y;
+	}
+
+
+2.      Have an explicit "out" parameter to catch the attention of
+	the developer:
+
+	void Point_move_to(const Point *self, 
+		double x, double y, Point *out) {
+
+		out->x = self->x + x;
+		out->y = self->y + y;
+	}
+
+
+
+
+            OWNERSHIP: WHO IS RESPONSIBLE FOR FREEING?
+
+
+Each time Path list is extended, more heap memory was allocated.
+
+Q.	Is freeing just the head Path enough?
+A.	use Valgrind to find out.
+
+
+Document it:
+
+	/*
+
+	Extend a Path by creating a newPath node .....  
+
+	Returns a pointer to the next path for future extension 
+
+	The returned pointer is considered owned by the head path
+	in the list and MUST NOT be fixed manually
+
+	*/
+
+
+
+
+                   DATA STRUCTURES & OWNERSHIP
+
+
+In an unmanaged heap memory environment (like C, C++, Obj-C, Rust
+...) you must think deeply about the ownership  of values on the
+heap.
+
+The owner of allocated heap memory is responsible for freeing it.
+
+	void *OOMGUARD(void *p);
+
+	int main() {
+
+		Point *a = OOMGUARD( malloc( sizeof(Point) ) ); 
+		...
+		...
+		free(a);
+		return 0;
+	}
+
+
+For every allocation you should be able to discern its owner. 
+
+	- ownership in linked lists is recursive
+	- if the head variable in a PATH which owner a path ...
+	  freeing the head variable, using Path_free(), freed all
+	  of its owned paths
+
+You would NOT consider tail to have ownership, just a reference.
+
+	- you should only free the owner and only once
+	- freeing a reference will lead to double freeing
+	- you also want to be careful never to use a reference
+	  beyond the lifetime of it
+
+
+
+
+

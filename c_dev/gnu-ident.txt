@@ -1,0 +1,40 @@
+
+
+
+                            GNU INDENT
+
+
+
+GNU's code formatting tool. Indent supports multiple styles and
+custom styles. For example, GNU, K&R, Linux and Berkeley
+
+
+
+                        Configuration file
+
+	~/.indent.pro
+
+
+
+                    Kernighan & Ritchie style
+
+Kernighan & Ritchie style, -kr  is equivalent to:
+
+	-nbad -bap -bbo -nbc -br -brs -c33 -cd33 -ncdb
+	-ce -d0 -di1 -nfc1 -nfca -hnl -i4 -ip0 -l75
+	-lp -npcs -nprs -npsl -saf -sai -saw -nsc
+	-msob -nss -par
+
+
+
+                          Berkeley style
+
+Berkeley style, -kr  is equivalent to:
+
+	-nbad -nbap -bbo -bc -br -brs -c33 -cd33 -cdb
+	-ce -ci4 -cli0 -cp33 -di16 -f1 -fca -hnl -i4 
+	-ip4 -l75 -lp -npcs -nprs -psl -saf -sai -saw
+	-sc -nsob -nss -ts8
+
+
+

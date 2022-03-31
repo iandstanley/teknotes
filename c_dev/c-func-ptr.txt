@@ -1,0 +1,210 @@
+
+
+                      FUNCTION POINTERS IN C
+
+
+Memory map:
+
+		+----------------------+
+		| Environment & args   |
+		+----------------------+
+		| Stack                |
+		+----------------------+
+		|   |                  |
+		|   v                  |
+		|                      |
+		|  ^                   |
+		|  |                   |
+		+----------------------+
+		| Heap (dynamic memory)|
+		+----------------------+
+		| Static memory        |
+		+----------------------+ 
+		| Code                 |
+		+----------------------+
+
+
+An 'int' or a 'charp[' would appear in static memory. A char* often
+points to a string allocated with malloc() on the heap. But what
+kind of pointer s a function pointer and where does it point to?
+
+
+	int main() {
+		printf("main: %p\n", main);
+	}
+
+What is 'main' in the printf command above? It is a pointer to the
+location of the start of main().
+
+Beneath static memory (in what is called te 'Text Segment' of our
+programs) is where our compiled instructions are (the executable
+code).
+
+One of the first things the kernel does when first executing a file
+is to read the machne code from the ELF executable and leads them
+into the TEXT segment of memory.
+
+Referencing main() points to the first byte of the first instruction
+of the main() function (or at least the compiler created setup
+instructions).
+
+As a function name is just a memory address, we can store that in
+a variable and make use of it!
+
+
+
+                        A FUNCTION'S TYPE
+
+What then is a function's type?
+
+	* A functions type is defined by it's PARAMETER TYPES and
+	  it's RETURN TYPE.
+
+	* When you make forward declarations of functions like:
+
+		void hello();
+		void world();
+		int add(int, int);
+		int sub(int, int);
+
+You are doing exactly this -- declaring the functions type which
+restricts how you can later use it in your code.
+
+Here the functions hello() and world() have the same type. Also
+add() and sub() have the same type. Here the functions hello() and
+world() have the same type. Also add() and sub() ave the same type.
+
+
+
+              DECLARING A FUNCTION POINTER VARIABLE
+
+Declare it like you would forward declare the function prototype
+without parameter names.
+
+Add an astersk before the pinter variable's name.
+
+Surround the asterisk and the pointer variable name in parenthesis
+
+eg.
+
+	int64_t  add(int64_t, int64_t);
+
+	int64_t (*functionptr)(int64_t, int64_t);
+
+	ie. *functionptr is a ptr to a function that returns an
+	int64_t and takes two int64_t parameters.
+
+Now we have the function pointer (*functionptr)() we can use it
+like a variable.
+
+	functionptr = add;
+
+	printf("1+2 = %d", functionptr(1,2) );
+
+We can later reassign functionptr to point to another function sub()
+whose type is the same.
+
+
+
+          WHAT ARE THE USES CASES OF FUNCTION POINTERS?
+
+
+Many! Dynamic dispatch is an important mechanism under the hood of
+beloved features in many other programming languages.
+
+When you need to add the ability to plug features into a system
+this is the most common way of organising that.
+
+
+DYNAMIC DISPATCH:	
+When we call a function we don't necessarily know when its compiled
+which function is going to be called. This enables many. many useful
+scenarios.
+
+eg.
+	We can write and call function that take functions as
+	arguements!
+
+	* higher order functions such as filter, map and reduce.
+	* sorting in Java
+	* qsort in stdlib.h
+
+	We can create "interfaces" for an "object orientated" style
+	of programming.
+
+
+
+              READING FUNCTION POINTER DECLARATIONS
+
+
+Function pointers can be difficult to read, eg:
+
+int (*) (int*, float*) (*foo)(int, int, (*op)(double, double, double)
+
+
+With function pointers the name goes in the middle unlike normal
+variables declatations.
+
+So to read this declaration we follow the Right-Left rule:
+
+
+	int * (*foo) (int, int, int)
+
+First we find our indentifier: foo.
+
+We then look to the RIGHT and there is nothing there.
+
+We then look to the LEFT and see *, Ahwe have a pointer.
+
+Outside the parenthesis:
+
+	We look RIGHT and see (int, int, int) ... so we have a
+	function that takes 3 ints.
+
+	We look LEFT and see it return an integer pointer: int*
+
+So 'foo' is a pointer to a function that takes 3 ints and returns an int*
+
+
+
+                 EXAMPLE USE OF FUNCTION POINTERS
+
+
+
+	int add(int a, int b) {return a+b;}
+	int sub(int a, int b) {return a-b;}
+
+	void do_operation(int (*op)(int, int), int x, int y) {
+		op(x,y);
+	}
+
+	int main() {
+
+		int res = do_operation(add, 5, 34);
+
+		int res2 = do_operation(sub, 9, 2);
+
+
+
+We can also typedef it:
+
+	typedef int (*operation_ptr)(int, int);
+
+which changes the do_operation to 
+
+	int do_operation(operation_ptr op, int x, int y); {
+		....
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+

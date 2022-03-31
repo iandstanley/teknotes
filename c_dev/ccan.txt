@@ -1,0 +1,256 @@
+
+
+
+               CCAN Comprehensive C Archive Network
+                        (codearchive.net)
+
+
+
+This is an archive of the nice snippets of C code that should be
+exposed to the wider world in the same way that CPAN worked for
+Perl code.
+
+CCAN includes tools for the user to create archives to add to the
+site (like ccanlint).
+
+CCAN don't care what program does.
+
+Many ues the TAP library (Test Anything Library).
+
+
+
+
+                         CCAN GOLDEN RULE
+
+
+                   "Our code must not be ugly!"
+                          ~ CCAN Project
+
+Or do people ask: "Is this code going to hurt me more than it's
+going to help me?"
+
+
+
+
+                           CCAN ISSUES
+
+
+	- C is not designed with modules in mind
+	- Great trust is required to use someone's code
+	- Debugging other peoples code to work with yours is often
+	  longer than writing it yourself.
+
+
+
+
+                          A CCAN MODULE
+
+
+INDENTATION	no stated preference
+
+PORTABILITY	
+		#include "config.h"
+
+		Or use autoconf style HAVE_XXX defines
+
+METADATA
+		_info file (licence, docs, dependancies)
+		comments -> module doc
+		_info file is a C program even though it doesn't
+			end in .c
+		execute to get dependancies, libs
+		_info includes an example program
+
+DOCUMENTATION
+		Kernel-doc style
+		Human read in place, tools extract
+
+TEST SUITE
+		There is really no good standard for C unit testing
+
+UNIT TESTING
+		test/compile_fail*.c	should compile/link 
+					unless -DFAIL
+		test/compile_ok*.c	should compile/link
+		test/run*.c 		should compile and run
+					with exit 0
+		test/api*.c             like run but linked with
+					module
+		test/*.c                everything else linked with
+					test
+
+
+
+
+                            NAMESPACE
+
+
+C identifiers
+- many ignore it
+- we have primitive tools/namespaces
+
+Module Names
+- currently a flat directory structure
+
+
+
+                           BUILD SYSTEM
+
+
+System Agnostic.
+
+We supply a set of rules:
+
+	- supply "config.h"
+	- ensure #include <ccan/modname> working
+	- compile *.c in top level directory and that is
+	  the module
+	- no conditional builds
+	- you are going to need the libs live and therefore
+	  compile+execute _info. 
+	- We supply a makefile
+
+
+
+
+                            CCAN TOOLS
+
+
+
+namespaceize
+
+configurator 	to produce a "config.h"
+
+ccanlint
+		- guide to how to write a ccan module
+		- a helper to test your ccan module
+		- a vague scorer for ccan modules
+
+		ccanlint does some:
+
+		- compulsory test
+		- trivial tests
+		- build testing
+		- licensing tests
+		- documentation tests
+		- module testing
+		- also runs under valgrind
+
+
+
+
+                        EXAMPLE C PROJECTS
+
+
+
+ccan/array_size		ARRAY_SIZE macro (lwn.net/Articles/226007)
+
+gprof for profiling code coverage
+
+streq wrapper 		ccan/str/str.h
+
+foreach 		( git.ozlabs.org/?p=ccan:a=tree:f=ccan/foreach 
+			or tinyurl.com/2g9mqh )
+
+Remember you can use the C preprocessor to include files other than
+header files:
+
+	#include "file.c"
+
+
+ccan/noerr		wrappers to prottect errno from libc
+ccan/tap		test anything protocol
+ccan/failtest		adds fail test testing for free
+			(test malloc fails as fails etc) 
+
+
+
+
+                     CCAN/OPT OPTION HANDLING
+
+ccan/opt                like popt but extensible and typesafe 
+			(see ccan/typesafe_cls)
+			use getopt? popt? ccan/opt is what they
+			wanted popt to be
+
+ccan/opt allows:
+
+	opt_register_noarg("--help|--usage|-h", opt_usage_and_exit);
+
+and:
+
+	opt_register_arg("-port", opt_set_uintval, opt_show_uintval, 
+		&port, "server port number");
+
+then: 
+
+	opt_parse(&argc, argv, opt_log_stderr_exit);	
+
+ccan/opt leaves invalid arguments in argv, so we can:
+
+	if (argc != 1) 
+		opt_log_stderr_exit("unknown extra arguments");
+
+ccan/opt is more grep friendly, eg:
+
+	$ grep "--port" file.c 
+
+rather than "port"
+
+
+
+
+
+                        CCAN/CCAN/OSERVER
+
+
+See ccan/ccan/oserver
+
+How can we handle multiple connections on our server?
+
+There are typically two ways to do this:
+
+i.	some kind of select loop 
+	(for an event loop see ccan/tevent)
+
+	or
+
+ii.	use threads
+
+
+or ..... we can use antithreads   ccan/antithreads
+
+	Threads are for people who can't program state 
+	machines. 	-    Alan Cox
+
+
+
+
+ccan/read_write_all
+
+ccan/talloc		talloc_dump() opens a file and runs 
+
+				talloc_report_full()
+
+			which dumnps all memory allocations to a
+			file
+
+ccan/cdump		C version of genparser
+
+ccan/jmap		Judytree map
+ccan/hash		Jenkins hash
+
+ccan.ozlabs.com/list.html
+
+
+
+
+
+
+                       THE MEANING OF VOID*
+
+	void* 	means	"it could be anything"
+
+		NOT:	"I'm not going to tell you"
+		OR:	"I can't figure it out"
+

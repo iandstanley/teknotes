@@ -1,0 +1,183 @@
+
+
+                         STRUCTURES IN C
+
+
+Structures we used to define custom data types consisting of one
+or more variables. Typically we also use the keyword typedef to
+define the structures as a type:
+
+	struct Point {
+		double x;
+		double y;
+	}
+
+	int main() {
+		struct Point aPoint;
+
+		aPoint.x = 1.0;
+		aPoint.y = 2.0;
+	}
+
+
+If we have a pointer to a struct then this can lead to an interesting
+syntax:
+
+	void Point_print(const struct Point *self) {
+
+		printf("(%f,%f)", (*self).x, (*self).y );
+	}
+
+In C the same rules about locations of variables in memory apply
+to structs.
+
+This is a significant difference from memory-mapped languages like
+Java! In those languages, your objects can ONLY live in dynamic,
+heap memory and you can only pass around pointers!
+
+
+But we setup a struct variable:
+
+	struct Point aPoint;
+
+This group of members will be stored in the stack space in main's
+memory frame. This is very difficult and gives us more flexibility
+and control over where they are stored -- we can decide whether we
+want them to be stored in static memory, automatic memory or dynamic
+memory and we have that control. In memory managed languages such
+as Java and Python you are stuck with reference types stored on the
+heap.
+
+This creates some new opportunities and concerns working in a systems
+language tthat is unmanaged.
+
+
+
+                     STRUCTURE INITIALIZATION
+
+To initialize a struct we have a few options at our disposal.
+
+(i)	ZERO INITIALIZE ALL MEMBERS
+
+	struct Point Apoint = {0};	// C99 standard
+
+		"If there are fewer initializers than there are
+		members of an aggregate, the remaining members are
+		initialized implicity the same as objects with a
+		static duration."*
+
+	* objects with static duration are initialized to zero.
+
+	Prior to C99, we would need  = {0,0};
+
+
+(ii)	INITIALZIE MEMBERS IN ORDER OF APPEARANCE
+
+	struct Point aPoint = {1.0, 2.0};
+
+	This syntax ONLY works when declaring and initializing at
+	the same time!
+
+	As a matter of practice ALWAYS INITIALIZE in one of the
+	above ways so you don't have garbage values.
+
+
+
+                  ALIASING TYPES WITH A TYPEDEF
+
+
+C's typedef keyword allows you to alias a type with another name. eg.
+
+	typedef unsigned int whole_number;
+
+	whole_number x = 211;
+
+Because having to use the word struct in front of al struct types
+we tend to typedef structs as a rule.
+
+eg:
+
+	* traditionally:
+
+		typedef struct Point point_t;
+
+	* or a more modern version using a capital like a class
+	  name:
+
+		typedef struct Point Point;
+
+
+	We could then use either:
+
+		point_t	x = {0};
+	or:
+		Point	y = {1.0, 2.0};
+
+Naming conventions around struct typedefs vary from project to
+project. For longer names we see CamelCase being used or
+multiple_underscores_t.  The modern leading capital (or CamelCase)
+often feels more natural to those coming from OOP backgrounds.
+
+Some teams feel that having a separate typedef on a separate like
+feels like it is easy to forget and it keeps that knowledge in 2
+different places.
+
+So there is a way of doing this all in ONE STEP:
+
+We can convert:
+
+	struct Point {
+		double x;
+		double y;
+	}
+	typedef struct Point Point;
+
+To something that is all done in one statement:
+
+	typedef struct Point {
+		double x;
+		double y;
+	} Point;
+
+
+Can you get rid of the redundancy of Point being repeated twice?
+
+YES, but only if you do not need a recusrive data type (linked list,
+tree etc). In this case you use:
+
+	typedef struct {
+		double x;
+		double y;
+	} Point;
+
+(ie. an anonymous struct)
+
+
+
+                       USING STRUCT VALUES
+
+	aPoint.x = 1.0;
+	aPoint.y = 2.0;
+
+Take an address of:
+
+	Point * aPointPointer = & aPoint;
+
+Copy over ALL members of a struct:
+
+	Point aCopiedPoint = aPoint;
+
+	*aPointPointer = someOtherPoint;
+
+To avoid writing:
+
+	(* APointPointer).x 
+
+we can write:
+
+	aPointPointer->x
+
+
+
+
+

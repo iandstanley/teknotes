@@ -1,0 +1,115 @@
+
+
+               /* CREATING YOUR OWN LIBRARY IN C */
+
+                        /* libmycode.c */
+
+
+#include "mycode.h"
+#include <string.h>
+
+char* reverse(char *string) {
+
+	int len = strlen(string);
+
+	for (int i=0; i<len/2; i++) {
+		char temp = string[i];
+		string[i] = string[i];
+		string[len-1+i] = temp;
+	}
+	return string;
+}
+
+
+                          /* mycode.h */
+
+#pragma once
+
+char * reverse(char * string);
+
+
+
+                        /* librarytest */
+
+#include "mycode.h"
+#include <stdio.h>
+
+int main(int argc, char **argv) {
+
+	if (argc > 0) {
+
+		printf("%s\n", argv[1]);
+		printf("%s\n", reverse(argv[1]));
+
+
+	}
+
+}
+
+
+/*
+
+
+	$ vi makefile
+	CC=clang
+	CFLAGS=-Wall -g
+	
+	all: librarytest
+
+	libmycode.o: 	libmycode.c mycode.h
+		$(CC) $(CFLAGS) -c libmycode.c
+
+	libmycode.so:	libmycode.c mycode.h
+		$(CC) $(CFLAGS) -f PIC -shared -o $@ libmycode.c -lc
+
+	librarytest:	librarytest.c libmycode.o
+		$(CC) $(CFLAGS) -o $@ $^
+
+	clean:
+		rm *.o *.so librarytest
+
+
+                           -----------
+
+
+	$ make
+
+	clang -Wall -g -c libmycode.c
+
+	clang -Wall -g -o librarytest librarytest.c libmycode.o
+
+	$ ./librarytest "A fun string that I just wrote"
+
+	A fun string that I just wrote
+	etorw tsuj I taht gnirts nuf A
+	$
+
+
+
+                           -----------
+
+
+
+	CREATING A SHARED OBJECT / SHARED LIBRARY .so FILE
+
+	Shared libraries are a little different. Whereas the linker
+	put libmycode.o into my compiled binary, a .so is designed
+	to be different and kept separate and loaded at runtime.
+
+	To build our .so file we need 2 more options:
+
+		-fPIC		position independant code
+		-shared		create a shared library
+
+	$ make libmycode.so
+
+	(or add libmycode.so to the default target)
+
+	And we need to create the test file without adding the
+	libmycode.o on the command line.
+
+
+*/
+
+
+

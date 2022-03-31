@@ -1,0 +1,98 @@
+
+
+		     MODULARISING C PROGRAMS
+
+
+
+
+There are downsides to single file programs:
+
+1.      Single namespace for statuc global identifiers
+	(variables/function names).
+
+	- Static global identifiers have a file level namespace
+	  (hidden from other files).
+
+2.      Recompiling large projects can be slow, even when changes
+	are small.
+
+3.      Sharing code between multiple programs requires the duplication
+	of code (or messy copy-paste operations.
+
+4.      Long files are difficult to reason through separation of
+	concerns.
+
+
+
+			   MODULES IN C
+
+
+There are NO formal modules in C, but the combination of .h and .c
+source files offer the benefits of a module.
+
+In C our header .h files serve as our interface to the code in the
+.c files. The header file contains the function and type declarations.
+
+The .c source file contains the implementations.
+
+The contents of a well defined module should treat the .c source
+files as a black box.
+
+
+
+                       MODULE HEADER FILES
+
+
+A well defined header file should contain:
+
+* either a '#pragma once' or a guard clause
+
+* definitions of structs and associated typedefs
+
+	typedef struct Point {
+		double x; double y;
+	} Point;
+
+* function definitions
+
+* functions should have documentation for each function in the
+header file.
+
+* Any general documentation should appear in the header file
+
+* By convention we typically prefix our functions with Point_ 
+(where Point is our library name) to logically link these functions
+as related.
+
+* When passing a struct * parameter we would use:
+
+	void Point_print(Point *self);
+
+	Here we use 'self' to refer to the struct point in a similar
+	manner to C++'s this-> reference to make it clear that the
+	argument is passed as a reference to the struct being acted
+	upon.
+
+
+
+              COMPILING A "MODULE" INTO OBJECT FILES
+
+
+Adding the -c compiler flag to the command line produces object
+code files (.o).
+
+	$ cc -Wall -Wextra -std=c11 -g -c point.c
+
+Once everything is compiled to object code we must link them:
+
+	$ cc main.o point.o
+
+You can inspect executable and object files with:
+
+	$ objdump -t file.o
+
+or dump disassembled assembler code with:
+
+	$ objdump -d file
+
+

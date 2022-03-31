@@ -1,0 +1,109 @@
+
+
+
+
+                    MOST DANGEROUS C FUNCTIONS
+
+Replacing C runtime functions with better C runtime functions.
+
+
+	strlen		->	strlen_s
+	strcpy		->	strcpy_s
+	strcat		->	strcat_s
+	sprintf		->	_snprintf_s
+	vsprintf	->	vsnprintf_s
+	makepath	->	_makepath_s
+	_splitpath	->	_splitpath_s
+	scanf/sscanf	->	sscanf_s
+	snscanf		->	_snscanf_s
+	gets		->	gets_s
+
+Most of these are mostly to cover buffer overflow.
+
+You can generally see the revised 1990's functions have an _s at
+the end of the name.
+
+Even strlen can be hit with a non-null-terminated string or a 100MB
+string or something equally big. Strlen also blows up on a null
+pointer.
+
+
+
+                        THE NEW FUNCTIONS
+
+
+
+You will need to add:
+
+	#include <string.h>
+
+to include most of the new string functions.
+
+
+strlen_s	returns 0 if you pass it a null pointer
+
+
+snprintf_s      allows you to specify a buffer size and detects the
+		following conditions at runtime.
+
+		- %n is present
+		- any of the args are a null pointer
+		- format or buffer is a null pointer
+		- buffer size > RSIZE_MAX
+		- any encoding errors during formatting
+		- too long of a string in total
+
+
+_makepath_s	allows you to sepcify size of output buffer
+
+_splitpath_s	specifies size of each path component
+
+sscanf_s        specify the max size for each component you can
+		scan out of the string
+
+_snscanf_s      pass length specifier for each component you scan
+		out of the string
+
+
+vsnprintf_s     specify buffer size & detect the following conditions
+		at runtime calling the constraint handler as
+		appropriate
+		- %n is present
+		- any of %s args are a null pointer
+		- format or buffer if a null pointer
+		- buffer size is zero or > RSIZE_MAX 
+		- any encoding errors during formatting
+		- too long of a string in total
+
+gets_s          specify max buffer length N and writes N-1 chars
+		to it PLUS the NULL terminator
+
+		It watches and throws on the following exceptional
+		cases:
+
+			- n is zero
+			- n > RSIZE_MAX
+			- string is a null pointer
+			- reached N-1 chars without EOL or EOF being
+			  hit
+
+Use vsnprintf_s() 
+	va_list args;
+	va_start(args, format);
+	vsnprintf_s(buffer, cb, _TRUNCATE, format, args);
+	va_end(args);
+
+
+
+
+
+
+
+
+
+
+
+
+
+	- Dave's Garage
+

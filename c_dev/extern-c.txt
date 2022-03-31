@@ -1,0 +1,45 @@
+
+
+		    THE 'EXTERN' KEYWORD IN C
+
+
+C programs are built from one or more translation units (aka
+compilation units).
+
+eg
+	$ cc -c main.c -o main.o
+
+	$ cc -c display.c -o display.o
+
+	$ cc -o main main.o display.o
+
+Here each of these files are compiled separately (ie each is it's
+own translation unit) then linked together into a single executable.
+
+Let's say we declare a variable in one translation unit but want
+to use it in another:
+
+	display.c:
+
+		int displayCount = 0;
+
+	main.c:
+		extern int displayCount;
+
+		main () {
+			printf("%d", displayCount);
+		}
+
+If you miss out the keyword 'extern' often nothing happens. In the
+old days you would get an error. Today a lot of modern linkers
+figure this out and correct your mistake generally assuming that
+you meant to have just one variable across your whole program
+(otherwise you would have used 'static').
+
+Then why use it at all? If you later mistakenly add a second
+initialiser to the  variable then the compile breaks with a "duplicate
+symbol error". Using 'extern' in this situation would give a message
+denoting attempts to initialize an extern.
+
+
+

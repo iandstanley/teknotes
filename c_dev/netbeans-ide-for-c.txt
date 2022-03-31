@@ -1,0 +1,19 @@
+
+                      Netbeans IDE For C/C++
+
+
+	netbeans.org/downloads 
+
+Which downloads an installation shellscript
+
+
+	$ cd Downloads
+	$ sh netbeans-8.0.2.cpp-linux.sh
+
+
+Netbeans for C/C++ requires the Java JDK (??)
+
+
+
+
+

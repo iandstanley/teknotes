@@ -1,0 +1,682 @@
+
+
+
+
+			   C STANDARDS
+
+
+
+
+	_name           identifiers are RESERVED at GLOBAL SCOPE
+
+Identifiers with the following forms are ALWAYS RESERVED.
+
+	__reserved      /* double underscore */ _Reserved       /*
+	underscore then capital */
+
+The burden is on you not to use them!
+
+
+Here is an example of how this affects you in practice ...
+
+eg      C90 has no built in boolean type. Programmers often used:
+
+		typedef enum {false, true} bool;
+
+	C99 added a boolean type. However, it couldn't name the
+	type 'bool' or 'boolean' without risking "breaking existing
+	code"
+
+	The Standards Committee used a Reserved keyword for the new
+	type _Bool
+
+	_Bool was a reserved identifier and now it's a keyword.
+
+	If you want to use a more appealing type 'bool' then include
+	<stdbool.h> which has:
+
+		bool	as an alias for _Bool
+		false	as an alias for constant 0
+		true	as an alias fro constant 1
+
+	These are builtins in C++, but not in C. In C99 you must
+	include <stdbool.h> before using these names.
+
+
+
+
+                       C VERSION DETECTION
+
+
+C90 specifies what Standard C implementations MUST define: 
+
+
+__STDC__
+
+	a macro whose value 1 indicates the compiler fully implements
+	Standard C
+
+
+
+In C99 they added:
+
+
+__STDC_VERSION__
+
+	a macro whose value indicates WHICH standard the compiler
+	supports
+
+
+	#if __STDC_VERSION__ == 201710L
+		/* its C18 */
+	#elif __STDC_VERSION__ == 201112L
+		/* its C11 */
+	#elif __STDC_VERSION__ == 199901L
+		/* its C99 */
+	#elif __STDC__ == 1
+		/* its C90 */
+	#else
+		/* its not standards conforming */
+	#endif
+
+
+
+
+
+                 C99 FEATURES IN COMMON WITH C++
+
+
+C99 added many features to C90:
+
+	// comment
+	long long integer types
+	extended integer types
+	relaxed declaration ordering
+	declarations in FOR statements
+
+Some things are similar to, but NOT identical to features of C++:
+
+	inline functions
+	complex and imaginary types
+
+
+
+
+                             COMMENTS
+
+
+	/* C90 comments */
+
+	// C99/C++ added the double slash comments
+
+	/* 	multi 
+		line 
+		comments
+	*/
+
+
+
+
+
+                    EXACT WIDTH INTEGER TYPES
+
+
+C allows compilers to choose storage size and range of values of
+each integer type.
+
+
+For years C programmers defined their own exact width types:
+
+	typedef char sint8		/* 8 bit signed int */
+	typedef unsigned long uint32	/* 32 bit unsigned */
+
+This was an aid for portability in some respects, but it is also a
+real nuisance for people who have specific range requirements.
+
+So C99 provides a standard set of such typedefs in <stdint.h>
+
+C++ provides same set as C99 but as members of namespace 'std' in
+the header file <stdint.h>
+
+<stdint.h> /might/ define integer types of the form 'intN_t' and
+'uintN_t'. These types are optional and may be absent from the
+header.
+
+<stdint.h> provides 'int_LeastN_t' and 'uint_leastN_t' data types.
+
+For example, int_least8_t is the smallest type that can represent
+at least 8 bits. This is particularly useful when using binary masks
+for options or state.
+
+Note these are a compromise and can overflow requiring careful
+programming.
+
+
+Fastest integer types:
+
+	<stdint.h> defines:
+
+		int_fastN_t
+		uint_fastN_t
+
+These are the _fastest_ type that can represent the specified N bit
+int/uint.
+
+
+Also
+
+	intmax_t	\_	signed and unsigned 
+	uintmax_t	/	integer of greatest width
+
+
+
+<stdint.h> MIGHT also define:
+
+	intptr_t
+	uintptr_t
+
+Which are integers that can hold the value of a pointer to an object.
+
+
+	Usage:          maybe you want to perform arithmetic other
+			than just adding and subtracting on the
+			values pointed to.
+
+			eg. Operations like multiply without losing
+			    information.
+
+
+<stdint.h> can't provide intptr_t on a platform where 
+
+	sizeof(void *) > sizeof(intmax_t)
+
+
+
+
+
+
+             THE NON-MACRO MACRO IDENTIFIER __func__
+
+
+C99 provides a macro identifier named __func__. It's NOT A MACRO
+
+Within each function body, its implicitly defined LOCAL OBJECT. It
+is how we can ask 'What is the name of the function we are compiling?'
+for tracing and error messages.
+
+Its as if the following declaration appears immediately after the
+opening brace:
+
+	static char const __func__[] = "functionname";
+
+
+Example code:
+
+
+	#define enter() printf("enter %s\n", __func__);
+	#define leave() printf("leave %s\n", __func__);
+
+	void foo() {
+		enter();
+		...
+		leave();
+	}
+	void bar() {
+		enter();
+		...
+		leave();
+	}
+
+
+
+
+
+
+                    RELAXED DECLARATION ORDER
+
+
+
+C90 doesn't allw any declarations after the first statement in
+block.
+
+C99/C++ allows you to intermix and have declarations closer to codes:
+allowing you to delayt declaration until you are ready to initialize
+it.
+
+Also you can declare with a for statement in C99.
+
+
+
+
+
+                     INLINE FUNCTIONS IN C99
+
+
+
+Well written programs are often self documenting.
+
+eg.
+
+	This is OK:
+
+		if ( n %2 == 0 ) 	// if n even
+
+
+	This is better:
+
+		bool unsigned_even(unsigned n) {
+			return (n%2) == 0;
+		}
+
+		if (unsigned_even(n)) {
+			// no comment needed
+		}
+
+Unfornately, the added overheard of calling and returning from a
+function call can degrade performance.
+
+C programmers traditionally avoid this overhead by using a macro
+instead:
+
+	#define unsigned_even(n) ((n)%2 == 0)
+
+	if (unsigned_even(n) {
+		// still no comment needed
+	}
+
+Macros work fine in some cases but have problems, particularly with
+side effects like postfix ++ operators.
+
+
+C99 added support for inline functions (a keyword):
+
+	inline int_max_val(int x, int y) {
+		return x>y ? x : y;
+	}
+
+Note the compiler cannot generate the call inline unless the function
+definition appears in the translation unit prior to the call. Inline
+avoids side effects like ++. An inline function behaves like regular
+function in that ...
+
+	a program can take the address of an inline function
+
+	eg here the compiler must generate a non-inline copy of
+	   maxval:
+
+		int (*pf)(int, int) == &max_val;
+
+However, calls using max_val as the function name should continue
+to expand inline.
+
+
+What happens if you define a non-inline external function in a
+header?
+
+If you try to call the function in more than one source file, the
+Linker complains about multiple defines.
+
+But with inline functions you SHOULD DEFINE not just declare an
+inline function in a header (unless it has external linkage):
+
+	// mylib.h
+	inline int_max_val(int x, int y) {
+		return x>y ? x, y;
+	}
+
+In C you must decide beforehand _where_ that non-inline copy will
+go.
+
+The inline function in C file:
+
+	// max_val.c
+	#include "max_val.h"
+	int max_val(int, int)
+
+The use of 'extern' is optional here. The declaration may include
+the word 'inline' but ONLY if the keyword 'extern' is there too.
+
+However, 'inline int_max_val(int, int)' is invalid as the compiler
+would be expecting you to define the function here.
+
+
+
+
+
+                   COMPLEX AND IMAGINARY TYPES
+
+
+
+C99 added native support for complex numbers in cartesian form, 
+x + yi.
+
+In contrast C++ implements a 'class with specializations'.
+
+As with other specifiers order does not matter:
+
+	#include <complex.h>
+
+	double  _Complex  a;
+	_Complex  double  b;
+
+
+
+
+                        COMPOUND LITERALS
+
+
+	int [m] { 8,7,6,5,3 }
+
+
+
+
+                     DESIGNATED INITIALIZERS
+
+
+In C90 a brace initializer for a union can init only the first
+marker.
+
+In C99 we can use designated initializers with arrays:
+
+	int x[10] = { [3]=8, [7]=2 }; // C99
+
+Rather than:
+
+	int x[10] = { 0,0,0,8,0,0,0,2 }; // C90
+
+Unspecified elements default to zero.
+
+
+
+
+                      VARIABLE LENGTH ARRAYS
+
+
+In C90, if you wanted to create an array at runtime you would do:
+
+	void f(size_t n) {
+		int *x = malloc( n * sizeof(int) );
+
+		for ( size_t i=0 ; i<n ; ++i ) {
+			// do something with each x[i]
+		}
+
+		free(x);
+	}
+
+And you would need the free() to avoid memory leak.
+
+This is worse with multidimensional arrays and is easy to get wrong.
+
+C99 introduced variable length arrays (VLAs) to simplify using
+arrays with non-constant dimensions:
+
+
+	void f(size_t m, size_t n) {
+		int x[m][n];	// a VLA
+
+		for ( size_t i=0 ; i<m ; ++i ) {
+
+			for ( size_t j=0 ; j<n ; ++j ) {
+ 				
+				// do something with x[i][j]
+			}
+		}
+	}
+
+With a VLA you do not need a malloc() and free() to manage array
+storage. VLAs are required in C99 and optional in C11. Few compilers
+support it.
+
+If x <> a VLA, sizeof(x) is a constant.
+
+If x == a VLA, sizeof(x) is not a constant and may not be computable
+at compilation.
+
+A VLA can only appear in:
+
+	a function parameter list, or
+	in function body
+
+It cannot appear as declared static or extern.
+
+
+
+
+                      FLEXIBLE ARRAY MEMBERS
+
+
+
+Suppose you need to build packet-like structures with:
+
+	fixed format header
+	trailer variable length data sequence
+
+VLAs cannot be a structure member:
+
+	/* WRONG */
+	size_t n; ....
+
+	typedef struct packet packet;
+	struct packet {
+		header h;
+		data d[n]; 	/* WRONG */
+	}
+
+The conventional approach in C90 (and in C++) is to define the data
+portion of the packet as an array whose dimension is 1.
+
+	typedef struct packet packet;
+	struct packet {
+		header h;
+		data d[1]; 	// C90 approach
+	}
+
+You have to be careful about how you compute the size of the total
+object.
+
+To allocate storage for a packet with 'n' data values, you might
+try:
+
+	packet *p = malloc( sizeof(header) + n * sizeof(data) );
+
+
+So if the packet has 'n' lots of data in the packet then we can
+just overrun, because C doesn't do bounds checking.
+
+However, this might not work ...
+
+The problem with this is the prescence of possible padding bytes. 
+
+If the data requires alignment the compiler will add padding bytes
+between header and data.
+
+So you have to compute not the sizeof(header) but the offset of the
+data from the beginning of the struct.
+
+	packet *p = malloc(
+			offsetof(packet, d) + n * sizeof(data)
+			); // C90
+
+Where offset(t,m) is defined in <stddef.h> and returns the offset
+In bytes of member 'm' from the beginning of structure type 't.
+
+The C99 solution to this problem s to use a FLEXIBLE ARRAY MEMBER
+(not a VLA) where you can use an unspecified dimension (if last
+member of a structure):
+
+	typedef struct packet packet;
+
+	struct packet {
+		header h;
+		data d[]; 	// OK in C99, flex array member 
+	};
+
+
+Then in C99 the sizeof a struct with a flexible array member is:
+
+	- sizeof everything in the structure
+	- including any padding
+	- upto BUT NOT INCLUDING the flexible array member
+
+Which simplifies to:
+
+	packet *p = malloc( sizeof(packet) + n * sizeof(data) );
+
+
+
+
+                       RESTRICTED POINTERS
+
+
+In C90, <string.h> declares strcpy() as:
+
+	char * strcpy( char *s1, char const *s2);
+
+In C99, the declaraton looks like:
+
+	char * strcpy(char * restrict s1, char const *restrict s2);
+
+As with const and volatile, the keyword restrict is a type qualifier.
+
+
+Restrict can only applu to:
+
+	- pointers to complete obejct types
+	- pointers to incomplete object types, such as void
+
+This occurs in headers such as <string.h> and <stdlib.h>.
+
+Restrict is used in the declaration of pointer params.
+
+What does this mean?
+
+Its because pointer aliasing occurs when a program uses two or more
+pointers to access the same storage.
+
+Its because pointer aliasing occurs when a program uses two or more
+pointers to access the same storage.
+
+Pointer aliasing can create problems for optimizations, such as:
+
+	- caching memory in CPU registers, or
+	- reordering memory access
+
+Especially on architectures with vector operations. 
+
+In order to be able to use optimizations that might use vector
+processing instuctions you have to have confidence that the operands
+to the vector operations are non-overlapping.
+
+
+The 'restrict' keyword gives permission to the compiler to go ahead
+and assume that this pointer is the ONLY pointer pointing to that
+entity and tat your compiler is allowed to freely reorder operations
+to optimize vector operations without worrying if the source and
+destinations are overlapping. This allows greater caching and other
+optimizations.
+
+
+In C99, memcpy()'s pointers are restrcit qualified:
+
+	void * memcpy(void * restrict s1, void const *restrict s2, 
+		size_t n);
+
+The compiler is then free to assume that memcpy() is copying between
+non-overlapping objects.
+
+If the objects do overlap, behaviour is undefined.
+
+There are functions like memmove() where parameters are NOT restricted:
+
+	void * memmove(void *s1, void const *s2, size_t n);
+
+Where the compiler MUST anticipate the objects overlap.
+
+
+
+
+
+                   TYPE QUALIFIED ARRAY PARAMS
+
+
+
+An array declaration in a parameter list dimension actualy declares
+a pointer.
+
+ie
+	int f(T x[]);
+
+means the same as 
+
+	int f(T *x);
+
+If first array dimension is constant and present the dimension is
+ignored.
+
+The transformation to pointer type preserves type qualifiers, if
+present.
+
+eg.
+	int f(T const x[]);	// x is ptr to const T
+	int g(T volatile y[]);	// y is ptr to volatile T
+
+means the same as:
+
+	int f(T const *x);
+	int g(T volatile *y);
+
+In C90, tere's no way to declare array params that equivalent to a
+ptr param with top level qualifiers.
+
+In C90, you can declare:
+
+	int f(T * const x);
+	int g(T * volatile y);
+
+But in C90 you can't use array notation.
+
+
+In C99, you can:
+
+	int f(T x[const]);	// x is a "const ptr to T"
+	int g(T y[volatile]);	// y is a "volatile ptr to T"
+	// THIS IS NOT USEFUL
+
+Howver, 
+
+	int f(T x[restrict]);	// useful
+
+and is the equivalent to:
+
+	int f(T *restrict x); 	// useful
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

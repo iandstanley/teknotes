@@ -1,0 +1,77 @@
+Using GPG keys on Yubikeys across multiple computers
+""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+To generate a GPG key on a Yubikey you need to run the following commands 
+to create the GPG key on the Yubikey itself:
+
+$ gpg --card-status
+(read to see what card is attached and report back)
+
+$ gpg --card-edit
+gpg> admin
+gpg> generate
+...
+...
+
+gpg> key 1
+(select each key in turn and move to card)
+...
+gpg> keytocard
+...
+gpg> quit
+
+When you run 'keytocard' GPG creates a stub in your keyring pointing to
+the Yubikey by serial number.
+
+Running GPG operations will then prompt the user to insert the Yubikey
+into the computer before prompting for a pin number etc.
+
+Using the Yubikey on another computer
+'''''''''''''''''''''''''''''''''''''
+
+Now things get a little more complicated as the new computer will not have 
+the stubs pointing to the Yubikey in the keyring.
+
+In order to rectify this you will need to perform the following commands:
+
+$ gpg --card-status
+(makes GPG look for a inserted Yubikey)
+
+$ gpg --card-edit
+gpg> fetch
+
+(fetches the public key from the URL that you previously setup and creates 
+the stubs pointing to this Yubikey)
+
+You may now continue to use the Yubikey as expected.
+
+Issues using a Yubikey resident GPG key on an account you have 'su -' to
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+When you switch to another account using "su - accountname" you will be 
+able to perform most of the things you would expect to do with GPG with 
+that new account. However, if pin operations are required (which is default
+for gpg decryption) then you will find that the backend 'pinentry' program 
+fails.
+
+This is because of the permissions on the psuedo tty that you are using.
+
+$ tty 
+/dev/pts/2
+
+$ ls -la /dev/pts/2
+crw--w----  1 ian  tty  136, 2 Jun  4 23:36 2
+
+Notice that the pts is owned by your original user and not the user you have 
+su - to.
+
+Now you could change the 'other user' permissions but that would be bad 
+security.
+
+The correct way to do this is to change your su command options:
+
+$ su - --pty testuser
+
+The --pty option creates a new pts tty and sets the ownership to the new user
+
+You will find that all 'pinentry' operations now work without problems.

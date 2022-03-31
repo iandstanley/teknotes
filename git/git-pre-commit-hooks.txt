@@ -1,0 +1,35 @@
+
+
+		       GIT PRE-COMMIT HOOKS
+
+
+
+This and other hooks are found in .git/hooks/.
+
+Sample scripts are found there to help you get started.
+
+Typically one would use linters and code beautifiers at this point.
+
+Ususally if a code beautifier amends a file you have to 'git add'
+and 'git commit' a second time.
+
+If you don't like the changes then you can 'git restore' to original
+formatting.
+
+For some languages (notably omitting C) there are a bunch of sample
+pre-commit hooks at pre-commit.com/hooks.html
+
+For C hooks try:
+
+	   opensourcelibs.com/lib/poce-pre-commit-hooks
+
+This repo contans pre-commit hooks integrating 2 C/C++ code formatters:
+
+		   clang-format and uncrustify
+
+and 5 C/C++ static code analysers:
+
+   clang-tidy, oclint, cppcheck, cpplint, include-what-you-use
+
+
+

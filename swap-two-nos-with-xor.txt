@@ -1,0 +1,15 @@
+
+
+                     Swap 2 numbers with XOR
+
+To swap two numbers whilst only using the original 2 variables we
+can use XOR.
+
+
+	x = x ^ y
+	y = x ^ y
+	x = x ^ y
+
+Simple
+
+
