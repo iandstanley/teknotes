@@ -1,0 +1,214 @@
+
+
+
+
+                              REFER
+                       (Troff preprocessor)
+
+
+Uses the format (there are many other fields):
+
+	%K baker88
+	%A Mark Baker
+	%T Incorporation: A Theory of Grammatical Function Changing
+	%I Chicago University Press
+	%D 1988
+
+You can convert it from a Bibtex format. In the example above we
+have converted it from a bibtex database (as we have a %K reference
+which is not needed in REFER).
+
+Note the bibtex required book referene has been assigned to %K
+keywords.
+
+Refer is better than bibtex as although it can match a keyword like
+bibtex, it can also simply match words and infer the entry. If refer
+finds a close enough match it will return the bibliography entry.
+
+A normal groff run might be:
+
+	$ groff -ms example.ms -T pdf > example.pdf
+
+Lets add some citations to example.ms
+
+	$ vi example.ms
+
+	...
+
+	.NH
+	Using 'refer'
+	.PP
+	Lets cite some stuff!
+	.{
+	hamlet's mill
+	.]
+
+	$ refer -p ./my.bib example.ms
+
+
+This outputs to STDOUT. Piping through tail(1) allows you to check
+the bibliographic reference you have just added to the bottom of
+the file.
+
+A more typical use:
+
+	$ refer -p ./my.bib |  \
+		groff -ms -T pdf example.ms > example.pdf
+
+If we open example.pdf we can see groff has added a footnote to
+stuff, and the bibliographic reference has been added to the footnote
+at the bottom if the page, all properly formatted with the title
+in italics.
+
+So we do not have to write stuff out, nor do we have to remember
+the keyword like you have to do in LaTeX.
+
+
+
+                        CUSTOMISING OUTPUT
+
+
+Refer has a few different options:
+
+-p specify bibliographic database 
+-e accumulate references
+-P moves punctuation
+-S changes the label from a numbered footnote 
+   to (author name, year)
+
+
+	$ refer -S -p my.bib $file | \
+		groff -ms -T pdf > $file.pdf
+
+	Let's cite some stuff! (Santilana, 1969)
+
+
+This is a label so the footnote at the bottom of the page reads
+authorname year (in small text) followed by the reference.
+
+But this is a little strange. Note the ! after stuff is before te reference: Most style guides want the reference inside the sentance so -P does that
+
+
+	$ refer -PS -e -p my.bib $file | \
+		groff -ms -T pdf > $file.pdf
+
+	Let's cite some stuff (Santilana, 1969)!
+
+For a rolling bibliography rather than footnotes give the '-e'
+option. This collects  the refences to a references section at the
+end of the document:
+
+
+	References
+
+	Samilana, 1969 
+		....................
+
+There are other comands that can finetune things.
+
+In your document you can add a refer instructions.
+
+
+	.R1
+	no-label-in-reference
+	accumulate
+	.R2
+
+This block overrides command line options. You can have multiple
+.R1 ... .R2 sections as needed in the document.
+
+Most things are done automatically.
+
+If we add the following to example.ms
+
+	.[
+	chomsky
+	.]
+
+The reference will now be:
+
+	Let's cite some stuff (Santilana, 1969; Chomsky, 1953)!
+
+
+If there are more than one match for a reference refer will print
+to STDERR a warning.
+
+To ensure that I get the correct reference I should specify more
+information to narrow down the search. For example:
+
+	.[ 
+	chomsky three factors
+	.]
+
+Which would match 'Chomsky, 2005'.
+
+
+Maybe you want to accumulate your references, not at the end of the
+document, but per chapter:
+
+First we should turn on accumulate by default:
+
+	.R1
+	no-label-in-references
+	accumulate
+	.R2
+
+
+	$ refer -PS -e example.ms .....
+
+would accumulate the references to the end of the document.
+
+If we now add another chapter:
+
+	.NH
+	New Chapter
+	.PP
+	Here's a paragraph
+	.[
+	bakker 1991
+	.]
+
+If we now add the following after the end of the first chapter. 
+
+	.[ 
+	$LIST$
+	.]
+
+We will see all of the references that accumulated upto that point
+will be printed out after the end of the first chapter (where you
+placed the $LIST$ command).
+
+References after that will be accumulated to either the next $LIST$
+instruction -OR- the end of the document.
+
+
+
+
+                 Groff/Refer vs LaTeX Comparison
+
+
+	$ time (pdflatex testfile && biber testfile  && \
+	  pdflatex testfile)
+	...
+	...
+	real	0m4.233s
+	user	0m3.901s
+	sys	0m0.215s
+
+
+	$ time (refer -SPe -p $REFBIB testfile.ms | \
+		groff -ms -T pdf > testfile.pdf)
+	...
+	...
+	real	0m0.145s
+	user	0m0.164s
+	sys	0m0.018s
+
+
+And this is only a tiny file.
+
+A live previewer of LaTeX is a very intensive program. Whereas the
+groff suite is almost negligible.
+
+
+
