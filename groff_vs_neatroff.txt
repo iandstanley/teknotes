@@ -1,0 +1,39 @@
+
+
+
+
+                        GROFF VS NEATROFF
+
+
+Groff was written around 1989. Neatroff's first commit was 2012. 
+
+Neatroff's first commit was 2012. Neatroff tries to fix what is
+sees as Groff's shortcomings. After the beginning of groff's
+development Plan 9 came out which had an implementation of troff
+with unicode support (which groff was missing until fairly recently).
+There was also the implementation of TeX and later LaTeX which had
+a number of improvements in handling math.
+
+Neateqn improves groff's 'eqn' is almost everyway in its typesetting
+(even with the same source).
+
+Neatroff (vs groff) handles fonts substantially easier. Installing
+a font in groff is not trivial. Neatroff has a built in utility
+'neatmkfn' with the appropriate command flags.
+
+After using 'mkfn' to create the fmt description we can use:
+
+	.fp 12 F2 fontname
+
+To replace the normal roman font:
+
+	.fp -R fontname
+
+Neatroff comes with comprehensive documentation.
+
+With neatroff you can use fontawesome to get symbols if you like.
+
+This feature is unique amongst troff implementations.
+
+
+
