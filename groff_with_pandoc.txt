@@ -1,0 +1,76 @@
+
+
+
+
+	USING GROFF WITH PANDOC TO CONVERT MARKDOWN TO PDF
+
+
+
+Pretty much everything you can do in Pandoc normally, actually works
+properly with groff.
+
+One major issue is that you have to convert images into .eps format
+for them to work.
+
+Headings, bullets, images (via eps), pagebreaks, tables, even Math
+using LaTeX works. You can also use groff features eg. write equations
+in 'eqn', or complex tables in 'tbl' inside the markdown file.
+
+You can convert image files using ImageMajick:
+
+	$ convert orig.png new.eps
+
+The LaTeX math appears inside $$ dollar signs:
+
+	$\neg$(p$\lor$q) ....
+
+	$leftrightarrow$ ($\neg$p)
+
+	$\land$ ($\neg$q)
+
+This allows you to do LaTeX math inside the file without installing
+LaTeX:
+
+	$ pandoc temp.md -t ms -o temp.pdf
+
+Or inside the file:
+
+	```(=ms)
+	.NH
+	This is a ms heading
+	```
+
+This allows you to do some pretty cool things. Fro example at the
+top of the file you can add:
+
+	```(=ms)
+	.TL
+	This is a title
+
+	```
+
+We can also add tables:
+
+	```(=ms)
+	.TS 
+	centre allbox tab(1);
+	ccc.
+	header
+	this | is a | table
+	.TE
+	```
+
+You can also do PIC drawings in the Pandoc markdown file:
+
+	```(=ms)
+	.PS 
+	box
+	.PE
+	```
+
+But we must pass a -p option:
+
+	$ pandoc temp.md -t ms --pdf-engine-opt=-p -o temp.pdf
+
+
+
