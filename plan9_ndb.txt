@@ -1,0 +1,74 @@
+
+
+
+                            PLAN 9 NDB
+
+
+Plan 9's network database (ndb) was originally intended as a system
+database  like the hosts file. But because the way it works it can
+be used as a more generic database.
+
+	$ vi people.db
+
+	# This is a comment
+
+	name = "Gavin Freeborn"
+		gender = male
+		phone = "555 123 456"
+		desc = "This is Gavin"
+
+	name = Seren
+		gender = female
+		phone = "555 123 654"
+	...
+
+	# blank lines are ignored
+	# use tabs or spaces to indent
+	# values with spaces are double quoted
+
+	name = Kim
+		gender = male
+		phone = "555 123 789"
+
+	# these blocks can all be on one line
+	# and you don't need the blank lines
+
+
+GNU has a database called 'recutils' that serves a similar function.
+Recutils has commandline and C interfaces, can perform joins and
+other database like functions. It includes syntax checking, a type
+system, templating. But recutils biggest limitation is performance.
+Recutils runs sequentially through the file like grep returning
+matches and this doesn't scale.
+
+Plan 9's NDB was designed to be performant. At its core it just
+matches key value pairs.
+
+	$ ndbquery -f people.db gender male
+
+As your database grows you may want to split up your files:
+
+
+	$ vi tot.db
+
+	database=
+		file=~/first.db
+		file=~/second.db
+		file=~/third.db
+
+
+	$ ndbquery -f tot.db name="Brady" name=Brady gender=male
+
+As databases grow you will run in to performance issues. Although
+NDB is a lot faster than Recutils natively, you can create hash
+indexes to make it faster:
+
+
+	$ ndbmkhash  tot.db name
+	$ ndbquery -f tot.db name "Gavin Freeborn"
+
+This query will now use the hashed index and results will come back
+faster. NDB finds the hash and skips to the line in the file to read
+and return.
+
+
