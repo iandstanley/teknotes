@@ -1,0 +1,19 @@
+
+
+
+			   SCROLL LOCK
+
+
+
+Originally the scroll lock would not move the cursor, but rather
+the contents of the window keeping the cursor position fixed.
+
+eg.     In Excel the entire sheet moves and the cursor can even
+	move offscreen
+
+
+
+On most browsers F7 has te same effect.
+
+
+
