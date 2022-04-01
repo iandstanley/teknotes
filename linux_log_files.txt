@@ -1,0 +1,115 @@
+
+
+
+
+		  HOW TO HANDLE LINUX LOG FILES
+
+
+For example, I have a firewall that runs and it constantly inserts
+messages when it denies access to a port. That's good. I want that
+information, but it is collecting it into my syslog file and
+cluttering things up so I cannot see the ususal syslog messages.
+
+
+
+
+			     RSYSLOGD
+
+Rsyslogd is the daemon what controls what messages are placed where.
+
+It's configuration file is /etc/rsyslog.conf plus any additional
+files in /etc/rsyslog.d/ directory.
+
+Typically you would add your customisations to the /etc/rsyslog.d/
+directory leaving the main configuration file alone unless absolutely
+necessary.
+
+The main configuration file /etc/rsyslog.conf should be used for
+rsyslogd configuration and the system level messages it is handling.
+
+Application and custom configurations should be added in one or
+more files in the /etc/rsyslog.d/ directory. Each file is prefixed
+with a number in order to specify the order of loading (via file
+globbing).
+
+
+
+
+
+		  LETS ADD A CONFIGURATION FILE
+
+# cd /etc/rsyslog.d/
+
+# vi 39-firewall.conf
+
+	# Log kernel generated messages to file 
+
+	:msg, contains, "Dropped by firewall:" /var/log/iptables.log
+
+
+We need to restart rsyslogd to take effect of new or changed config
+files.
+
+
+
+
+                           LOG ROTATION
+
+
+The next problem we will have is that the log file will continue
+to grow until we fill the filesystem.
+
+To manage this we use the logrotate utility.
+
+
+	$ man logrotate
+
+The command logrotate(1) rotates, compresses and emails system logs.
+
+The logrotate(1) configuration file is /etc/logrotate.conf (plus
+any subfiles in /etc/logrotate.d/).
+
+In logrotate.conf you should put the general settings for logrotated
+daemon. You will notice an include statement to import the contents
+of files in the /etc/logrotate.d directory.
+
+There is also an rsyslog config file specifying what to do with rsyslogd managed logfiles.
+
+
+	# view /etc/rsyslog.conf
+
+	/var/log/mail.warn
+	/var/log/cron.log
+	...
+	...
+	{
+		rotate 4
+		weekly
+		missing ok
+		notifempty
+		delaycompress
+		sharedscripts
+		poststate
+			/usr/lib/rsyslog/rsyslog.rotate
+		endscript
+	}
+	...
+	...
+
+
+We can force a logrotate with:
+
+	# logrotate -f ./rsyslog
+
+
+The command delaycompress does not compress the .1 logs but only
+the .2 and onwards allowing the admin to read the logs without
+having to uncompress them first.
+
+
+Add our custom logrotation configurations in a new file in
+/etc/logrotate.d/.
+
+This is where we should place our application specific configurations.
+
+
