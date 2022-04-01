@@ -1,0 +1,214 @@
+
+
+
+
+		      8 THINGS ABOUT OPENSSH
+			   (CyberGizmo)
+
+
+
+OpenSSH didn't start out as an open source project but a commercial
+project and was designed to address the shortcomings of FTP and
+RSA.
+
+OpenSSH is the most widely used of the SSH protocols (there are a
+number of implementations of SSH). OpenSSH is included by default
+in MacOS, BSD, Linux, Solaris and Windows.
+
+An OpenSSH implementation was taken by Theo de Raadt, Markus Freidl
+and Neils Provols to create OpenSSH in OpenBSD in 1999. It was then
+ported to Linux.
+
+OpenSSH encrypts remote access and creates a tunnel to use insecure
+protocols through the encrypted tunnel.
+
+It also encrypts file transfers.
+
+It runs remote commands, programs and scripts and replaces rsh,
+login, telnet, and ftp.
+
+
+
+
+		    WHAT DOES OpenSSH PREVENT?
+
+
++       OpenSSH prevents eavesdropping of data over a network
+	(encryting the data in motion).
+
++       OpenSSH prevents manipulation of data at intermediate
+	elements in the network (routers etc).
+
++       OpenSSH prevents IP spoofing
+
++       OpenSSH prevents IP source routing
+
+
+
+
+		    WHAT OPENSSH DOES NOT DO?
+
+
+-       OpenSSH cannot protect from misconfiguration, misuse or
+	abuse
+
+-       It cannot protect you from compromised systems
+
+
+-       OpenSSH cannot protect you from inappropriate or insecure
+	directory settings
+
+You cannot fix stupid.
+
+On a compromised system you can connect to the pseudo-tty on either
+side of the ssh exchange and you can see the command and data
+channels.
+
+
+
+                          SSH PROTOCOLS
+
+
+                       SSH Connect protocol
+
+SSH Connect manages:
+
+	the SSH session
+
+	session multiplexing
+
+	X11 forwarding
+
+	TCP forwarding
+
+	shell
+
+	remote program execution
+
+	invocation of SFTP subsystem (OpenSSH has a separate
+	application for SFTP)
+
+
+You can create a server chain :
+
+	% ssh -t pi@blue ssh pi@red
+
+
+
+                      SSH UserAuth protocol
+
+
+SSH UserAuth protocol provides authentication of clientside to
+server side communications.
+
+There are several mechanisms available: password, public key,
+challenge response, PAM, Generic Security Service API (GSSAPI),
+dongles, and Common Access Cards (CAC).
+
+
+
+                      SSH Transport protocol
+
+The Transport protocol provides:
+
+	server authentication
+
+	confidentiality 
+
+	data integrity
+
+SSH1 uses server and host keys to authenticate which is vulnerable
+to attack.
+
+SSH2 uses host keys only.
+
+
+
+
+                          SFTP protocol
+
+SFTP is not FTPS.
+
+SFTP uses a single channel (and not the two channels of FTPS).
+
+FTPS wraps FTP inside of TLS and is a bit messy.
+
+
+
+________________________________________________________________________
+
+
+
+                    OTHER SSH IMPLEMENTATIONS
+
+
+There are a number of other commonly used implementations of SSH
+in use:
+
+* 	Drop Bear
+* 	Tectia
+* 	Solaris Secure Shell (a fork of OpenSSH 2.3)
+* 	Globalscope EFT server
+
+... and many others
+
+
+________________________________________________________________________
+
+
+
+                          SSH UTILITIES
+
+
+ssh-agent       the agent holds private keys in memory for a session
+
+ssh-add         loads key identifiers into the agent (also used to
+		remove them)
+
+ssh-keyscan     retrieve public key and check fingerprint
+
+ssh-keygen      generates/updates/manages/verifies keys
+
+ssh-copyid      installs public key into remote's authorised_keys
+		file
+
+ssh-vulnkey     check a key vs list of compromised keys
+
+
+
+________________________________________________________________________
+
+
+
+             PROGRAMMING LANGUAGES WITH SSH BINDINGS
+
+
+
+libssh          C library, multiplatform support for SSH1/SSH2
+		protocols for both client and server
+
+libssh2		Another C library for SSH2 only
+
+Perl		There are various bindings available
+
+Python		Paramika, Fabric and libssh2
+
+Ruby		Net::SSH, Capistrano
+
+Rust		SSH2 crate
+
+Java		Javamiko, JSch
+
+
+________________________________________________________________________
+
+
+                         ELEVATOR SPEECH
+
+
+
+	SSH employs a symmetric encryption. Messages between two
+	systems are secure from eavesdroppers as long as encryption
+	method remains secret OR keylengths are sufficiently large.
+
+
