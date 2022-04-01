@@ -6,19 +6,46 @@
 
 
 
+Using groff with Pandoc ti convert a Markdown file into a PDF is
+great because groff is wat faster than LaTeX and all the other
+tools. It has few dependancies and the install is under 0.5GB. Often
+you will find groff installed by default on many systems.
+
 Pretty much everything you can do in Pandoc normally, actually works
 properly with groff.
-
-One major issue is that you have to convert images into .eps format
-for them to work.
 
 Headings, bullets, images (via eps), pagebreaks, tables, even Math
 using LaTeX works. You can also use groff features eg. write equations
 in 'eqn', or complex tables in 'tbl' inside the markdown file.
 
+
+________________________________________________________________________
+
+
+                            DRAWBACKS
+
+One major issue is that you have to convert images into .eps format
+for them to work.
+
+
+________________________________________________________________________
+
+
+                              IMAGES
+
 You can convert image files using ImageMajick:
 
 	$ convert orig.png new.eps
+
+Then add the new file to the markdown file:
+
+	![this image](./2020-02-20-picture.eps)
+
+
+________________________________________________________________________
+
+
+                            LATEX MATH
 
 The LaTeX math appears inside $$ dollar signs:
 
@@ -33,6 +60,12 @@ LaTeX:
 
 	$ pandoc temp.md -t ms -o temp.pdf
 
+
+________________________________________________________________________
+
+
+          USING GROFF COMMANDS INSIDE THE MARKDOWN FILE
+
 Or inside the file:
 
 	```(=ms)
@@ -40,25 +73,54 @@ Or inside the file:
 	This is a ms heading
 	```
 
+________________________________________________________________________
+
+
+                            MS TITLES
+
 This allows you to do some pretty cool things. For example at the
 top of the file you can add:
 
 	```(=ms)
 	.TL
 	This is a title
-
+	.AU
+	Joe Bloggs
 	```
+
+________________________________________________________________________
+
+
+                           MS HEADINGS
+
+You can add raw groff commands for direct manipulation of headings.
+
+	```(=ms)
+	.NH
+	This is arms heading.
+	```
+
+________________________________________________________________________
+
+
+                            MS TABLES
 
 We can also add tables:
 
 	```(=ms)
 	.TS 
-	centre allbox tab(1);
+	centre allbox tab(|);
+	css
 	ccc.
 	header
 	this | is a | table
 	.TE
 	```
+
+________________________________________________________________________
+
+
+                         MS PIC DRAWINGS
 
 You can also do PIC drawings in the Pandoc markdown file:
 
@@ -72,5 +134,91 @@ But we must pass a -p option:
 
 	$ pandoc temp.md -t ms --pdf-engine-opt=-p -o temp.pdf
 
+
+________________________________________________________________________
+
+
+                TABLE OF CONTENTS USING MS MACROS
+
+	```(=ms)
+	.TL
+	This is a title
+	.AU
+	Joe Bloggs
+	```
+
+	```(=ms)
+	.NH
+	heading name
+	.XS
+	heading name
+	.XE
+	.NH
+	heading 2
+	.XS
+	heading 2
+	.XE
+	```
+
+And use .TC to insert table of contents
+
+	```(=ms)
+	.TC
+	```
+
+If we ran:
+
+	$ groff temp.ms -ms > temp.pdf
+
+We could see our TOC appear at the end of the PDF.
+
+
+To fix this we can use 'pdfroff' instead:
+
+	$ pdfroff  temp.ms -mspdf  > temp.pdf
+
+PDFroff is a bit slower.
+
+So I recommend using groff for a working document and pdfroff for
+the end result.
+
+Using the 'mspdf' macros means you can replace the .XS and .XE with:
+
+	.XN "name of heading"
+
+Also 'mspdf' macros creates pdf bookmarks automatically. 
+
+
+________________________________________________________________________
+
+
+                     DRAWING THE TOC BY HAND
+
+You can actually draw the TOC by hand.
+
+
+	```(=ms)
+	.XS 1
+	heading
+	.XA 2
+	heading 2
+	.XA 3
+	heading 3
+	.XE
+	```
+
+	```(=ms)
+	.NH
+	heading 1
+	.NH 
+	heading 2
+	.NH 
+	heading 3
+	```
+
+If you want your title to be placed after your TOC you need to have
+a .TC called before .TL
+
+PDFroff effectively runs groff twice.
 
 
