@@ -40,7 +40,7 @@ Or inside the file:
 	This is a ms heading
 	```
 
-This allows you to do some pretty cool things. Fro example at the
+This allows you to do some pretty cool things. For example at the
 top of the file you can add:
 
 	```(=ms)
