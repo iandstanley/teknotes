@@ -1,0 +1,112 @@
+
+
+                         KEYS FOR OPENSSH
+
+
+There are a number of types of keys you can create and use in Open
+SSH. Here we will look at the pros and cons of each of them.
+
+
+
+                               RSA
+
+	+ 	Tried and true
+	-	Large keys
+	=	Weak keys are easily broken
+
+	Current NIST recommendation is 112 bit (2048 bit key length)
+	but that will only last a few/couple of more years.
+
+	NIST recommends 128 bit security going forward and to get
+	that in RSA you need a key length of 3072 bits or larger.
+
+
+
+
+                               DSA
+
+	+	Adopted by FIPS-184 in 1994
+	-       DSA supported in Putty, but OpenSSH 7.0 disables
+		it by default preventing you from using DSA on Lnux
+		machines.
+	=       Requires the use of a randomly generated unpredictable
+		and secret value, that if the seed is discovered
+		can recreate the private key.
+
+	DO NOT USE DSA!
+
+
+
+                              ECDSA
+
+	+       To achieve 128 bit security ECDSA only needs 256
+		bit key lengths
+	-       Hacked in Bitcoin and Sony Playstation 3
+	=       ECDSA has known irregularities which cast suspicion
+		on the algorithm
+
+	DO NOT USE ECDSA *PERIOD*
+
+
+
+
+                              EDDSA
+
+	+       Not the same as ECDSA (with a C) and uses different
+		algorithms
+	- 	Relatively new
+	=       None (yet), although it has been vetted a number
+		of times
+
+
+
+
+                    ED25519 (aka Curve 25519)
+
+	+ 	Now available in crypto++ libraries
+	+ 	Curve 25519 widely adopted
+	+	Small key lengths making it fast yet more secure
+
+	FIPS proposed ED448 in their recent draft of SP800-186
+
+
+
+
+             BEFORE GENERATING KEYS ... THERE'S MORE
+
+
+TL;DR	Where do you manage your keys?
+
+
+With all that we talked about above, that is not the problem with
+OpenSSH.
+
+Where OpenSSH gets broken is through inappropriate configuration
+or misconfiguration.
+
+
+The real question is where do you manage your keys?
+
+
+
+
+                           CONCLUSIONS
+
+* 	RSA is tried and true but use a key length > 2048.
+
+*       ED25519 is as secure but smaller and faster to use (although
+	it is relatively new)
+
+* 	DO NOT USE DSA or ECDSA!
+
+*       Careful thought must be put into how you use and manage
+	your keys
+
+* 	And even more care taken when configuring systems.
+
+
+
+
+
+
+
