@@ -1,0 +1,158 @@
+
+
+
+
+		    STAYING ANONYMOUSE ONLINE
+
+
+4 years. That is how long a group of hackers were able to stay
+inside te Marriot Starwood network without being detected or
+discovered.  How on earth does an unauthorised party stay undiscovered
+for this long?
+
+
+
+			PHYSICAL SECURITY
+		 (or Operational Security OPSEC)
+
+
+Guess how many failures it takes to be sucessfully identified? One!
+
+Ross Ulbricht, 'the Dred Pirate Roberts' who founded the site Silk
+Road got caught by simple failures in OPSEC (he bragged on a blog
+and used his real photo for fake id he'd bought).
+
+It is essential for those who wany to remain anonymous to be aware
+of their online and offline habits. Including when and where they
+use their computers. Their writing style; their social media posts,
+and their social interactions in general.
+
+
+
+		  ACQUIRING AN ANONYMOUS MACHINE
+
+
+Buy a machine with the most untraceable and mobile trail possible.
+Ideally, this is a laptop which is bought for cash of cryptocurrency.
+Next completely wipe the operating system. Buy a USB stick to load
+a live operating system. A live OS commonly has no permanent storage.
+
+But you would also want to enable full disk encryption to be on the
+safe side. When installing a live OS it is important to stick to
+an OS distribution like Linux's TAILS OS.
+
+TAILS OS has a bunch of privacy focused features that allows you
+to stay anonymous.
+
+
+
+
+          ANONYMIZE YOUR IDENTITY AND NETWORK CONNECTION
+
+
+There are several steps to accomplish this:
+
+Any type of unique or pseudo unique identifier is going to be harmful
+to someone wanting to remain anonymous.
+
+From the hardware perspective on of the most harmful and well known
+identifiers is a MAC address. A MAC address is a serial number
+issued by the device manufacturer. It is used to identify a device
+on a local network, and can be used to identify the geographical
+location of a machine in some cases.
+
+MAC address spoofing (aka MAC address anonymization) uses different
+MAC addresses to anonymize your identity. There are different ways
+to accomplish this, such as built in programs, customisable scripts,
+and installable tools. In Linux TAILS OS the MAC address is temporarily
+changed to a random value for each new session.
+
+In addition to MAC address randomize your IP address. An IP address
+is assigned by your ISP (or the ISP of the network you connect to).
+To accomplish this, services such as VPNs, Proxies and TOR can be
+used (BUT ALL WITH STRICT CAUTION). Each of these methods introduces
+intermediaries with assumptions of complete trust.
+
+In order to ensure anonymity you must never trust a central authority.
+But with modern architecture of the internet, that is not really
+realistic. For VPN you could install OpenVPN onto a machine not
+associated with you. A better solution is the TOR project; running
+either a TOR bridge or using a OS distribution like TAILS OS that
+has it built in and enabled by default.
+
+
+
+                           PROXY CHAINS
+
+A program like proxychains can be used to route internet traffic
+through a chain of proxy servers on top of the TOR network.
+
+Configure proxychains by editing /etc/proxychains.conf and enabling
+'dynamic_chain' instead of 'static_chain'. Also proxy DNS requests
+with 'proxy_dns' and set the default [PROXYLIST] to:
+
+	socks4  127.0.0.1       9050 
+	socks5  127.0.0.1       9050
+	# default set to TOR
+
+Start the TOR service:
+
+	$ sudo service tor start
+
+Then we can use proxychains:
+
+	$ proxychains firefox www.duckduckgo.com
+
+We can test for DNS leaks:
+
+	www.astrill.com/dns-leak-test
+
+This is a basic way to layer both thte TOR network and proxychains
+on top of one another.
+
+
+
+
+                    SEPARATION OF ENVIRONMENTS
+
+You need to separate your anonymous environment from your everyday
+use environment.
+
+A classic example of machine separation is machine virtualization,
+or containerization.
+
+Use emphermeral or temporary environment when conducting things you
+want to remain anonymous.
+
+It is NEVER a good idea to use ONE ENVIRONMENT for ALL activities.
+
+Computer machine isolation ensures evidence can be contained and
+destroyed and can easily be achieved through virtualization.
+
+Also you can use a bouncing server as a step towards any online
+server you connect to regularly. This allows you to connect via SSH
+to the bouncing server then SSH onwards to your remote server after
+you have anonymised it.  The remote server will have all the utilities
+and documents you use that you want to keep anonymous. If the
+bouncing server it on a different server quite quickly and continue.
+
+It is important that you are also randomizing your network connection
+by using public WIFI (see wifimap.io for open public networks).
+Randomize WHEN and WHERE  you are connecting to these wifi networks.
+
+
+
+                       COVERING YOUR TRACKS
+
+
+For any servers you operate/use on the internet it is important
+that you limit or remove any logs etc.
+
+It is also common to hide activity with common network connections
+and protocols such as DNS tunnelling.
+
+It is possible to route your activity through DNS (see DNSCAT2).
+
+
+
+
