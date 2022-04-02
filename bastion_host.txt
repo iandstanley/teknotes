@@ -1,0 +1,188 @@
+
+
+
+
+		       OPENSSH BASTION HOST
+
+
+
+A Bastion Host is just a regular unix server that is accessible
+from the internet. Hopefully you use a VPN so you can SSH into it
+without it being open for anyone to connect to.
+
+A bastion host ACCEPTS SSH connections, but NOT SSH sessions. You
+can make it do that, but as a best practice you don't allow people
+to log into your Bastion Host. A bastion host then passes the
+connection through to another SSH server.
+
+This gives you a chance to reduce that footprint that you have in
+your security exposure to a simple host, and it sllows you to harden
+that host without having additional processes or workloads that are
+running on it.
+
+The process of passing the connection through to another host is
+sometimes called jumping. A bastion server is therefore often called
+a "jump host". But it is not a "Jump Server" which is something
+completely different.
+
+A jump can be automatically configured so I don't have to connect
+to my desitnation SSH server.
+
+In our case today we are attempting to bridge one or more fitrewalls
+and allow a connection from the outside to come in and be able to
+access a server on the inside of the network. You could use bastion
+servers on the inside of your network as well.
+
+
+
+                       SETUP A BASTION HOST
+
+
+STEP 1          Install a minimal a server as your distro of choice
+		will allow.
+
+STEP 2          Move your OpenSSH server port to something other
+		than port 22 (and not 2222)
+
+STEP 3          Have a process in place to apply software updates
+		and security patches
+
+STEP 4          Leave root passwd blank on Debian installs as this
+		disables root login
+
+You may also want to have some scanning software for intrusion
+detection.
+
+
+
+                   BASTION HOSTS BEST PRACTICES
+
+
+1.      Do NOT re-use the SSH bastion server for any other purpose.
+
+2.      Do NOT allow bastion host SSH users to LOGIN to the server,
+	get a shell prompt or anything other than "jump" to their
+	destination SSH host.
+
+3.      Clean out other daemons (cups, apache etc) that might be
+	installed by default.
+
+
+
+
+                           ASSUMPTIONS
+
+
+1.      I will be using my domain name servers and FQDN (fully
+	qualified domain names).
+
+2.      My bastion IP address resolved to bastion.macknife.info
+
+Bastion servers can be really finnicky about the lack of use of
+FQDNs. Short names sometimes work and other times don't.
+
+
+
+                       NETWORK CONNECTIVITY
+
+
+Your client should be able to access the bastion server.
+
+The bastion server should be able to access the other SSH servers
+in your network.
+
+
+
+                             PROCESS
+
+
+1.	I have done the hardening steps already
+
+2. 	I have a firewall running
+
+3.      Ensure that you have your keys and the key exchange setup
+	for the bastion host, and the destination and also the
+	clients
+
+4. 	cd /etc/sshd && vi sshd_config
+
+	Turn OFF the following:
+
+		PasswordAuthentication 	no
+		PermitRootLogin 	no
+		Port	4455	(or anything)
+		Protocol     	2 	(to shut lynis up)
+		PermitEmptyPasswords  no 
+		Banner  /etc/issue.net
+		LogLevel   verbose
+		MaxAuthRetries   2   (no of sessions)
+		AllowAgentForwarding   no 
+		TCPKeepAlive   no 
+		ClientAliveCountMax  2  (concurrent connections)
+
+
+	Do NOT DISABLE TCP FORWARDING (needed for forwarding the
+	connection).
+
+	You can override for a particular user or group of users:
+
+		Match user pi,joe
+			X11Forwarding  no
+			PermitTTY  no   (no terminal sessions allowed)
+			PermitTunnel  no 
+			GatewayPorts  no
+			ForceCommand  /usr/sbin/nologin
+
+5.	Restart the server
+
+	$ sudo  systectl restart sshd
+
+6. 	Create a new ssh key and add to authorised_keys
+
+	$ cat id_rsa.pub  >> ~/.ssh/authorised_keys
+
+
+
+
+                         TEST CONNECTION
+
+
+client$ ssh -J bastion.macknife.info pi@hyperdeck.mackinfe.info
+
+
+How do we know we didn't just connect to hyperdeck directly. Use
+-v to turn on verbose mode to the above ssh command.
+
+Using  ssh -v -J ..... we can see we received a bastion ssh public
+key from bastion.macknife.info.
+
+SSH will try a number of connections to make a successful connection.
+
+We will need to bring the SSH keys over to the bastion host for the
+clients for each client.
+
+Q. 	How do I prevent having to use this everytime?
+
+	$ ssh -J bastion.macknife.info pi@hyperdeck.macknife.info
+
+	$ cd ~/.ssh
+
+	$ vi config 
+
+		Host hyperdeck.macknife.info
+			ProxyJump bastion.mackinfe.info
+
+	We could even wildcard this with Host:
+
+		*.macknife.info
+
+
+
+
+                  CERTIFICATES AND BASTION HOSTS
+
+
+Doing certificates gets a little cumbersome when you are using a
+bastion host. So we could use Teleport on the bastion host as it
+will manage all those things for us.
+
