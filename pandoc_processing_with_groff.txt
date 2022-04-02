@@ -1,0 +1,43 @@
+
+
+
+
+	  CONVERT MAKRDOWN TO PDF USING PANDOC AND GROFF
+
+
+
+I want to talk today about Markdown and converting it into a PDF
+without using LaTeX!
+
+Markdown is one of the most popular markup languages because of its
+simplicity.
+
+One of the most powerful tools for converting markdown into different
+formats like HTML and PDF is Pandoc.
+
+One drawback of Pandoc conversion of Markdown to PDF is that you have to install Pandoc and LaTeX. LaTeX is a huge download (multiple GB) and runs slowly. Some have suggested converting via HTML first, but results vary (and often has large dependancies). But there is an alternative that not many people know about.
+
+This final alternative we will be talking about is groff.
+
+Using groff with Pandoc to convert a Markdown file into a PDF is great, because groff is way faster than LaTeX and all the other tools. It has few dependancies and the install is under 0.5GB. Often you will find groff installed by default on many systems.
+
+Pretty much 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
