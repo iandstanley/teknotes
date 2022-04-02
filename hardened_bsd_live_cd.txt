@@ -1,0 +1,28 @@
+
+
+
+
+		HARDENDED BSD LIVE CD (UNOFFICIAL)
+
+
+This LIVECD version is an unofficial spin by one of the developers
+with a preconfigured desktop in a similar manner to GHOSTBSD. It
+is a VOLATILE LIVE SESSION OS so it does not save any information
+like NomadBSD to install media, but it allows you like GHOSTBSD to
+run apps and test the general capabilities of the OS on your target
+machine.
+
+Ths live CD runs an XFCE based desktop.
+
+A Lynis security scan scores 69 which is comparable to OpenBSD base
+install.
+
+
+See
+	hardenedbsd.org github.com/HardenedBSD/hardenedBSD
+
+Hardened BSD is forked from the FreeBSD development tree.
+
+
+
+
