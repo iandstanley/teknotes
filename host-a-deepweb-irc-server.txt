@@ -1,0 +1,144 @@
+
+
+
+		    HOST A DEEP WEB IRC SERVER
+
+
+Today we are going to setup an IRC server on the deep web using TOR
+so that we can chat anonymously.
+
+So IRC stands for Internet Relay Chat. It is an extremely lightweight
+text based way to communicate. Essentially a chat room. Its popular
+among hackers, software engineers and tech nerds in general.
+
+Now you can also combine IRC with a proxying service like TOR to
+allow you to chat with people anonymously without the far of being
+censored or being judged.
+
+All we need is a need computer running linux (or a bsd), and an
+internet connection. We'll use a Debian server for our demo.
+
+
+	$ sudo apt install -y tor inspircd
+
+
+Here we will use the IRC server 'inspircd'.
+
+Once apt has installed the software we will need to configure
+inspircd.
+
+
+	$ sudo ed /etc/inspircd/inspircd.conf
+
+
+A few things to note here:
+
+	First, the server name, this section can be set to whatever
+	you want. If you are hosting this server on the regular web
+	and not in the deep web you should change "irc.local" to a
+	fully qualified domain name (FQDN).
+
+	Another thing to look at is the Bind Address (default to
+	127.0.0.1). Since we are using TOR this default is exactly
+	what we want.
+
+	The diepass and restartpass should be changed as these used
+	to kill and restart the server.
+
+	Further down we will see the operators defined. Their
+	passwords should be changed (and probably their usernames).
+
+	In addition, the files section lists the motd and rules
+	files.
+
+
+Once you have changed the settings, save and exit your editor.
+
+We should then change the message of the day so we know that our
+server is working. Lines consisting of a single '-' is still shown
+and can be used to pad out the motd in the output to make it more
+visible.
+
+The next thing is to start our IRC server.
+
+
+	$ sudo service inspircd start
+	$ sudo service inspircd status
+
+
+Let's install another package. This time a client:
+
+
+	$ sudo apt install -y irssi
+
+
+(or you could install hexchat if running X11 your server).
+
+
+And run your client:
+
+
+	$ irssi
+
+	/connect irc.localhost
+	/quit
+
+
+And we can see that the motd has changed.
+
+We are now in the IRC chat on our local server. But no one else can
+log into it from outside our localhost.
+
+The next thing we need to do is connect it to TOR.
+
+
+	$ sudo ed /etc/tor/torrc
+
+
+Scroll down to the section called hidden services. We need to change
+2 lines.
+
+
+	HiddenServiceDir	/var/lib/tor/hidden_service/
+	HiddenServicePort	6667 127.0.0.1:6667
+
+
+Uncommenting and also changing the port to 6667 (irc). Save and
+exit, then start TOR.
+
+
+	$ sudo tor
+
+
+(We wil just start it from the command line for now - later we
+should start it as a service on boot).
+
+In another terminal:
+
+
+	$ sudo cat /var/lib/tor/hidden_service/hostname
+
+
+This outputs the .onion address of our TOR hidden service.
+
+
+INSTALLING A GRAPHICAL CLIENT
+
+
+	$ sudo apt install hexchat
+
+
+
+In Hexchat, click ADD in the network list to add another server.
+Then click EDIT. In the servers section, click ADD and paste in our
+onion address. also click DELETE to remove the original server.
+
+Next goto settings->preferences and then to Network Setup. Make
+sure your server is 127.0.0.1 and port is 9050 (TOR) and that the
+proxy type is SOCK5.
+
+We should see that we can connect to our server over TOR.
+
+
+
+
