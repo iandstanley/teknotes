@@ -1,0 +1,93 @@
+
+
+
+	SUDO WITH YUBICO CHALLENGE RESPONSE AUTHENTICATION
+
+
+We want to protect our sudo access with a Challenge-Response held
+on a Yubikey.
+
+
+	$ sudo apt install -y libpam-yubico yubikey-manager
+
+
+Create a challenge-response on the Yubikey.
+
+
+	$ ykman otp chalresp -g2 
+	Using a randomly generated key: 150245a98b75f4e9875c213fd97
+	....  
+	Program a challenge-response credential in slot 2? [y/N]  y 
+	.....
+	....
+	$ 
+
+
+Now you have the challenge-response credential in slot 2 of your
+Yubikey (long press).
+
+Now we need to associate this specific key with this challenge-response
+credential with your user account.
+
+
+	$ ykpamcfg -2
+	Stored initial challenge and expected response in 
+	'/home/william/.yubico/challenge-8693844'
+	$
+
+
+Where 8693844 is the serial no of your Yubikey.
+
+
+	$ cd /etc/pam.d/
+	$ sudo nano sudo
+
+And insert the line:
+
+
+	@include yubico-required
+
+
+Now we will create the config 'yubico-required':
+
+
+	$ sudo nano yubico-required
+
+
+And add the single line:
+
+	auth required pam_yubico.so mode=challenge-response 
+			chalresp_path=/etc/yubico
+
+
+
+                          Yubikey Login
+			  """""""""""""
+
+Requiring the Yubikey for login (via the graphical login manager
+GDM):
+
+
+	$ cd /etc/pam.d/
+	$ ls 
+	........... gdm-password ........
+
+	$ sudo nano gdm-password
+
+
+		@include yubico-required
+
+
+
+Which includes the yubico-required file into the gdm-password
+configuration.
+
+We now require the Yubikey to login via gdm.
+
+Note: you should also look at the files 'login' and 'sshd'.
+
+You could even add an include file to 'su', 'su-l', 'passwd' and
+other files.
+
+
+
