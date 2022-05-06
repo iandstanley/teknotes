@@ -1,0 +1,88 @@
+
+
+
+                 HOST YOUR OWN TOR HIDDEN SERVICE
+
+
+
+The first thing I am going to do is create a directory for our
+server to live in.
+
+
+	$ mkdir tor_service && cd tor_service
+
+
+And start up a temporary webserver on port 8080:
+
+
+	$ python3 -m http.server --bind 127.0.0.1 8080
+
+
+In a second terminal window:
+
+
+	$ cd tor_service
+
+	$ ed index.html
+
+	  <html><body><h1>Demo for service</h1></body></html>
+
+
+This is just a simple webserver with a very simple webpage for us
+to test. Test this works with a regular browser at localhost:8080/.
+Great this works.
+
+
+Now for TOR. We will need to install the TOR server:
+
+
+	$ sudo apt install -y tor
+
+
+Also if you haven't got a machine with the TOR Browser installed,
+you will have to follow the instructions on torproject.org.
+
+Now to configure TOR:
+
+
+	$ sudo -i 
+
+	# cd /etc/tor/torrc
+	# ed torrc
+
+	HiddenServiceDir	/var/lib/tor/hidden_service/
+	HiddenServicePort	80 127.0.0.1:8080
+
+
+Here we change the redirected port to 8080 (where our python3 web
+server is listening).
+
+
+	$ sudo tor
+
+
+Now we should be running a TOR hidden service. This service will
+only run as long as the TOR process and the python webserver are
+running. A more permanent solution would be to run a proper webserver
+and the TOR server as proper services that come up at boot.
+
+
+
+In another terminal, let's find out what our new .onion address is:
+
+
+	$ sudo cat /var/lib/tor/hidden_service/hostname 
+	qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.onion	
+
+
+Where qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.onion is actually a
+random set of letters that represents the hash of a public key
+unique to the TOR network.
+
+If we copy and paste that .onion address into the TOR browser we
+will see our webpage via the TOR network.
+
+
+NOTE we could also use the Brave Browser.
+
+
