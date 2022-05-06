@@ -1,0 +1,605 @@
+
+
+
+
+             FEATURES OF THE VARIOUS RECENT YUBIKEYS
+
+
+Although the Yubikey 5 Series are the currently available product
+available for sale via many vendors, sellers on eBay are regularly
+selling older versions of te Yubikey (mainly the Yubikey 4 Series
+and the Yubikey Neo).
+
+As Yubico released a new version they added various features. NB
+The Yubikey NEO and the Yubikey 4 were released at around the same
+time providing different sets of features. The Yubikey 5 Series
+combined the features of the NEO and the Yubikey 4 as well as adding
+a few improvements to encryption algorithms.
+
+The Yubikey 4 and NEO devices are no longer for sale except on eBay.
+Sellers on eBay have old stock of NEW Yubikey 4 devices and companies
+or individuals sell used versions of the Yubikey 4 series.  Yubikey
+NEO devices are rarer as they sold less than the 4 series, but you
+will still see them regularly sold as used on eBay (and very
+occaisionally a new NEO).
+
+Buying a used Yubikey is perfectly safe as you can easily delete
+any previous credentials with the tools Yubico provides; most sellers
+on eBay will remove any credentials on the Yubikey before selling
+them.  However, you should understand the security features you
+need before choosing a Yubikey as the features differ from device
+to device.
+
+
+
+	-----------------------------------------------------------
+
+
+                           YUBIKEY NEO
+
+
+The Yubikey NEO was released as an 'upgrade' to the Yubikey 4 feature
+set by adding the facility to use NFC (near field communication)
+allowing the user to use the key with their mobile phone, tablet
+or other NFC enabled devices. Note the Yubikey 4, although considered
+lower in the range does support Ecliptic Curve algorithms like
+ECC-P256 and ECC-P384 in the PIV applet and RSA with 3072/4096 bits
+in the OpenPGP applet.
+
+The Yubikey NEO is a device in for the form of a USB-A device. It
+supprots NFC connectivity with phones etc. Also there was a nano
+versio of the Yubikey NEO called the 'NEO-n', although they are not
+available even in the secondhand market. The NEO-n does not support
+NFC so really is a downgrade compared to the 'Yubikey 4 Nano' as
+it doesn't add any features and also misses out on the Yubikey 4
+series additions.
+
+
+5 Applications, which are all independant.
+
+* OTP (One Touch Password) (USB/OTP)
+
+	OTP has two slots that can be programmed each with one of
+
+	- Yubico OTP
+	- HMAC-SHA1 Challenge-Response
+	- Static Password
+	- OATH-HOTP
+
+* U2F (USB/FIDO)
+
+	Unlimited no of u2f credentials and if FIDO certified
+
+* OATH (USB/CCID)
+
+	- Holds 28 OATH credentials supporting both OATH-TOTP (time
+	  based) and OATH-HOTP (counter based)
+
+	- Requires use of Yubico Authenticator software (cross
+	  platform)
+
+* PIV (Smart card) (USB/CCID)
+
+	Provides a PIV compatible smart card. On Windows, smart
+	card functionality can be enhanced with Yubikey Smart Card
+	Minidriver.
+
+	Supported Algorithms:
+
+	- RSA 1024
+	- RSA 2048
+
+
+* OpenPGP (USB/CCID)
+
+	Implements v2.0 of the OpenPGP smartcard specification and
+	is useable with GNUPG v2.0+
+
+	Supported Algorithms:
+
+	- RSA 1024
+	- RSA 2048
+
+
+                  Notes on supported algorithms
+
+	You should NOT use the RSA 1024 algorithm as it is no longer
+	safe.  The RSA 2048 is currently safe in 2022 but is expected
+	to be broken within the next few years as computing power
+	grows.
+
+
+                       Note on  SSH support
+
+	The Yubikey NEO does NOT have an SSH applet unlike the 5
+	Series. However, you can configure ssh to use the GPG applet
+	and a GPG key for ssh use.
+
+
+			FIPS Certification
+
+	The NEO is NOT available in a FIPS certified version
+
+
+	--------------------------------------------------------------
+
+
+
+                         YUBIKEY 4 SERIES
+
+
+The Yubikey 4 series comes in a range of formats. The regular USB-A
+device known as the 'Yubikey 4'. Also available is a USB-C device
+called the 'Yubikey 4c'. Finally, there is another kind of USB-A
+device designed to be inserted into a USB-A port on a semi-permanent
+basis (it can be removed with a fingernail or a paperclip). All
+three formats have the same feature set.
+
+
+5 Applications, which are all independant.
+
+* OTP (One Touch Password) (USB/OTP)
+
+	OTP has two slots that can be programmed each with one of
+
+	- Yubico OTP
+	- HMAC-SHA1 Challenge-Response
+	- Static Password
+	- OATH-HOTP
+
+* U2F (USB/FIDO)
+
+	Unlimited no of u2f credentials and if FIDO certified
+
+* OATH (USB/CCID)
+
+	- Holds 32 OATH credentials supporting both OATH-TOTP (time
+	  based) and OATH-HOTP (counter based). This is an increase
+	  compared to the Yubikey NEO.
+
+	- Requires use of Yubico Authenticator software (cross
+	  platform)
+
+* PIV (Smart card) (USB/CCID)
+
+	Provides a PIV compatible smart card. On Windows, smart
+	card functionality can be enhanced with Yubikey Smart Card
+	Minidriver.
+
+	Supported Algorithms:
+
+	- RSA 1024
+	- RSA 2048
+	- ECC P256
+	- ECC P384
+
+* OpenPGP (USB/CCID)
+
+	Implements v2.0 of the OpenPGP smartcard specification and
+	is useable with GNUPG v2.0+
+
+	Supported Algorithms:
+
+	- RSA 1024
+	- RSA 2048
+	- RSA 3072
+	- RSA 4096
+
+
+                   Note on supported algorithms
+
+	You should NOT use the RSA 1024 algorithm as it is no longer
+	safe.  The RSA 2048 is currently safe in 2022 but is expected
+	to be broken within the next few years as computing power
+	grows.
+
+                       Note on  SSH support
+
+	The Yubikey NEO does NOT have an SSH applet unlike the 5
+	Series. However, you can configure ssh to use the GPG applet
+	and a GPG key for ssh use.
+
+
+                        FIPS Certification
+
+	Yubikey also created a series of Yubikeys that where also
+	FIPS certified (certified against the FIPS standard required
+	by the US Government). All members of the Yubikey 4 Series
+	(but not the NEO) are availale in the same form factors and
+	features
+
+
+	--------------------------------------------------------------
+
+
+                         YUBIKEY 5 SERIES
+
+
+The Yubikey 5 Series was designed to simplify the options created
+by the Yubikey 4 Series and NEO series by creating a single key
+with ALL of the features of the 4 and NEO devices with updated
+cryptography.
+
+The Yubikey 5 Series range consists of the following:
+
+	- Yubikey 5 NFC
+	- Yubikey 5c NFC
+	- Yubikey 5c 
+	- Yubikey 5 Nano
+	- Yubikey 5c Nano
+	- Yubikey 5Ci
+
+There are a few differences between models. The Nano versions
+together with the 'Yubikey 5c' and 'Yubikey 5Ci' devices do NOT
+support NFC due to the physical constraints on these devices.
+
+Also in the range is the Yubikey 5 Security key available in USB-A
+and USB-C formats. In previous generations the Security key was a
+separate range. In the latest series the security key is considered
+part of the range. To simplify the discussion I have left the
+security keys for the next section of this document as their
+functionality is radically different to the regular Yubikeys.
+
+
+6 Applications, which are all independant.
+
+* OTP (One Touch Password) (USB/OTP)
+
+	OTP has two slots that can be programmed each with one of
+
+	- Yubico OTP
+	- HMAC-SHA1 Challenge-Response
+	- Static Password
+	- OATH-HOTP
+
+* U2F aka FIDO (v.1) (USB/FIDO)
+
+	Unlimited no of u2f credentials and if FIDO certified
+
+* FIDO2 (USB/FIDO)
+
+	This is an upgrade to the U2F applet supporting both U2F
+	and FIDO2.
+
+	Can offer truely passwordless authentication with WebAuthn
+	enabled websites
+
+	Can hold upto 25 resident keys which can be left unlocked
+	but protected by a PIN number (of 4-63 characters). If PIN
+	is entered wrong 8 times in a row the FIDO2 app is locked.
+
+	FIDO2 in most current use cases is identical to the user
+	to U2F/FIDO v.1
+
+* OATH (USB/CCID)
+
+	- Holds 32 OATH credentials supporting both OATH-TOTP (time
+	  based) and OATH-HOTP (counter based)
+
+	- Requires use of Yubico Authenticator software (cross
+	  platform)
+
+* PIV (Smart card) (USB/CCID)
+
+	Provides a PIV compatible smart card (FIPS 201). On Windows,
+	smart
+	card functionality can be enhanced with Yubikey Smart Card
+	Minidriver.
+
+	Supported Algorithms:
+
+	- RSA 1024
+	- RSA 2048
+	- ECC P256
+	- ECC P384
+
+
+* OpenPGP (USB/CCID)
+
+	Implements v3.4 (on firmware version 5.2.3+) of the OpenPGP
+	smartcard specification and is useable with GNUPG v2.0+
+
+	Supported Algorithms:
+
+	- RSA 1024
+	- RSA 2048
+	- RSA 3072
+	- RSA 4096
+	- ECC secp256r1, ECCsecp256k1, ECCsecp384r1, ECCsecp521r1,
+	  brainpoolP256r1, brainpoolP394r1, brainpoolP512r1
+	- Curve x25519 (decipher only)
+	- Curve ed25519 (sign/auth only)
+
+* SSH Applet
+
+	The Yubikey 5 series supports on Yubikey SSH keys using the
+	ecdsa-sk and ec25519-sk ssh key types. The user is advised
+	to use the latter ec25519-sk as it is generally considered
+	the better option.
+
+	SSH key support is also supported by the OpenPGP (GPG)
+	applet.
+
+
+                  Notes on supported algorithms
+
+	You should NOT use the RSA 1024 algorithm as it is no longer
+	safe.  The RSA 2048 is currently safe in 2022 but is expected
+	to be broken within the next few years as computing power
+	grows. The user is advised to use 3072 or 4096 bit RSA if
+	available or the faster ed25519 keys.
+
+
+			FIPS Certification
+
+	The Yubikey Series 5 keys are available in a FIPS certified
+	version in all form factors except the BIO series.
+
+
+	--------------------------------------------------------------
+
+
+                        YUBIKEY BIO SERIES
+
+
+In 2021 Yubikey announced two new devices in the Yubikey 5NFC and
+Yubikey 5C NFC form factors with the addition of a fingerprint
+sensor replacing the yellow button. At the time of writing this
+technical note not all services have upgraded their code to support
+the fingerprint version.
+
+The BIO series are different from the Yubikeys above as they are
+only U2F/FIDO2 compatible and are essentially a Yubikey 5 Security
+Key with a fingerprint reader.
+
+You must register your fingerprints on the device before you can
+use it as a U2F or FIDO2 key.
+
+They are available with either a USB-A or a USB-C connector and do
+not suport NFC.
+
+
+The BIO keys only have a single applet supporting U2F(FIDO1) and
+FIDO2 protocols.
+
+* U2F aka FIDO (v.1) (USB/FIDO)
+
+	Unlimited no of u2f credentials and if FIDO certified
+
+* FIDO2 (USB/FIDO)
+
+	This is an upgrade to the U2F applet supporting both U2F
+	and FIDO2.
+
+	Can offer truely passwordless authentication with WebAuthn
+	enabled websites
+
+	Can hold upto 25 resident keys which can be left unlocked
+	but protected by a PIN number (of 4-63 characters). If PIN
+	is entered wrong 8 times in a row the FIDO2 app is locked.
+
+	FIDO2 in most current use cases is identical to the user
+	to U2F/FIDO v.1
+
+
+	--------------------------------------------------------------
+
+
+                      YUBIKEY SECURITY KEYS
+
+
+The Yubikey Security Keys are made out of a blue plastic to denote
+that they are different to the almost identical Yubikey. 
+
+The Yubico Security keys are designed for a different purpose than
+the keys mentioned above (NB the Yubikey BIO series are essentially
+a Yubikey 5 Security Key with a fingerprint reader).
+
+The purpose the Yubikey Security keys were designed to use with
+second factor authentication on the Web. Modern browsers have
+functionality written into them to support WebAuthn/U2F/FIDO2
+protocols allowing the webpage to authenticate with the Yubikey.
+
+In recent months Yubikey has updated the firmware on the Yubikey 5
+Security Key (FIDO2 compliant version) to also support SSH keys.
+
+
+	--------------------------------------------------------------
+
+
+                    PURCHASING A SECURITY KEY
+
+
+There are FOUR different versions of the Yubico security key that
+all look similar but have different functionalities. Care should
+be taken in identifying that you are buying the correct key before
+purchase.
+
+The original security key (FIDO U2F Security Key) only supported
+U2F and had a gold button with a key symbol on it. This device does
+NOT support NFC and therefore has no radio wave symbols on the
+button.
+
+The next version, simply known as the 'Yubico Security Key' is
+identical to the first version but has the number 2 etched in the
+blue plastic above the button. This key added FIDO2 support (see
+below).
+
+The remaining two versions are essentially the same key but in USB-A
+and USB-C connection formats. Both support NFC connectivity. These
+Yubikey Security Keys have a gold button with two NFC wave symbols
+surrounding the Key symbol (the same button design as the Yubikey
+5 NFC).
+
+In a recent blog article in late 2021 Yubico announced SSH support
+using the FIDO2 resident credentials for new security keys sporting
+the latest firmware release (requires OpenSSH version8.2+ on client
+and server).
+
+	--------------------------------------------------------------
+
+
+                       YUBIKEY FIDO U2F SECURITY KEY
+
+
+This original Yubikey Security Key only supported U2F and was
+designed and priced to provide second factor web authentication at
+a substantial discount over the regular Yubikeys.
+
+This original security key does not support the NFC protocol and
+only came in USB-A connections.
+
+It supports only the U2F (FIDO v.1):
+
+* U2F aka FIDO (v.1) (USB/FIDO)
+
+	- Unlimited no of u2f credentials and if FIDO certified
+
+It can easily be identified from other Yubico security keys as the
+gold button has only a key symbol.
+
+
+	--------------------------------------------------------------
+
+
+		       YUBIKEY SECURITY KEY (2nd gen)
+
+
+This is an upgrade to the original security key (the 'FIDO U2F
+Security Key') adding support for FIDO2 resident credentials.
+
+This security key only supported U2F and FIDO2 and was designed and
+priced to provide second factor web authentication at a substantial
+discount over the regular Yubikeys.
+
+This security key still does not support the NFC protocol and only
+came in USB-A connections.
+
+It supports only the U2F (FIDO v.1) and the FIDO2 standards:
+
+* U2F aka FIDO (v.1) (USB/FIDO)
+
+	- Unlimited no of u2f credentials and if FIDO certified
+
+* FIDO2 (USB/FIDO)
+
+	This is an upgrade to the U2F applet supporting both U2F
+	and FIDO2.
+
+	Can offer truely passwordless authentication with WebAuthn
+	enabled websites
+
+	Can hold upto 25 resident keys which can be left unlocked
+	but protected by a PIN number (of 4-63 characters). If PIN
+	is entered wrong 8 times in a row the FIDO2 app is locked.
+
+	FIDO2 in most current use cases is identical to the user
+	to U2F/FIDO v.1
+
+
+It can easily be identified from other Yubico security keys as the
+gold button has only a key symbol without any NFC radio waves on
+it. It differentiates itself from the original security key by
+advertising it's FIDO2 support with an etched '2' above the gold
+key button.
+
+	--------------------------------------------------------------
+
+
+          YUBIKEY SECURITY NFC KEY  & SECURITY KEY C NFC
+                            (3rd gen)
+
+
+This Yubikey Security Key was designed and priced to provide second
+factor web authentication for both computers and also mobile devices
+that have an NFC chip in them.
+
+This new security key, often associated with the Yubikey 5 Series
+(and sometimes called the Yubikey 5 Security Key) comes in both
+USB-A and USB-C formats.
+
+The versions are essentially the same key but in USB-A and USB-C
+connection formats. Both support NFC connectivity. These Yubikey
+Security Keys have a gold button with two NFC wave symbols surrounding
+the Key symbol (the same button design as the Yubikey 5 NFC).
+
+In a recent blog article in late 2021 Yubico announced SSH support
+using the FIDO2 resident credentials for new security keys sporting
+the latest firmware release (requires OpenSSH version8.2+ on client
+and server).
+
+It supports both U2F and FIDO2 standards:
+
+* U2F aka FIDO (v.1) (USB/FIDO)
+
+	Unlimited no of u2f credentials and if FIDO certified
+
+* FIDO2 (USB/FIDO)
+
+	This is an upgrade to the U2F applet supporting both U2F
+	and FIDO2.
+
+	Can offer truely passwordless authentication with WebAuthn
+	enabled websites
+
+	Can hold upto 25 resident keys which can be left unlocked
+	but protected by a PIN number (of 4-63 characters). If PIN
+	is entered wrong 8 times in a row the FIDO2 app is locked.
+
+	FIDO2 in most current use cases is identical to the user
+	to U2F/FIDO v.1
+
+* SSH support
+
+	This latest version of the security key can use a FIDO2
+	resident slot to provide support for an SSH key.
+
+
+
+	--------------------------------------------------------------
+
+
+                         LEGACY YUBIKEYS
+
+
+There are a few legacy devices that are generally no longer available
+(even on the secondhand market like eBay). They include:
+
+They have their uses still today particularly those supporting the
+U2F applet (NEO and Edge in both regular key and Nano formats). But
+often the second hand price for these are inflated and you are
+better off getting a NEO or a Yubikey 4 series than purchase these.
+
+I have a Yubikey Standard (Yubikey 2) that I only use for holding
+the router passwords using the OTP applet (with a static password).
+But for most use cases the Yubikey Standard and it's nano format
+sister device the Yubikey Nano have limited use cases for most
+users.
+
+If you are a technical user however, experienced in managing a Linux
+or BSD machine, you can use the OTP applet to add second factor
+authentication to a home server (using Yubico OTP, Challenge-Response,
+HMAC-SHA1 or OATH-HOTP). Note that the OATH-TOTP was introduced in
+the NEO series and was not available on the older devices.
+
+Occaisionally Available on eBay:
+
+	- Yubikey NEO (see above, still available occaisionally on
+	  eBay)
+	- Yubikey Standard (aka Yubikey 2a, only supports the OTP
+	  applet). The Yubikey Standard is identified by a dot on
+	  the button.
+
+Haven't seen these available anywhere for a few years:
+
+	- Yubikey Nano (like the Yubikey 4 Nano, but only supports
+	  the OTP applet)
+	- Yubikey Neo-n (a NEO in Nano format without NFC support) 
+	- Yubikey Edge (An upgrade to the Yubikey Standard adding
+	  U2F support)
+	- Yubikey Edge-n (A Yubikey Edge in Nano format)
+
+
+
+
+
