@@ -1,0 +1,50 @@
+
+
+
+                  SSH AUTHENTICATION WITH FIDO2
+
+
+Q.      I was wondering if it is possible to use FIDO2/U2F to
+	authenticate against an ssh server (eg. Yubico Security
+	Key)
+
+
+
+                            SOLUTION 1
+
+OpenSSH v8.2 has added support for FIDO/U2F (without a need for a
+patch).
+
+In OpenSSH, FIDO devices are supported by public key types ecdsa-sk
+and ed25519-sk along with the corresponding certificate types.
+
+ssh-keyen(1) may be used to generate a FIDO-backed key:
+
+
+	$ ssh-keygen -t ecdsa-sk -f ~/.ssh/id_ecdsa-sk
+
+
+
+
+                            SOLUTION 2
+
+You can use the PAMs provided by Yubico.
+
+	libpam-yubico for OTP
+		see developers.yubico.com/yubico-pam/
+
+	libpam-U2F for U2F
+		can't be used with ssh since it uses libusb/local
+		ports
+
+
+You don't need a PPA as its already in Debian.
+
+
+
+
+
+
+
+
+
