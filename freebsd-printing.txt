@@ -1,0 +1,94 @@
+
+
+
+                      PRINTING FORM FREEBSD
+
+
+
+Printing from FreeBSD can seem daunting. Here we will show you both
+the proper way to do it but also the quick and dirty way.
+
+
+QUICK & DIRTY WAY
+
+	# pkg install -y cups gutenprint
+
+	# sysrc cupsd_enable="YES"
+
+	# sysrc cups_browsed_enable="YES"
+
+	# sysrc lpd_enable="YES"
+
+	# service lpd start
+
+	# service cupsd start
+
+	# service cups_browsed start
+
+
+	$ firefox locahost:631
+
+
+
+We can then use the 'Administration' tab to add a printer (logging
+in as root).
+
+In our example we are using the Xerox B320 printer. We can the edit
+the config file and #tag out the default JobPrivateAccess settings.
+
+
+	<Policy default>
+		# Job/subscription privacy .........
+		# JobPrivateAccess default
+		# JobPrivateValues default
+		SubscriptionPrivateAccess default
+		SubscriptionPrivateValues default
+		JobPrivateAccess all
+		JobPrivateValues none
+
+
+
+	<Limit Create-job Print-job Print-URI Validate-Job>
+		Order deny, allow
+	</Limit>
+
+
+To add a HP Jetdirect / Appsocketprinter:-
+
+
+	[addprinter]
+	choose Appsocket/HP JetDirect
+	[continue]
+	Connection = socket://192.168.1.174:9100
+	[continue]
+
+	Now name the printer
+
+	Select make of printer - select [generic]
+	Model = [generic IPP Eveywhere printer]
+	(You can also upload a PPD file)
+
+
+
+SETTING UP VIA USB
+
+
+Select the local printer, (continue) then name it.
+
+Google for a PPD file for your printer (eg Xerox B233 ppd)
+
+Download the PPD. Unzip the download.
+
+Typically you will get a Linux and Windows ppd files. 
+
+We will want to select and use the Linux ppd driver.
+
+
+For more information, goto the FreeBSD foundations page called
+"Printing on FreeBSD - Quick Guide"
+
+Or for the in depth instructions see the FreeBSD Handbook chapter
+9.
+
+
+
