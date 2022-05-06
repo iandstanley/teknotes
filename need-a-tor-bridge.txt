@@ -1,0 +1,59 @@
+
+
+
+		    DO YOU NEED A TOR BRIDGE?
+
+
+Do you need a tor bridge? And for that matter, what is a TOR bridge?
+
+A TOR bridge takes the place of an entry guard.
+
+Normally:
+
+	Client 	   Entry    Middle    Exit     Server
+	Machine -> Guard -> Relays -> Relay -> Machine
+		   Relay
+
+
+When you connect to the TOR network, your first relay is going to
+be an entry node (guard). You are then going to route all your
+traffic through a number of relays. Finally hitting an exit relay
+(if accessing the regular internet); else hitting the TOR hidden
+service server.
+
+If we look at our TOR settings in the TOR Browser, we can request
+a bridge by selecting 'Use a bridge'. We can choose the type of
+bridge as well (eg OBS4 and others).
+
+For countries where the ISPs censor TOR, then you should be using
+a bridge.
+
+A bridge is a way to further decentralize part of your connection
+from the publically listed TOR relays on the internet. If you have
+the most concerns of surveillance capitalism, I would recommend
+using the Snowflake bridge. This is because the snowflake bridge
+is actually a browser extension that continually changes to a new
+random bridge from the unlisted entry guards of snowflake bridges.
+
+Snowflake mimics WebRTC so it actually looks like a video chat when
+you are connected to it.
+
+After selecting snowflake we can then go back to connect to TOR.
+We can even set this to do this automatically.
+
+So if you are concerned about censorship and of the blocking of
+TOR, like what happens in China, you are going to want to try a
+bridge.
+
+The people that NEED a bridge are the people who are worried about
+censorship and blocking of TOR.
+
+If you don't live in a country where this happens, then try to save
+the bridges for people who really need them.
+
+You will notice that if you are on a bridge connection will be
+slower than a regular TOR connection.
+
+
+
+
