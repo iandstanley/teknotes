@@ -1,0 +1,34 @@
+
+
+
+
+                           SSH OVER TOR
+
+
+
+ON SERVER
+
+$ sudo apt install -y tor
+
+$ sudo vi /etc/tor/torrc
+
+
+	HiddenServiceDir	/var/lib/tor/hidden_service/
+	HiddenServicePort	22 127.0.0.1:22
+
+
+
+ON CLIENT
+
+$ vi ~/.ssh/config
+
+
+	Host *.onion
+		ProxyCommand	/usr/bin/nc -x localhost:9150 
+				-X5 %h %p
+
+
+$ ssh root@aboo87ajhlku3yoyhldwlowyuy2kjs72hd98wc59.onion
+
+
+
