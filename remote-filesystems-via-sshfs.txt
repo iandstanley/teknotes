@@ -1,0 +1,125 @@
+
+
+	      REMOTE FILESYSTEMS MOUNTING WITH SSHFS
+
+
+We are going to look at mounting remote filesystems over SSH using
+a program called sshfs.
+
+A typical usage of this would be if you host a website on a VPS and
+you make changes to the website on a regular basis. Mounting the
+filesystem locally allows you to launch whatever development tools
+you wish for modifying the site and any changes you make will reflect
+on the virtual server as soon as they are made on your local machine.
+
+First, we need to install the software on our local computer.
+
+
+	$  sudo apt install sshfs
+
+
+We also require the sshd daemon installed and running on the remote
+server. Let's assume this is done already.
+
+
+	$  ssh server01
+	server01$  ls /mnt
+	USB
+	$
+
+
+Here we are using a demo server with a USB mounted rather than a
+SSD/HDD (as this is our home lab).
+
+
+	$  ls -p /mnt/USB/
+	backups/	lost+found/	share/		torrents/
+
+
+We will no mount the filesystem locally. First we will need a mount
+point.
+
+
+	$  sudo mkdir /mnt/test/
+	$  sudo chown nate:nate /mnt/test
+
+
+Now after changing the ownership we can mount it:
+
+
+	$  sshfs nate@192.168.1.5:/mnt/USB /mnt/test
+
+	$ cd /mnt/test
+	$ ls -p
+	backups/	lost+found/	share/		torrents/
+
+
+The reason why it didn't prompt me for an ssh identity was that my
+ssh to server01 is still open, and ssh multiplexes the connection
+to server01 through the existing connection.
+
+But that brings up another point. With SSHFS we can also use the
+ssh aliases that we setup in ~/.ssh/config:
+
+
+	$  cat ~/.ssh/config
+
+	host server01
+		Hostname	192.168.1.5
+		IdentityFile	~/.ssh/clk-home
+		PreferredAuthentication		publickey
+		Port	22
+		User nate
+
+
+	host *
+		# Enables SSH multiplexing
+		ControlPath	/tmp/%r@%h:%p
+		ControlMaster	auto
+		ControlPersist	30m
+
+		# Other prefs applied to all connections
+		AddressFamily	inet
+		Protocol 2
+
+
+If we wanted to unmount the filesystem:
+
+
+	$  fusermount -u /mnt/test
+	$  ls /mnt/test
+	total 0
+	$
+
+
+With the aliases in ssh config we can simplify the command to:
+
+	$  sshfs server01:/mnt/USB /mnt/test
+
+
+
+                           AUTOMOUNTING
+
+
+Using sshfs we can aloso automount the filesystem at startup by
+adding the following entry to /etc/fstab (on a single line):
+
+
+	nate@192.168.1.5:/mnt/USB  /mnt/test fuse.sshfs delay_connect, 
+		defaults,idmap=user,IdentityFile=/home/nate/.ssh/clk-home,
+		port=22,uid=1000,gud=1000,allow_other  0  0
+
+
+	$  sudo mount -a
+	$  ls /mnt/test
+
+This shows the /mnt/USB filesystem on server01.
+
+
+
+                            ALTERNATE
+
+Without SSHFS you could use a sftp client like FileZilla. But sftp
+has it's limitations as you need to copy files back and forth.
+
+
