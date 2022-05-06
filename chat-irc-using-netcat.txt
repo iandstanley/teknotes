@@ -1,0 +1,218 @@
+
+
+
+                     CHAT ON IRC USING NETCAT
+
+
+I'm going to show you how you can chat on an IRC channel using
+netcat. Netcat is the swiss army knife of networking, basically
+giving you a RAW TCP connection to work with.
+
+
+
+	$ sudo apt install -y netcat
+
+
+To connect to an IRC server:
+
+
+	$ nc irc.devdungeon.com 6667
+
+
+If you use the wrong port you will get a message like:
+
+
+	irc.devdungeon.com [192.53.170.182] 668 (?): 
+				Connection Refused
+
+
+Once you are online you will need to register a user name and
+nickname.
+
+
+	$ nc irc.devdungeon.com 6667
+	:irc.devdungeon.com NOTICE: *** Looking up your hostname ...
+	:irc.devdungeon.com NOTICE: *** could not resolve your hostname
+				Domain not found; using your IP address
+				(107.181.165.217) instead
+	
+
+
+If you wait for a minute or so, eventually the server will close
+the connection with:
+
+	ERROR: Closing link (096AAAC@107.181.165.217) 
+				[Registration timeout]
+
+
+So you need to complete the registration in under a minute (defaults
+for most servers)
+
+
+To register you use the USER command which has the format:
+
+
+	USER <username> <hostname> <servername> <realname> (RFC1459)
+
+	USER <username> <mode> <unused> <realname> (RFC2812)
+
+
+And you nickname with the NICK command:
+
+
+	NICK <nickname>  [<hopcount>]  (RFC1459)
+
+	NICK <nickname>    (RFC2812)
+
+
+Your USER is for formal identification with the server but your
+nickname is how you will appear to other users, and how they will
+address you.
+
+
+	$ nc irc.devdungeon.com 6667
+	........
+	........
+
+	USER johnq * * :John Q Hacker
+
+
+You don't need to know what the two asterisks mean. Your username
+here would be johnq and your "real name" is ":John Q Hacker". You
+place a colon before the real name as it can have spaces in it.
+
+
+Next you need to set your nickname:
+
+
+	NICK  johnq
+
+
+Or whatever you want your display name to be.
+
+
+The server responds with a bunch of messages.
+
+:irc.devdungeon.com 001 johnq: Welcome to DevDungeon IRC
+....
+....
+:irc.devdungeon.com 251 johnq: There are 1 users and 0
+				invisble on 1 server
+....
+....
+:irc.devdungeon.com 375 johnq: irc.devdungeon.com message of the day
+:irc.devdungeon.com 372 johnq: Welcome to Devdungeon
+:irc.devdungeon.com 376 johnq: End of message of the day
+													
+Once you are connected you can retain your username whilst changing
+your nickname many times.
+
+After the server processes your registration successfully it will
+send you the message of the day along with some server information.
+
+Now we are fully recognised as an irc client. At this point you can
+start messaging people, joining channels and making queries to the
+server about channels etc.
+
+
+To message someone use PRIVMSG:
+
+
+	PRIVMSG nanodano hey dano
+
+
+This will only work if somebody is already logged into that server
+with the nickname nanodano.
+
+
+To get a list of char rooms:
+
+
+	LIST
+	:irc.devdungeon.com 321 johnq channel: Users name
+	:irc.devdungeon.com 322 johnq #general 1
+	:irc.devdungeon.com 323 johnq :End of channel list
+
+
+
+To join one of those channels (eg general):
+
+
+	JOIN #general
+	:johnq!johnq@107.181.165.217 JOIN #general
+	:irc.devdungeon.com 353 johnq = #general :johnq nanodano
+	:irc.devdungeon.com 356 johnq #general :End of /NAMES list
+
+
+
+To chat in the channel we use PRIVMSG as before but we give it the
+channel name (starting with #):
+
+
+	PRIVMSG #general  Hello general channel!
+
+
+
+To get a list of users in the #general channel:
+
+
+	WHO #general
+
+
+To get more information about a user, like the real name they
+provided:
+
+
+	WHOIS nanodano
+	:irc.devdungeon.com!johnq@107.181.165.217 PRIVMSG 
+					johnq :Hello johnq
+	:irc.devdungeon.com!johnq@107.181.165.217 PRIVMSG 
+					#general :Welcome
+
+
+In these messages you will see who sent the message and after PRIVMSG
+you will see a destination (a channel name or your username). After
+the colon is the message.
+
+
+To respond use the PRIVMSG command:
+
+
+	PRIVMSG  #general Glad to be here
+	PRIVMSG  nanodano  see you later
+
+
+
+So now you have an active client connection to the IRC server. You
+know how to list the channels and find somewhere to chat. You know
+how to join a channel. You know how to check who is in the channel.
+And you know how to send messages to a channel or a specific user.
+You're pretty much all set.
+
+
+
+After you have been connnected for a while you wil recieve a notice
+from the server:
+
+
+	PING :irc.devdungeon.com
+
+
+It will say PING followed by some text (often the server name). You
+must respond with PONG followed by the same text:
+
+
+	PONG :irc.devdungeon.com
+
+
+If you don't your connection will timeout:
+
+
+	ERROR: Closing link (johnq@107.181.165.217) [ping timeout]
+
+
+For a list of more IRC commands see Wikipedia page for "List of
+Internet Relay Chat commands"
+
+
+
