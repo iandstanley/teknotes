@@ -1,0 +1,21 @@
+
+
+
+                   WHICH YUBIKEY SHOULD I BUY?
+
+
+Yubico provides a handy quiz to help you decide which Yubikey to buy
+
+                     https://yubico.com/quiz
+
+
+
+
+
+                   LIST OF APPS SUPPORTING U2F
+
+
+             yubico.com/ca/works-with-yubikey/catalog
+
+
+

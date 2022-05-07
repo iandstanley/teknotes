@@ -1,0 +1,113 @@
+
+
+
+
+		     USING GPG-AGENT OVER SSH
+
+
+
+Q.      I'm having problems using gpg-agent over ssh via a single
+	command line
+
+	Here's my configuration:
+
+	Server A        triggering the command via ssh
+
+		$ ssh user@serverb "sudo -E /path/toscript.sh"
+
+	Server B        Executing the script requiring a passphrase
+	i		signature
+
+	System info:    Ubuntu 12.04
+
+	I've setup the gpg-agent on server B, and also added the
+	following to /home/user/.bashrc
+
+	# Invoke GnuPG agent the first time we login
+	# Does the '~/.gpg-agent-info' exist and points to the gpg-agent
+	# process accepting signals
+
+	if test -f $HOME/.gpg-agent-info && \
+
+		kill -0 `cut -d: $HOME/.gpg-agent-info` 2>/dev/null; then
+
+		GPG_AGENT_INFO=`cat $HOME/.gpg-agent-info | cut -c 16`
+
+	else
+
+		# No gpg agent available, start gpg agent
+		eval `gpg-agent --daemon --write-env-file $HOME/.gpg-agent-info`
+
+	fi
+
+	export GPG_TTY=`tty`
+	export GPG_AGENT_INFO
+
+
+
+	Here's the configuration of the agent in .gnupg/gpg-agent.conf:
+
+
+		enable-ssh-support
+		# 1yr cache support
+		default-cache-ttl 31536000
+		default-cache-ttl-ssh 31536000
+		max-cache-ttl 31536000
+		max-cache-ttl-ssh 31536000
+		#debug -all
+
+
+	So in order to make this work, I connect to the server B
+	via ssh.
+
+
+		$ ssh user@serverb
+
+
+	The gpg-agent is started. I manually trigger the script
+
+
+		$ sudo -E /path/toscript.sh
+
+
+	Then gpg-agent prompts me for the passphrase which then
+	caches it for a year. Repeats work fine manually.
+
+
+	My problem is when I try to trigger it remotely via:
+
+
+		$ ssh user@serverb "sudo -E /path/toscript.sh"
+
+
+	It seems that gpg-agent is not working because the script
+	keeps asking me for a passphrase.
+
+
+	I've added the following to /etc/sudoers.d/
+
+		user ALL=(ALL)NOPASSWD:SETENV:/path/toscript.sh
+
+	Any Ideas?
+
+
+
+
+When you do:
+
+
+	$ ssh user@serverb "sudo -E /path/toscript.sh"
+
+
+You are doing a new login each time and ssh-agent doesn't support
+saving of passphrases between logins.
+
+You could try Keychan www.funtoo.org/Keychain
+
+With Keychain you only need to enter a passphrase each time your
+local machine is rebooted. Keychain also makes it very easy for
+remote cron jobs to securely 'hook into' a long running ssh-agent
+process allowing your scripts to take advantage of key based logins.
+Keychain supports gpg-agent and ssh-agent.
+
+

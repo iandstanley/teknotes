@@ -1,0 +1,66 @@
+
+
+
+                   MOUNT AN SD CARD ON FREEBSD
+
+
+
+
+How to mount a FAT32 formatted SD card on FreeBSD. 
+
+
+1.	Insert the SD card into your reader
+
+
+	$ dmesg
+	mmc0:	<MMC/SD bus> on rtsx0
+	mmcsd0:	4GB <SDHC EYEFI 0.0 .....> at mmc0
+	$
+
+
+
+2. 	Determine the filesystem
+
+
+	$ sudo gpart show mmcsd0
+	.....
+	.....
+	8192	60628992    1	fat32lba     [active]    (29G)
+	$
+
+
+	You can gather even more info about the filesystem with:
+
+
+	$ sudo file -s /dev/mmcsd0s1
+	.....
+	.....
+
+
+
+3.	Mount the FAT32 formatted filesystem
+
+
+	Assuming that you are downloading photos from the SD card
+	you will only want to have the SD card read-only.
+	
+
+	$ sudo mount -t msdos -o ro /dev/mmcsd0s1 /mnt
+
+
+	However, if you want to write to the card then you should
+	specify 'rw' in the options to enable writes.
+
+
+	$ sudo mount -t msdos -o rw /dev/mmcsd0s1 /mnt
+
+
+
+4. 	Umount when done
+
+
+	$ sudo umount /mnt
+
+
+
+
