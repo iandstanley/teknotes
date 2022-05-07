@@ -1,0 +1,186 @@
+
+
+
+
+		      DEBIAN: USING APT KEYS
+
+
+
+People oftem are instructed to add a PPA server as a secure for
+packages.
+
+Often, if not generally, this is considered a bad idea to use a PPA
+repository. Butin some cases, especially a company self-hosted
+internal PPA repository, there may be benefits to doing so.
+
+
+
+
+			 THE APT-KEY TOOL
+
+
+Apt-key is a very misunderstood command.
+
+Often people either through laziness or inexperience will often add
+a PPA repository to their Deian based system, but won't really
+maintain the additions.
+
+
+	$ sudo apt-key list
+
+
+This command lists out a long list of encryption/signing keys most
+of these are from the Linux distribution (eg Debian or Ubuntu).
+
+But as we add a PPA for various software (eg. Microsoft Visual
+Studio Code) keys get added to this list.
+
+We should from time to time review the contents of this list and
+remove keys that are associated with PPA repositories we don't use.
+
+Inexperienced Linux users often install Ubuntu 3rd party PPA on
+Debian (and vice versa), and this should be avoided for various
+reasons.
+
+Each key shown by 'apt-key list' typcially shows 3 or 4 lines.
+
+The first line starts with pub and shows the key length size, the
+creation date and the [flags]. You will often see [SC] for
+signing/certifying and [E] for encryption.
+
+The second line contains the fingerprint. The key id is the last 8
+hex digits of the fingerprint with the space removed.
+
+The third line shows the UID unique id, typically with an email
+address, and comment.
+
+Sometimes you have a fourth line that starts with 'sub'. This subkey
+is often an encrption key.
+
+
+
+	     DELETEING AN APT KEY YOU NO LONGER NEED
+
+
+If we want to delete an unused or expired key we can find it with:
+
+
+	$ sudo apt-key list
+
+
+Note or copy down the key id (last 8 digits of the fingerprint).
+
+
+	$ sudo apt-key del 2D0F61F0 OK
+
+	$ sudo apt-key list
+
+
+You should also remove any associated PPA definition for this key
+(see later).
+
+
+
+		      DOWNLOADING A GPG KEY
+
+
+Let's download a GPG key to show you the commands that you need to
+type in to add them to apt's keyring.
+
+For this we start with the tool GPG to download the signer's public
+key.
+
+
+	$ gpg --keyserver subkeys.pgp.net --recv-keys 55BE302B
+
+
+This command adds the key to your personal GPG keyring and NOT the
+system apt keyring. For that we need to issue another command:
+
+
+	$ gpg -a --export 55BE302B |  sudo apt-key add -
+
+
+This command exports the specified key from the user's keyring and
+pipes it to apt-key to add it to the system keyring.
+
+Once the GPG signing key has been added to apt's keyring, we can
+add it to the sources list, and then Debian will be happy to install
+from the PPA repository.
+
+
+
+
+	    ADDING/REMOVING PPA'S TO THE SOURCES LIST
+
+
+	$ cd /etc/apt
+
+	$ ls -p apt.conf.d/     auth.conf.d/    sources.list
+	sources.list.d/ trusted.gpg     trusted.gpg.d/ preferences.d/
+
+
+In this directory you can see the 'sources list' but it is good
+practice to create a PPA specific file is 'sources.list.d/' which
+makes it easy to maintain.
+
+
+For example:
+
+	$ sudo ed sources.list.d/nextcloud.list
+
+	deb [arch=amd64,i386] http://download.opensuse.org/repositories/
+				home:/ivarudi/Debian_9.0/ /
+
+
+or
+
+	$ sudo ed sources.list.d/vscode.list
+
+	deb [arch=amd64] https://packages.microsoft.com/repos/vscode
+				stable main
+
+
+If you have them in two spots ie in 'sources.list.d' and 'sources.list'
+you will see a 'W' when I run my 'apt update' to warn me of a
+misconfiguration.
+
+Now update your apt cache.
+
+
+	$ sudo apt update 
+
+
+
+
+                           OTHER NOTES
+
+
+Sometimes PPA instructions suggest using wget or curl to download
+the PPA key. eg:
+
+
+	$ wget -q0 - \
+	      https://download.sublimetext.com/sublimehq-pub.gpg | \
+		sudo apt-key add -
+
+
+If your apt is not setup to use https sources, run:
+
+
+	$ sudo apt install apt-transport-https
+
+
+And sometimes you are given the command to create a sources file.
+
+
+	$ echo "deb https://download.sublimetext.com/  apt/stable" |\
+		sudo tee /etc/apt/sources.list.d/sublimetext.list 
+
+	$ sudo apt update 
+		
+
+
+
+
+
