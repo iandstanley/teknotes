@@ -1,0 +1,177 @@
+
+
+
+	     SECURE A SSH SERVER OVER THE TOR NETWORK
+
+
+We want to create a secure ssh server running over the TOR network.
+
+One of TOR's kinda niche features that nobody really uses.  Normally
+people want to run a server anonymously but reachable so that people
+can easily access it.
+
+In our case we are actually going to configure our hidden_service
+in what is called "stealth mode".
+
+When you consider 'stealth mode' ONLY a user with a particular
+authentication cookie can even reach your network.
+
+
+This actually gives us a lot of cool properties.
+
+The .onion address of your service is actually a HASH of the services
+public key. So there is NO need for any kind of certificate authorities
+to verify that you are talking to the right server.
+
+Once you goto the hash of that public key (the .onion address) ONLY
+the server with that private key can associate with the connection.
+
+So you get self-authentication. You get multi-layer end-to-end
+encryption, as each hop has it's own encryption layer.
+
+One of the real cool features is NAT traversal. Ordinarily to connect
+to your ssh server behind your router's firewall, you would normally
+have to open up a hole in your firewall for port forwarding to your
+ssh server. But using TOR's NAT traversal we don't need to do this.
+
+
+This allows us to deny all inbound connections and traffic, but we
+will still be able to ssh in from the coffee shop via TOR because
+of the unique architecture of the network.
+
+Because of that, this gives us a minimal attack surface. This is
+really kind of cool and should be more utilized. There is no use
+for DNS entries as we don't use DNS as we are using, instead, the
+hash of the public key.
+
+Another cool thing would be as we are associating the address of
+the server as the hash of a public key, we don't need a static ip
+address. Ordinarily, we would require a static IP address (or at
+least a dynamic dns entry) to be able to connect to the server.
+
+The TOR client running on the server is going to associate it all
+with pure cryptography.
+
+So this gives us a whole lot of cool properties.
+
+
+
+	--------------------------------------------------------------
+
+
+
+So basically what we are going to build is a server.  This server
+will have the TOR client on it to connect to the TOR network. You
+can imagine this to be behind a corporate firewall, which ha sa
+basic rule of 'deny all inbound'.  So any traffic coming in instigated
+from the outside is dropped (ie we didn't ask for you, you don't
+come in).
+
+How this is going to work is that our TOR client on our server is
+going to publish the hidden_service to the hidden service directory,
+which gets our service three introduction points.
+
+Each introduction point does exactly what it sounds like it allows
+a point (a server on the TOR network) to introduce the client to
+the server (via a series of 3 hops on each side). Anyone who goes
+to the public key hash (.onion address) gets redirected to one of
+the three introduction points. You will get a cookie to authenticate
+this particular connection for this particular user. The client and
+server essentially agree on a rendezvous point where they will
+compare cookies before continuing. Without these authentication
+cookies no TOR node can even connect to the server.
+
+In our particular case (stealth mode), no connections open unless
+configured on the client have this particular authentication cookie
+configured on the client which matches the authentication cookie
+on the server. So without this specific authentication cookie no
+TOR node/client can connect to the server.
+
+This is almost overkill in most situations, for even more security
+use ssh keys (recommended) and even a hardware token (like a Yubikey).
+
+
+But before we start I would like to just make one more clarification.
+Some people mistakenly think because you are running a hidden_service,
+or the TOR client you are running a 'tor node' with potentially
+transferring other people's illegal traffic. But this is far from
+the truth. You are not running a TOR node unless you specifically
+configure TOR to be a node. Running a hidden service is the same
+as running a TOR browser in that they are just clients connecting
+to the network.
+
+
+So let's start to configure this.
+
+
+	$ sudo -i
+
+	# apt install -y openssh-client openssh-server tor
+
+	# ed /etc/tor/torrc
+
+	HiddenServiceDir        /var/lib/tor/hidden_service/
+
+	HiddenServicePort       22 127.0.0.1:22
+
+	HiddenServiceAuthorizeClient    stealth server
+
+
+The last line tells the TOR client to publish encrypted instructions
+on how to begin the communication. A client with the right key can
+decypher these instructions. And with the same key the hidden service
+expects the first andshake to be made. Without this key you cannot
+decrypt the routing/connection information.
+
+Without this key, you are also protected from a DDOS attack on the
+server because the attackers can't find the path to the client.
+
+These are two flavours of this BASIC mode and STEALTH mode. In BASIC
+mode, many keys for the same onion address are published. In STEALTH
+mode the same hidden service server publishes different .onion
+addresses each with a different key.
+
+The security difference is in basic mode it can scale easily for
+its servers. Stealth mode is limited to more or less 16 keys. Stealth
+mod e is good for small setups but not for massive hidden servers.
+There are ways to overcome these limitations of stealth mode. I use
+the stealth mode quite a lot for my ssh serves, and have a different
+.onion and key set for every client.
+
+To configure client authorization on the service side the
+<hidden_service_dir>/authorization_clients/ directory nees to exist.
+
+
+	$ sudo cat /var/lib/tor/hidden_service/hostname
+
+	$ sudo systemctl restart tor-service
+
+
+The 'cat' gives us the .onion urls and the authentication cookie.
+
+
+
+ON THE CLIENT
+
+
+	$ sudo apt install openssh-client tor
+
+	$ sudo ed /etc/tor/torrc
+
+	HidServAuth  hjsliddgel...uyiuy6.onion oi87642...12i3u74/83x
+
+
+	$ sudo systemctl restart tor-service
+
+	$ torify ssh server@hjsliddgel...uyiuy6.onion
+
+
+Here in /etc/tor/torrc we specify the arguments to HidServAuth. The
+first arguement is the onion address and the second the authentication
+cookie.
+
+
+
+
+
+
