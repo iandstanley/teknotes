@@ -1,0 +1,105 @@
+
+
+
+
+                   FORWARDING GPG KEYS FOR SSH
+
+
+
+Q.      I can use ssh config file to enable forwarding of ssh keys
+	added to ssh-agent. How can I do the same with gpg keys?
+
+
+
+SOLUTION 1.
+
+
+OpenSSH's new Unix Domain Socket Forwarding can do this directly
+(starting with v.6.7).
+
+You should be able to do:
+
+
+	$ ssh -R ~/.gnupg/S.gpg-agent:~/.gnupg/S.gpg-agent 	\
+		-o "StreamLocalBindUnlink=yes"			\
+		-l bminton 192.168.1.9
+
+
+
+
+SOLUTION 2.	(OBSOLETE since above)
+
+
+You can use socat to relay Unix socket over TCP. Details omitted,
+see solution 1.
+
+
+
+SOLUTION 3.
+
+
+In newer versions of GNUPG or Linux distros the socket paths can
+change. These can be found via:
+
+	$ gpgconf --list-dirs agent-extra-socket
+
+	$ gpgconf --list-dirs agent-socket
+
+
+Then add to your SSH config file:
+
+	Host	remote
+
+		RemoteForward <remote socket> <local socket>
+
+
+A quick solution for copying the public keys.
+
+	$ scp .gnupg/pubring.kbx  remote:~/.gnupg/
+
+On the remote machine, activate GPG agent:
+
+	$ echo use-agent >> ~/.gnupg/gpg.conf
+
+On the remoate machine, also modify the SSH server configuration,
+adding:
+
+
+	$ sudo vi /etc/ssh/sshd_config
+
+	StreamLocalBindUnlink yes
+
+
+Restart sshd server and reconnect.
+
+
+
+SOLUTION 4.
+
+
+I created the following scripts to use socat in one go:
+
+
+#!/bin/bash -e
+
+FORWARD_PORT=${1:-12345}
+
+trap '[ -z "$LOCAL_SOCAT" ] || kill -TERM $LOCAL_SOCAT'  EXIT
+
+GPG_SOCK=$(echo "$GPG_AGENT_INFO" | cut -d: -f1)
+
+if [ -z "$GPG_SOCK" ]; then 
+
+	echo "No GPG agent configured" >&2
+	exit 1
+fi
+
+socat TCP_LISTEN:$FORWARD_PORT,bind=127.0.0.1,reuseaddr,fork \
+	UNIX_CONNECT:$GPG_SOCK &
+
+LOCAL_SOCAT=$!
+
+
+
+
+
