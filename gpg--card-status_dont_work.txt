@@ -1,0 +1,26 @@
+
+
+
+
+             GPG --CARD-STATUS DOESN'T WORK FOR USER
+
+
+Having a problem trying to get gpg --card-status to work for your user? If it works for root then try the following:
+
+
+$ sudo -e /etc/rc.conf
+
+	devfs_system_ruleset="localrules"
+
+
+$ sudo -e /etc/devfs.rules
+
+	[localrules=10]
+	add path 'usb/*' mode 0660 group usb
+
+
+$ sudo pw groupadd usb
+
+$ sudo pw group mod usb -m ian
+
+

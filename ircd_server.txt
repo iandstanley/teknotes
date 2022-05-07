@@ -1,0 +1,43 @@
+
+
+
+
+			RATBOX IRCD SERVER
+                           (ratbox.org)
+
+
+
+	- Supports SSL
+
+	- ircd choice for EFNet
+
+	- it supports a subIRC protocol DCC (Direct Client to Client)
+	  for sending files directly to 3rd parties without going via server
+
+	- ratbox-respond challenge system to authorize users via
+	  private keys
+
+	- extension services:
+
+		* username registration service 
+
+		* channel registration service 
+
+		* nickname registration service 
+
+		* jupe server banning 
+
+		* global message server 
+
+		* oper message server 
+
+		* opered bot 
+
+		* list service (advanced channel searching)
+
+
+
+
+Ratbox was last updated in Freshports 2022-01-10
+
+
