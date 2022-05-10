@@ -1,0 +1,63 @@
+
+
+
+
+		      YUBIKEY PGP MIGRATION
+
+
+
+Q.      I am currently using Yubikey 4 with my GPG subkeys on it.
+	My main key is stored within Kleopatra.
+
+	I am planning to move over to a Yubikey 5, and I was wondering
+	if it is possible to still be able to decrypt emails with
+	my new subkeys generated for the new Yubikey.
+
+
+
+The important question is how you generated your PGP key and subkeys.
+
+
+As explained in the docs there are two ways of generating keys:
+
+1.      You can use a live distro such as TAILS OS to generate your
+	keys on an air-gapped machine (without networking). Then
+	you make backups of your keys to removeable storage like a
+	USB key or harddrive that you then keep in a secure place.
+
+2.      The other option is to generate the keys directly on the
+	device (option recommended by Yubico). This is extremely
+	secure, but has a major drawback: you cannot backup the
+	keys. If you lose or destroy the Yubikey, you lose your
+	keys.
+
+With this second approach migration IS NOT POSSIBLE as the private
+key cannot be exported from a Yubikey. This option should be avoided
+unless you know your key is going to have a limited shelf life.
+
+If you choose approach #1 transferring your keys is quite easy. You
+don't even need the old Yubikey, as you can just boot your live
+distro (eg TAILS OS) and import your main key and subkeys from your
+backup (external storage) and then write them to your new Yubikey
+with the GPG command 'keytocard'.
+
+In order to maintain access to your existing emails and encrypted
+files you must keep the current key and subkeys but the hardware
+itself does not have to stay the same, it could be another Yubikey
+or smartcard as long as you have that external backup (You did make
+MORE than ONE copy?).
+
+If you really must change your PGP key, in theory you could decrypt
+files and re-encrypt them with a new key but with emails it gets
+more complicated as they are often stored in an mbox format. Even
+if they are available as standalone files on an IMAP server (for
+instance). It's not the whole file that is encrypted but just some
+or all of the mail body. The mail headers are still in clear text.
+
+In Thunderbird I can copy the whole message source with Ctrl-U. I
+then pasted this into a new blank text and was able to decrypt it
+with the command line gpg tool with the old key. But you don't get
+all the headers but a stripped down version.
+
+
+

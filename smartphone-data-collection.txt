@@ -1,0 +1,11 @@
+
+
+                    SMARTPHONE DATA COLLECTION
+
+
+Recent studies show that Android collects a minimum of 50-150kb per
+hour and send it to Google. This Equates to 1-4Mb per day.  Apple
+also collects some data.
+
+
+

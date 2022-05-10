@@ -1,0 +1,33 @@
+
+
+
+
+	      UPDATING FREEBSD USING FREE-BSDUPDATE
+		       (the binary method)
+
+
+
+The FreeBSD utility 'freebsd-update' is the binary way of updating
+FreeBSD.
+
+It is fairly simple and straight forward.
+
+
+First, we should check what components we will be updating.
+
+
+	# vi /etc/freebsd-update.conf
+
+	Components src world kernel
+
+
+	# freebsd-update fetch
+
+	# freebsd-install
+
+
+Reboot and run 'uname -a' to show the updated release name.
+
+
+
+

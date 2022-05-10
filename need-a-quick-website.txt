@@ -1,0 +1,121 @@
+
+
+
+
+	      NEED A WEBSITE QUICKLY WITH WORDPRESS
+
+
+
+
+	% su -
+
+
+Install from binary packages:
+
+
+	# pkg install nginx php74 wordpress
+
+
+This will take a couple of minutes.
+
+
+	# cd /usr/local/etc/nginx
+	# vi nginx.conf
+
+
+Add the following line BEFORE the closing } brace:
+
+
+	include conf.d/*.conf
+
+
+
+Now create a conf.d directory for nginx:
+
+
+	# mkdir conf.d && cd conf.d
+	# vi mydomain.conf              # or 10.148.86.127.conf
+
+
+	# HTTPS server for 10.148.86.127
+
+	server {
+
+		listen 80;
+		server_name     10.148.86.127
+
+		root	/usr/local/www/wordpress;
+		index	index.php;
+		location	~ \.php$ {
+
+			try_files $uri=404;
+			fastcgi_split_path_info ^(.+\.php)(/.+)$;
+			fastcgi_pass unix:/var/run/php74-fpm.sock;
+			fastcgi_index index.php;
+			fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+			include fastcgi_param;
+		}
+
+		location / {
+			try_files $uri $uri/ /index.php?$args;
+		}
+
+		# Disable access to user.ini files
+
+		location ~/\.user.ini {
+			deny all;
+		}
+	}
+
+
+
+That's all we need to do with nginx for now.
+
+
+	# cd /usr/local/etc/php-fpm.d/
+	# vi www.conf
+
+
+And change the listening address to:
+
+
+	listen= /var/run/php74-fpm.sock
+
+
+So we are going to listen on a Linux socket.
+
+We will also uncomment the 3 lines owner, group and mode of the
+socket.
+
+
+	listen.owner=www
+
+	listen.group=www
+
+	listen.mode=0660
+
+
+Now we need to enable all of this in our rc.conf file :
+
+
+	# vi /etc/rc.conf
+
+	nginx_enable="YES"
+	php_fpm_enable="YES"
+
+
+	# /usr/local/etc/rc.d/nginx start
+	# /usr/local/etc/rc.d/php-fpm start
+
+	# tail -f /var/log/nginx/error.log & 
+
+	# firefox 10.148.86.127/
+
+
+And we have our Wordpress setup page and work our way through the
+installation scripts.
+
+
+
+
+

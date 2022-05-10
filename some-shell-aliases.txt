@@ -1,0 +1,37 @@
+
+
+
+
+                        SOME SHELL ALIASES
+
+
+
+
+$ vi .bashrc
+
+
+	alias df='df -h'
+	alias sensors='sysctl hw.sensors'
+	alias disks='sysctl hw.disknames'
+	alias ..='cd ..'
+	alias ...='cd ../..'
+
+
+$ vi .kshrc
+
+	# implement arrow keys
+	alias __A = echo "\020"		# up arrow (prev cmd)
+	alias __B = echo "\016"		# down arrow (next cmd)
+	alias __C = echo "\006"		# right arrow (next char cmd)
+	alias __D = echo "\002"		# left arrow (prev char cmd)
+	alias __H = echo "\001"		# home (start of line)
+	alias __Y = echo "\005"		# end (end of line)
+
+
+
+
+
+
+
+
+

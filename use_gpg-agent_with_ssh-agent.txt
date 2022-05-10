@@ -1,0 +1,113 @@
+
+
+
+
+	 HOW DO I USE GPG-AGENT WITH SSH-AGENT / SSH-ADD
+
+
+
+Q.      Ssh-agent is very easy to use. I can start it, and add keys
+	using ssh-add keyfile. After killing the process ssh-agent
+	all file are gone.
+
+	But how can I get the same behaviour with gpg-agent? The
+	closest program I could find was gpg-preset-passphrase but
+	looking at the man page gpg-agent(1), it seems like a
+	directory is created for storing private keys.
+
+	Is there a way to setup gpg-agent such that no files are
+	created?  Or are there any other options?
+
+
+
+GPG uses the terminology "cache" for storing passwords. Two constraints
+can be imposed on the maximum storage time:
+
+
+	* time to keep since initially added
+
+	* time to keep passphrase since it was last accessed
+
+
+In addition, two variations exist for both constraints one for GPG
+keys and one for SSH keys (if support was enabled).
+
+The relevant manual page entries from gpg-agent(1):
+
+	--default-cache-ttl n
+
+		Set time limit a cache entry is valid to n seconds.
+		Default is 600 seconds.
+
+	--default-cache-ttl-ssh n
+
+		Set time limit a cache entry used for SSH is valid
+		to n seconds. Default is 1800 seconds.
+
+	--max-cache-ttl n
+
+		Set time limit a cache entry is valid to n seconds.
+		After this time a cache entry will be expired even
+		if it has been accessed recently. Default is 2 hours
+		(7200 seconds).
+
+	--max-cache-ttl-ssh n
+
+		Set time limit a cache entry for SSH keys is valid
+		to n seconds. After this time a cache entry will
+		be expired even if it has been accessed recently.
+		Default is 2 hours (7200 seconds).
+
+
+Passphrases are always cached in memory, not on disk, so there is
+no need for ssh-add. For example, signing dummy data triggers cache
+already.
+
+
+	$ echo | gpg -s >/dev/null (passphrase requested)
+
+	$ echo | gpg -s >/dev/null (signing proceeds without prompting
+	for passphrase)
+
+
+To make permanent changes to the cache settings of gpg-agent, edit
+~/.gnupg/gpg-agent.conf and add:
+
+
+	# Expire GPG keys when unused for 1 min
+
+	default-cache-ttl 60
+
+
+	# Expire GPG keys after 10 mins since add
+
+	max-cache-ttl 600
+
+
+I have tries to enabled SSH support by specifying 'enable-ssh-support',
+but this asks you for another key to encrypt the key, and then
+stores your private key in ~/.gnupg/private-keys.d/ directory. This
+is a no-go for me, so I will stick to a dual ssh-agent / gpg-agent
+approach.
+
+
+
+
+Some bonus tips:
+
+* SSH agent's equivalent of max-cache-ttl-ssh can be specified when adding the key, for example:
+
+	$ ssh-add -t 600 ~/.shs/id_rsa
+
+
+* To prevent storing the GPG passphrase in the agent, disable the agent. In the newer GPG versions the option --no-use-agent is ignored, but you can prevent the agent from being used by clearing the related env variable:
+
+
+	$ echo | GPG_AGENT_INFO=gpg -s 		# temporary
+
+	$ export GPG_AGENT_INFO=; echo | gpg -s # for current shell
+
+
+
+
+

@@ -1,0 +1,57 @@
+
+
+
+
+       HOW TO ENCRYPT A FILE USING GPG SYMMETRIC ENCRYPTION
+
+
+
+Let's say Ann wants to send a message to Bob but has to forward it
+to Bob via Eve. Anne doesn't want Eve to be able to read the message.
+
+One of the easiest ways to do this is with symmetric encryption.
+This means that Ann encrypts the file using a key (passphrase) and
+then Bob, when he recieves the file via Eve, can decrypt the message
+using the same key (that is agreed between Ann and Bob via some
+other means).
+
+Ann runs the following:
+
+
+	$ gpg --symmetric --output forbob.gpg message.txt
+
+
+Ann then types in the key to be used.
+
+Ann can then give Eve the file 'forbob.gpg' and Eve can't decrypt
+it without the key that Ann typed upon creation.
+
+When Bob gets the file from Eve, he can read it with:
+
+
+	$ gpg --decrypt forbob.gpg
+
+
+Bob will be prompted to type in the required symmetric key (the
+same one Ann did). And the original message.txt contents is then
+displayed on the terminal.
+
+Bob can also recreate the original file message.txt using:
+
+
+	$ gpg --decrypt forbob.gpg > unencrypted.txt
+
+
+The file unencrypted.txt now contains the same contents as the original message.txt that Ann wrote.
+
+
+This works for any kind of file. But for binary formats (images, videos, office documents etc) it is best to add the '-a' flag to ascii armour the file:
+
+
+	ann$ gpg --symmetric -a --output selfie.gpg selfie.jpg
+
+	bob$ gpg --decrypt selfie.gpg > selfie.jpg
+
+
+
+

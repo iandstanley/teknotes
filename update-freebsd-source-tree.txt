@@ -1,0 +1,96 @@
+
+
+
+
+		UPDATING FreeBSD USING SOURCE TREE
+
+
+
+Updating FreeBSD from te source is fairly simple to do with only a
+few commands. It does take a bit of time adn a lot longer than
+FreeBSD-update.
+
+Building FreeBSD from source means that FreeBSD is completely
+customized to your hardware.
+
+
+	# cd /usr/src
+
+
+You can also do a custom kernel here if you really want. For example,
+if you have a Mac Mini you will need to add in certain network
+devices just to get wifi working.
+
+
+	# cd /usr/src
+
+	# cp sys/amd64/conf/GENERAL sys/amd64/conf/MacMini
+
+	# vi sys/amd64/conf/MacMini
+
+
+And now you can edit your build config as desired.
+
+
+Bulilding your system from source:
+
+
+	# make buildworld
+
+
+This step can take a fair few hours depending on your hardware: for
+example a Core2 Duo took overnight.
+
+Once you have finished building world, the next thing is to build
+the kernel.
+
+
+	# make buildkernel KERNCONF=MacMini
+
+
+The kernel build took around 30 minutes on a Core2 Duo.
+
+The next command would be to install that kernel.
+
+
+	# make installkernel KERNCONF=MacMini
+
+
+The next step is to install world:
+
+
+	# make installworld
+
+
+Once this is all installed you can literally just reboot.
+
+There are a few other things you can do, and it is especially
+important IF you are upgrading between major versions:
+
+
+Before running 'make installworld' you should run 'mergemaster -Fp' which will run through your /etc and a few other config directories and gather the differences. Again thi is only really important when you are going across major version updates:
+
+
+	# mergemaster -Fp
+
+	# make installworld
+
+	# mergemaster -Fi
+
+
+This will give you the changes to be included.
+
+Delete your old libraries:
+
+
+	# make delete-old
+
+	# reboot
+
+
+Reboot and you are done.
+
+It's a little bit time consuming, but you and up with a TAILORED OS.
+
+
+
