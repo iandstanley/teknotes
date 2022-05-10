@@ -1,0 +1,75 @@
+
+
+
+
+			   UNIX FILTERS
+
+
+
+
+A filter is any command that accepts STDIN with the intent to
+transform, or "filter" the incoming lines or buffer.
+
+A simple filter:
+
+
+	#!/bin/sh
+
+	while IFS= read -r line; do
+
+		echo "${1-#}" $line
+
+	done
+
+
+Here (IFS) changes to read line returns instead of spaces as field
+separator. The -r ignores CRLF and treats it as a CR.
+
+
+
+	#!/usr/local/bin/bash
+
+	_filter() {
+
+		[[ -n "$1" ]] && return 1
+
+		while IFS= read -ra args; do
+
+			"${FUNCNAME[1]}" "${args[@]}"
+
+		done
+	}
+
+	myfunc() {
+
+		_filter "$@" && return 0?
+
+		echo "${1-#}" "$*"
+
+	}
+
+
+There are 2 types of line buffer filters:
+
+	* line buffer filters
+
+	* whole buffer filters
+
+
+
+	# filters all input at once
+
+	_filterbuf() {
+
+		[[ -n "$1" ]] && return 1
+
+		"${FUNCNAME[1]}" "$(</dev/stdin)"
+	}
+
+
+Filters are superior to other plugin approaches because they so
+easily attach together into pipelines.
+
+
+
+

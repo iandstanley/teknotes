@@ -1,0 +1,99 @@
+
+
+
+     ADDING DISKS TO FREEBSD AND SETTING THEM UP WITH ZFS NEW
+
+
+
+After you have physically installed your new drive(s) into your computer and booted it.
+
+
+	% cd /dev
+
+
+You will see da0, da1 and da2 for example. The disk da0 was our boot disk and the two disks we have installed are da1 and da2.
+
+
+	% su -
+
+
+And show your zpool:
+
+
+	# zpool list
+
+
+We see the default pool 'zroot'.
+
+We need to create a new zpool. We need to decide what kind of zpool we want: a stripe, a mirror or a raidz.
+
+In a stripe the mimimum amount of disks we need is 1, and in a mirror we need 2 or more disks.
+
+
+	# zpool create media mirror /dev/da1 /dev/da2
+
+
+Here 'media' is the name of our pool.
+
+
+	# zpool list
+
+
+This now shows us 2 pools, zroot and media.
+
+
+	# zpool status
+
+
+This shows us the status of each pool and the status of our mirroring.
+
+
+	# cd /media
+
+
+In ZFS we have what is known as a dataset. A dataset gives us great flexibility with ZFS snapshots and makes backing up or copying snapshots so easy.
+
+
+	# zfs create media/data
+
+	# ls /media/data
+
+	# zfs list
+
+
+This will shows you our ZFS datasets.
+
+We can compress data in a dataset transparently:
+
+
+	zfs set compression=gzip media/data
+
+
+
+                             STRIPES
+
+
+How would I creata a stripe?
+
+
+	# zpool create media /dev/da1 /dev/da2
+
+
+Note: we don't tell it what type of zpool we want as the default is stripe.
+
+And again we can create our dataset beneath that and compress it as before.
+
+
+
+
+                       DESTROYING A DATASET
+
+
+To destroy a dataset:
+
+
+	# zpool destroy media
+
+
+
+
