@@ -1,0 +1,80 @@
+
+
+
+
+	 CONFIGURE AND INSTALL A CUSTOM KERNEL ON FREEBSD
+
+
+
+Creating a custom kernel on FreeBSD is fairly trivial and doesn't
+take very long.
+
+One of the first things I would do before configuring and building
+a kernel would be to make sure I have got a very recent 'make
+buildworld' done without updating the sources after the 'make
+buildworld'.
+
+
+	# cd /usr/src
+
+	# cd sys/amd64/conf && ls
+
+
+We see a series of files.  The configuration GENERIC is a good
+starting base. Copy that file to a new filename and edit.
+
+
+	# cp GENERIC mykernel
+
+	# vi mykernel
+
+
+Change the name of the kernel to something meaningful:
+
+
+	ident mykernel_new
+
+I would be extremely cautious about taking devices out of a kernel.
+If you take the wrong one away you can end up with a non-functioning
+system.
+
+When adding devices it is better adding them one at a time. For
+example, you have a network card that is not in the default kernel
+like on the Mac Mini which needs it's own 'bwn' device.
+
+We then build the kernel from /usr/src:
+
+
+	# cd /usr/src
+
+	# make buildkernel KERNCONF=mykernel
+
+
+Once the build is complete the next step is to install the built
+kernel:
+
+
+	# make installkernel KERNCONF=mykernel
+
+
+FreeBSD boot environments can be very handy with ZFS as you can
+then switch to a new boot environment with the new kernel but still
+switch back to the old one if necessary.
+
+
+
+Improving build speed:
+
+
+	# sysctl hw.ncpu
+
+	# export NUMBER_OF_PROCESSORS=$( sysctl hw.ncpu | tr -d 'a-z.: ' )
+
+	# cd /usr/src
+
+	# make -j ${NUMBER_OF_PROCESSORS} buildworld
+
+
+
+
+

@@ -1,0 +1,69 @@
+
+
+
+
+
+                  ADD FREEBSD TO A WIFI NETWORK
+
+
+
+
+List your network devices:
+
+
+	# ifconfig
+
+
+This will show you any wired ethernet connections, and the loopback lo0. But often we don't see the wifi card listed.
+
+Look at the system messages:
+
+
+	# dmesg | more
+
+
+For example, this shows that the Os detected a wifi card eg bwn_pci0 a Broadcom BCM43224 wifi card.
+
+
+	# vi  /etc/rc.conf
+
+	wlans_bwn0="wlan0"
+
+	ifconfig_wlan0="WPA DHCP"
+
+
+This tells us that we want to use the WPA key and get a DHCP address.
+
+The next thing we want to do is create the interface:
+
+
+	# ifconfig wlan0 create wlandev bwn0
+
+
+If we now run 'ifconfig' we can now see my wifi card, we can see it's MAC address and a status of 'no carrier'. No carrier means that it hasn't got an IP adress and is not connected.
+
+So to connect:
+
+
+	# vi  /etc/wpa_supplicant.conf
+
+	network = { 
+		ssid="my_network_ssid"
+		psk="my_preshared_key"
+	}
+
+
+To create this we can do:
+
+
+	# wpa_passphrase <myssid> <mypsk> >> /etc/wpa_supplicant.conf
+
+
+Finally, we can restart our network:
+
+
+	# service netif restart
+
+
+
+

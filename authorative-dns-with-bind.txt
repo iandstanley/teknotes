@@ -1,0 +1,73 @@
+
+
+
+
+
+	  AN AUTHORATIVE DNS SERVER ON FREEBSD WITH BIND
+
+
+
+Bind is probably the most used DNS server software in the world,
+and it gives us loads of options.
+
+
+	# pkg install git
+
+	# git clone https://git.freebsd.org/ports.git /usr/ports
+
+	# cd /usr/ports/dns/bind918
+
+
+We could have also used the version installed in BASE in the base
+system, but lets continue with ports ...
+
+
+	# make install
+
+
+We need to let the system know that we are using an installed version
+of bind instead of the BASE version.
+
+
+	# vi /etc/rc.conf
+
+	named_enable="YES"
+	named_flags="-4"
+	named_program="/usr/local/sbin/named"
+	named_conf="/usr/local/etc/namedb/named.conf"
+
+
+This enabled the Bind daemon named and specifies which binary to use.
+
+
+	# cd /usr/local/etc/named
+
+	# vi named.conf
+
+
+Change the version to none so it doesn't display our version number when queried.
+
+We can change our forwarders to point to google for now.
+
+And we will put in our master entry:
+
+
+	zone "mydomain" {
+		type master;
+		file"/usr/local/etc/named/master/mydomain";
+	};
+
+
+We could also add a few defaults for logging if we want to.
+
+We would also need to create the log files /var/log/query.log and /var/log/security/log and change the owndership from root:wheel to bind:bind. 
+
+Finally we can startup bind:
+
+
+	# /etc/rc.d/named start
+
+	# tail -f /var/logl/query.log
+
+
+
