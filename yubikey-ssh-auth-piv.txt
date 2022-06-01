@@ -1,0 +1,162 @@
+
+
+
+	      YUBIKEY SSH AUTHENTICATION THE PIV WAY
+
+
+I only wanted SSH authentication and preferred PIV over GPG which
+can be tempermental.
+
+The PIV method doesn't require any special support from the SSH
+server. You just write the public key to ~/.ssh/authorised_keys on
+the remote end, then ssh into the server, authenticated by your
+Yubikey.
+
+
+
+			      SETUP
+
+
+First install the required software:
+
+
+	$ sudo apt install yubico-piv-tool ykcs11
+
+
+Generate a key on the Yubikey. Yubico suggest slot 9a (but note any
+slot will suffice).
+
+
+	$ yubico-piv-tool -s 9a -a generate -o public.pem
+
+
+Change the PIN from default.
+
+Interestingly I had already changed PIN when playing with GPG, but
+found that the PIV mode PIN was still 123456. You can use relatively
+arbitary characters in the PIN and doesn't have to be numeric.
+
+
+	$ yubico-piv-tool -a change-pin
+
+
+There seems to be a limit on the allowable PIN length (if exceeded,
+error is "Retrieving new pin failed").
+
+Create a certificate for the key and import it. Yubico state that,
+"The only use for the X509 certificate is to satify PIV/PKCS#11
+lib. It needs to be able to extract the public_key from the smartcard,
+and to do that through the X509 certificate".
+
+
+	$ yubico-piv-tool -a verify-pin		\
+		-a selfsign-certificate		\
+		-s 9a				\
+		-S "/CN=SSH key/"		\
+		-i public.pem -o cert.pem
+
+
+	$ yubico-piv-tool -a import-certificate	\
+		-s 9a -i cert.pem
+
+
+You will not need cert.pem after this.
+
+And libykcs11 to your SSH agent.
+
+
+	$ ssh-add -s /usr/lib/x86_64-linux-gnu/libykcs11.so
+
+
+Copy your public key to a remote host:
+
+	
+	$ ssh-copy-id  myserver.com
+
+
+You should then be able to SSH to the remote host without being
+asked for a password.
+
+Alternatively, you can list the key out and copy/paste into
+~/.ssh/authrized_keys on a remote host, or into your GitHub profile:
+
+
+	$ ssh-add -L
+
+
+So far, so good.
+
+The problem comes when you unplug the device and reinsert it. SSH
+just gives an error "agent refused operation".
+
+
+	$ ssh myserver.com
+
+	sign-and-send-pubkey: signing failed for RSA
+
+	"Public key for PIV Authentication" from agent: agent 
+	refused operation
+
+	jon@myserver.com's password:
+
+
+
+The problem is that SSH agent doesn't reinitialize libykcs11 when
+the Yubikey is plugged in (because it has no way of knowing it
+should). So libykcs11 doesn't get a chance to ask you for the PIN,
+so it can't unlock your Yuikey, and therefore can't use it for
+authentication.
+
+There is an easy workaround: Just remove and re-add the keys provided
+by libykcs11. I added this to my .bashrc:
+
+
+	alias yf="ssh-add -e /usr/lib/x86_64-linux-gnu/ykcs11.so; \
+		ssh-add -s /usr/lib/x86_64-linux-gnu/libykcs11.so"
+
+
+I can use this:
+
+
+	$ yf
+
+	  Card removed: /usr/lib/x86_64-linux-gnu/libykcs11.so
+
+	  Enter passphrase for PKCS#11:
+
+	  Card Added: /usr/lib/x86_64-linux-gnu/libykcs11.so
+
+
+This was all done on Ubuntu 20.04 LTS. Ubuntu seems tha have Yubikey
+udev rules present out-of-the-box, and automatically starts an
+ssh-agent.
+
+You can also create the key OFF the Yubikey and then import it.
+Particularly usefule if running a Certificate Authority (CA):
+
+
+	$ yubico-piv-tool -s 9a -a import-key -i key.pem
+
+
+Export the public key in correct format for SSH:
+
+
+	$ ssh-keygen -D /usr/lib/x86_64-linux-gnu/libykcs11.so -e
+
+
+This command exports all keys stored on Yubikey, retaining slot
+order:
+
+
+	$ ssh -I /usr/lib/x86_64-linux-gnu/libykcs11.so		\
+		userr@myserver.com
+
+
+Optionally:
+
+
+	$ ssh-add -s /usr/lib/x86_64-linux-gnu/libykcs11.so
+
+	$ ssh-add -L
+
+
