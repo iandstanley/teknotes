@@ -1,0 +1,779 @@
+
+
+
+
+
+			    PIV AGENT
+		    github.com/smlx/piv-agent
+
+
+PIV Agent is an SSH and GPG agent providing simple integration of
+PIV hardware (eg a Yubikey) with ssh, and gpg workflows such as git
+signing, pass encryption, or keybase chat.
+
+PIV Agent originated as a reimplementation of Yubikey-agent because
+I needed some extra features, and also to gain a better understanding
+of the PIV applet on security key hardware.
+
+PIV Agent makes heavy use of the GO standard library and supplementary
+crypto packages, as well as piv-go and pcsclite.
+
+
+
+			     FEATURES
+
+
+* implements (a subset of) both ssh-agent and gpg-agent functionality
+
+* support for various hardware security keys
+
+* support for multiple slots in those keys
+
+* support for multiple touch policies
+
+* socket activation (systemd compatible)
+
+	- as a result, automatically drop the transaction on the
+	  security key and cached passphrases after some period of
+	  disuse
+
+* provides "fall-back" to traditional SSH and OpenPGP keyfiles
+
+
+
+			DESIGN PHILOSOPHY
+
+
+PIV Agent is highly opinionated:
+
+* only supports 256 bit EC tokens on hardware tokens
+
+* only supports ed25519 SSH keys on disk
+
+* requires socket activation
+
+
+It makes some concession to practicality with OpenPGP:
+
+* supports RSA signing and decryption for OpenPGP keyfiles. RSA
+  OpenPGP keys are widespread and Debian in particular only documents
+  RSA keys.
+
+
+It tries to strike a balance between security and usability:
+
+* take a persistent transaction on the hardware token, effectively
+  caching the PIN
+
+* caches passphrases for on disk keys so they are only entered once
+
+* after a period of inactivity (32 minutes by default) it exits,
+  dropping both of these. Socket activation restarts it automatically
+  as required.
+
+
+
+			 HARDWARE SUPPORT
+
+
+Tested with:
+
+* Yubikey 5c (firmware 5.2.4) * Solo V2
+
+
+Any device implementing the SCard API and supported by piv-go/pcsclite
+may work.
+
+If you have tested PIV Agent successfully with PIV Agent, please
+send me a PR.
+
+
+
+			 PLATFORM SUPPORT
+
+
+Currently tested on Linux (with systemd) and MacOS (with launchd).
+
+
+	--------------------------------------------------------------
+
+
+			  PRE-REQUISITES
+
+
+	# apt install pcsclite-dev
+
+
+
+
+			  BUILD AND TEST
+
+
+	$ make
+
+
+
+		     BUILD AND TEST MANUALLY
+
+
+This D-Bus variable is required for pinentry to use a graphical
+prompt.
+
+
+	$ go build ./cmd/piv-agent && systemd-socket-activate -l \
+		/tmp/piv-agent.sock -E DBUS_SESSION_BUS_ADDRESS \
+		./piv-agent serve -debug
+
+
+And from another terminal:
+
+
+	$ export SSH_AUTH_SOCK=/tmp/piv-agent.sock $ ssh me@myserver
+
+
+
+		   BUILD AND TEST DOCUMENTATION
+
+
+	$ cd docs && make serve
+
+
+
+	--------------------------------------------------------------
+
+
+			     HOMEPAGE
+
+
+	smlx.github.io
+
+
+	--------------------------------------------------------------
+
+
+
+		      EXAMPLE SETUP WORKFLOW
+
+
+Find name of hardware:
+
+
+	$ piv-agent  list
+
+
+Generate new keys (if not using CSR/CA). PIN will be requested via
+interactive prompt.
+
+
+	$ piv-agent  setup --card='Yubico Yubikey FIDO+CCID 01 00'
+
+
+View newly generated keys (SSH only by default):
+
+
+	$ piv-agent  list
+
+
+
+			SINGLE SLOT SETUP
+
+
+PIV-agent has been designed to work best with the default setup.
+Only setup single slots if you know what you are doing. Setup is
+destructive - don't overwrite slots. It is possible to setup a
+single slot on your hardware device without resetting the PIV applet.
+
+For example, this command will reset JUST the decrypting key with
+touch policy 'never' on your Yubikey:
+
+
+	$ piv-agent  setup-slots  \
+		--card="Yubico Yubikey FIDO+CCID 01 00" \ --pin=123456
+		--decrypting-keys=never --reset-slots
+
+
+See interactive help for more usage details.
+
+
+	$ piv-agent  setup-slots --help
+
+
+	--------------------------------------------------------------
+
+
+			       SSH
+
+
+List keys:
+
+
+	$ piv-agent  list
+
+
+Add the public SSH key with the touch policy you want from the list,
+to any SSH service.
+
+
+
+
+			SET SSH_AUTH_SOCK
+
+
+	$ export SSH_AUTH_SOCK=${XDG_RUNTIME_DIR}/piv-agent/ssh.socket
+
+
+
+	   PREFER KEYS ON THE HARDWARE SECURITY DEVICE
+
+
+
+If you don't already have one, it's a good idea to generate an
+ed25519 keyfile and add that to all ssh services too for redundancy.
+PIV-Agent will automatically load and use ~/.ssh/id_ed25519 as a
+fallback.
+
+By default SSH will use keyfiles on disk before those from the
+agent. This is a problem, as piv-agent is designed to offer keys
+from the hardware token first, and only to fall back on local keys
+if hardware keys are refused.
+
+To get SSH to ignore local keyfiles and only talk to piv-agent, add
+this line to your ssh_config FOR ALL HOSTS:
+
+
+	Host *
+		IdentityFile /dev/null
+
+
+
+	--------------------------------------------------------------
+
+
+
+			       GPG
+
+
+
+EXPORT FALLBACK CRYPTOGRAPHIC KEYS
+
+
+Private GPG keys to be used by piv-agent must be exported to the
+directory ~/.gnupg/piv-agent.secring/
+
+NOTE:   This requires gpg-agent to be running, not piv-agent.
+
+If your private key is encrypted using a password (it should be!),
+the encryption is retained during export.
+
+The key is still stored encrypted in the exported keyfile - its
+just converted into a standard OpenPGP format that PIV-Agent can
+read.
+
+Example:
+
+
+	$ umask 770
+
+	$ mkdir -p ~/.gnupg/piv-agent.secring
+
+	$ gpg --export-secret-key 0xB346A434C7652C02 \
+		> ~/.gnupg/piv-agent.secring/art@example.com.gpg
+
+
+
+
+			DISABLE GPG-AGENT
+
+It is possible to set a custom path for the gpg-agent socket. Instead
+gpg-agent uses a hard-coded path for its socket.
+
+In order for piv-agent to work with gnupg/gpg, it sets up a socket
+in this same default location. To avoid conflict over this path,
+gpg-agent should be disabled.
+
+
+On Debian:
+
+	* add 'no-autostart' to ~/.gnupg/gpg.conf
+
+	# systemctl --user disable --now gpg-agent.socket \
+		gpg-agent.service; pkill gpg-agent
+
+
+
+
+
+   IMPORT PUBLIC CRYPTOGRAPHIC KEYS FROM THE SECURITY HARDWARE
+
+
+Before any private GPG keys on the hardware device can be used, gpg
+requires their public keys to be imported. This structure of a GPG
+public key contains a User ID packet which must be signed by the
+associated private key.
+
+The 'piv-agent list' command can synthesize a public key for the
+private key stored on the security hardware device.
+
+
+Listing a GPG key via:
+
+
+	$ piv-agent  list --key-formats=gpg
+
+
+This will require a touch to perform signing on the keys associated
+with these slots (due to the User ID packet). You should provide a
+name and email which will be embedded in the synthesized public
+key. See 'piv-agent --help list' for details.
+
+
+	$ piv-agent  list --key-formats=ssh,gpg \
+		--pgp-name='Art Vandelay' \ --pgp-email='art@example.com'
+
+
+Paste the public key(s) you would like to use into a key.asc file
+and run 'gpg --import key.asc'
+
+
+	--------------------------------------------------------------
+
+
+
+			   GPG ADVANCED
+
+
+
+If you have followed the setup instructions to this point you should
+have a functional gpg-agent are backed up by a PIV hardware device.
+
+
+    ADD CRYPTOGRAPHIC KEY STORED IN HARDWARE AS A GPG SIGN KEY
+
+Note:   There is a bug in current versions of GNUPG which doesn't
+allow ECDSA keys to be added as signing subkeys.
+
+
+This is unfortunate, as signing is much more useful than decryption.
+
+Until this is fixed you can use this docker image containing gnupg
+patched with a work around:
+
+	github.com/smlx/gnupg-piv-agent
+
+This docker image will allow us to add ECDSA keys as signing keys.
+
+Adding piv-agent OpenPGP key as a signing subkey of an existing
+OpenPGP key is a convienient way to integrate a hardware security
+device with your existing GPG workflow.
+
+This allows you to do things like sign git commits using your Yubikey
+while keeping the same OpenPGP key ID. Adding a subkey requires
+cross-signing between the master secret key of your existing OpenPGP
+key as described above to make it available to piv-agent.
+
+GPG will choose the newest available subkey to perform an action.
+So it will automatically prefer a newly added piv-agent subkey over
+any existing keyfile subkeys, but fall back to keyfiles if for
+example the Yubikey is not plugged in.
+
+(See GPG walkthrough for an example of this procedure)
+
+
+
+
+	--------------------------------------------------------------
+
+
+
+			  PIV-AGENT USE
+
+
+Use piv-agent with ssh and gpg.
+
+
+
+START PIV AGNET SOCKET
+
+Start the agent socket and test:
+
+
+	$ sudo systemctl --user enable --now piv-agent.socket
+
+	$ ssh-add -l
+
+	$ gpg -K
+
+
+This should be enough to allow you to use piv-agent.
+
+
+
+
+			COMMON OPERATIONS
+
+
+LIST KEYS
+
+
+	$ piv-agent list
+
+
+If this command returns an empty list, it may be because the running
+agent is holding a transaction to the hardware security device.
+
+The solution is to stop the agent and run the list command again:
+
+
+	$ sudo systemctl --user stop piv-agent
+
+	$ piv-agent list
+
+
+
+	--------------------------------------------------------------
+
+
+			     ADVANCED
+
+
+
+Some ways to enchance the usability of piv-agent.
+
+
+PIN/PASSPHRASE CACHING
+
+If your pinentry supports caching credentials, piv-agent will offer
+to cache the PIN of the hardware security device. It will not cache
+passphrases of any fallback keys (to prevent storing the private
+keyfile and passphrase on disk).
+
+
+
+	--------------------------------------------------------------
+
+
+			 GPG WALKTHROUGH
+
+
+Full example of how you might setup and use piv-agent with gpg.
+
+
+
+SETUP
+
+Supose I have an existing RSA OpenPGP key that I use with gpg.
+Creation of a GPG key is outside the scope of this document.
+
+With gpg-agent running, listing the RSA key looks something like
+this:
+
+
+	$ gpg --list-secret-keys --keyid-format=long \
+		--with-keygrip
+
+	....
+
+
+Now we can add cryptographic subkeys stored on the Yubikey, to this
+RSA key, fr use with piv-agent.
+
+
+
+EXPORT RSA KEYFILES
+
+Let's export the private keys of the existing RSA keypairs, so that
+they can be used in a fallback capacity by piv-agent:
+
+
+	$ umask 77 ; mkdir -p ~/.gnupg/piv-agent.secring/
+
+	$ gpg --export-secret-key 0xEC26B2BBE4240DD2A9 \
+		> ~/.gnupg/piv-agent.secring/EC26B2BBE4240DD2A9.gpg
+
+
+
+SETUP YUBIKEY
+
+Now lets setup the Yubikey with new cryptographic keys.
+
+Get the naem of the card:
+
+
+	$ piv-agent list
+
+	Security keys (cards):
+
+	Yubico Yubikey FIDO+CCID 01 00
+
+	....
+
+
+
+Use the card name to setup the Yubikey:
+
+
+	$ piv-agent setup --card='Yubico Yubikey FIDO+CCID 01 00'
+	\
+		--pin=123456 --reset-security-key
+
+
+List the keys that were just generated. This requires entering your
+PIN (specified above) and touching the device twice.
+
+
+Note:   You may wish to customize the UserID embedded in the public
+	key using --pgp-name and --pgp-email. See 'piv-agent list
+	--help' for details.
+
+
+	$ piv-agent list --key-formats=gpg
+
+	Security keys (cards):
+
+	Yubico Yubikey FIDO+CCID 01 00
+
+	Signing GPG Keys:
+
+	----- BEGIN PGP PUBLIC KEY BLOCK -----
+
+	....
+
+	$
+
+
+
+IMPORT YUBIKEY CRYPTOGRAPHIC KEY
+
+Import the public keys for the slots you are interested in into
+GPG.
+
+
+	$ gpg --import << EOF
+
+	(paste public keys here)
+
+	EOF
+
+	gpg: key 61EADB9FAB71EDB1: public key " ..........
+
+	gpg: Total number processed: 1
+
+	gpg:              imported: 1
+
+
+
+
+List the public keys known to gpg:
+
+
+	$ gpg --list-keys --keyid-format=long --with-keygrip
+
+
+But no secret keys yet:
+
+
+	$ gpg --list-secret-keys  --keyid-format=long --with-keygrip
+
+
+
+Stop gpg-agent, start piv-agent then list secret keys again.
+
+
+
+ADD DECRYPTING SUBKEY
+
+
+Now we can add the piv-agent decrypting key as a subkey of the RSA
+master key.
+
+
+	$ gpg --expert -edit-key 0xEC26B2E4240DD2A9
+
+	...
+
+	Secret key is available
+
+	sec     rsa3072/EC26B2E4240DD2A9        usage: SC
+
+		created ....
+
+		trust: ultimate
+
+	ssb     ....                            usage: E
+
+
+	gpg> addkey
+
+	...
+
+	(13) Existing key
+
+	(14) Existing key from card
+
+	Your selection: 13
+
+	Enter the keygrip:  2925c250....
+
+	Possible actions for ECDH key: Encrypt
+
+		(E) Toggle the encrypt capability
+
+		(Q) Finished
+
+	Your selection: Q
+
+	Key is valid for ?(0)  0
+
+	...
+
+	Really create? (y/N) y
+
+	gpg> save
+
+
+
+
+
+ADD SIGNING SUBKEY
+
+
+And we can add the piv-agent signing key as a subkey of the RSA
+master key too:
+
+
+Note:   GNUPG bug prevents this. Workaround see
+	github.com/smlx/gnupg-piv-agent)
+
+
+	$ gpg  --expert --edit-key 0xEC26B2E4240DD2A9
+
+	...
+
+	gpg> addkey
+
+		13      (existing key)
+
+	Enter keygrip: ...........
+
+	(q) to finish with key as sign only
+
+	...
+
+	gpg> save
+
+
+
+INSPECT SUBKEYS
+
+
+The cryptographic keys stored on the Yubikey are now subkeys of the
+RSA master key.
+
+
+	$ gpg --list-secret-keys --keyid-format=long --with-keygrip
+
+	sec ...
+
+	...
+
+	uid ...
+
+	ssb ...
+
+	ssb ...
+
+	ssb ...
+
+	...
+
+	$
+
+
+
+USE
+
+
+Signing and encryption using RSA master keyid will now preferably
+use the cryptographic keys stored on the Yubikey (falling back to
+keyfiles if Yubikey is nt present). Specify the master keyID to use
+the subkeys. The subkey with the most recent date is preferred by
+gpg.
+
+
+
+PUBLISH PUBLIC KEY
+
+
+	$ gpg --export --armor 0xEC26B2E4240DD2A9 > key.pub
+
+
+
+SIGNING EXAMPLE
+
+
+	$ echo bar > foo
+
+	$ gpg --output foo.sig --local-user 0xEC26B2E4240DD2A9 \
+		--sign foo
+
+	$ gpg --verify -v ./foo.sig
+
+
+
+DECRYPTING EXAMPLE
+
+
+	$ echo bar > foo
+
+	$ gpg --output foo.enc --local-user 0xEC26B2E4240DD2A9 \
+		--encrypt foo
+
+	$ gpg --decrypt -v ./foo.enc
+
+
+You can also specify multiple keyIDs when encrypting (one keyfile,
+one hardware, OR two hardware on separate Yubikeys) for fallback
+purposes.
+
+
+
+	--------------------------------------------------------------
+
+
+		   COMMON SOFTWARE INTEGRATION
+
+
+GIT
+
+
+The same master keyID will work as before, but signing will prefer
+to use the hardware security device if available.
+
+Example         ~/.config/git/config
+
+
+	[User]
+		name = John Piper 
+
+		email = john@piper.com 
+
+		signingKey = 9FA216008BDF87287N390870N29380NC2.......
+
+	[commit]
+		gpgsign = true
+
+
+
+
+PASS
+
+
+Pass has the ability to encrypt to multiple keyIDs.
+
+Running 'pass init' will re-encrypt existing passwords and configure
+'pass' to use the specified keyids for encryption.
+
+	$ pass init 0x41B99C3339FBC1! 0x84F7BFEAC32674!
+
+	....
+

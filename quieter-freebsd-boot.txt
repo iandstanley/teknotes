@@ -1,0 +1,27 @@
+
+
+
+
+                       QUIETER FREEBSD BOOT
+
+
+
+
+	# sysrc rc_startmsgs="NO"
+
+	# sysrc -f /boot/loader.conf beastie_disable="YES"
+
+	# sed -i '' 's/run_rc_script ${_rc_elem} 
+			${_boot}/run_rc_script ${_rc_elem} ${_boot} 
+			> \/dev\/null\/g' /etc/rc
+
+	# sysrc -f /boot/loader.conf autoboot_delay=3
+
+	# sysrc -C /boot/loader.conf boot_mot="YES"
+
+
+For more details see Vermaden's blog post on vermaden.wordpress.com
+(entitled FreeBSD Desktop - Part 1 - Simplified Boot)
+
+
+

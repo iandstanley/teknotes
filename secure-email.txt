@@ -1,0 +1,308 @@
+
+
+
+
+                           SECURE EMAIL (TEMPORARY & TOR)
+
+
+
+
+                         RUNNING YOUR OWN
+
+ONIONMAIL
+
+	https://onionmail.info
+
+		# vi /etc/apt/sources.list
+		deb http://onionmail.info ......
+
+	Onionmail is an anonymous and encrypted mail server made
+	to run on the TOR network WITHOUT losing the ability to
+	communicate with the Internet. All Onionmail servers are
+	configured to run as a TOR Hidden Service and use SSL (via
+	STARTTLS).
+
+	To use onionmail all you need is an email client connected
+	to the TOR network (eg ClawsMail or Thunderbird).
+
+	In the event of theft OnionMail does not reveal any sensitive
+	data. OnionMail server type uses asymetric encryption.
+
+	Each inbox is encrypted with RSA asymmetric keys with
+	different user's passwords. Obtaining the keys of the server,
+	nobody can read message from user's inbox.
+
+	All data is encrypted and chopped files are hashed. The
+	messages are only saved on the server of the recipient.
+
+	OnionMail uses POP3 with SSL to obligate the user to read
+	all messages and delete all messages from the server.
+
+	Every file deleted is wiped.
+
+	The master key of the server is nto on the server.
+
+	The server has auto-destruction certificates that destroy
+	all keys on f(x) servers allowing deletion of keys in the
+	event of theft or seizure WITHOUT SERVER ACCESS.
+
+	Supports unlimited aliases
+
+	Simple to install:
+
+		1. Add apt repository to Debian 8-11, Raspbian
+
+		2. apt install apt-transport-https
+
+		3. apt install onionmail
+
+		4. Configure with 'omn-configure'
+
+		5. Create a new server with 'omn-new'
+
+		6. Start server with 'omn-srv start'
+
+	Packages:
+
+		onionmail	encrypted TOR mail server
+		omnw-black	black theme
+		omnw-none	disable OnionMail web hidden service
+		omnw-tools      OnionMail Tools, backup, restore,
+				statistics
+
+
+
+	--------------------------------------------------------------
+
+
+RiseUp
+
+	- doesn't log IP addresses
+	- personal email address
+	- mailing lists for activist groups
+	- data encrypted at rest
+	- doesn't share data
+	- free
+	- admin support 
+	- NOT zero knowledge system, based in Seattle
+
+TORmail
+
+	- hidden email service
+	- v2 onion: jkiwjjlqpyawmppjx.onion
+	- uses squirrelmail as a gui
+
+
+Mail2Tor 	
+
+	- only accessible via TOR 
+	- can RECEIVE dark web and regular internet emails
+	- All messages are stored encrypted
+	- IP address removed from headers
+	- FREE service
+	- Been around for a while and respected
+	- CONS: basic ui, no sending emails outside of TOR network
+
+SCRYPTmail
+
+LuxSci
+
+MailFence
+
+Countermail
+
+Hushmail
+
+Bitmessage	
+
+	- via TOR only
+
+
+TORBox
+
+	- TOR only service, no clear web
+	- (limited smtp channels)
+	- recipient must use a TORbox connected mail server
+	- 100% free
+	- 25mb mailbox, more for bitcoin donations
+	- all email data on server is encrypted
+	- Unknown business owners 
+	- basic admin support
+
+
+Private-Email.com
+
+	- very competitively priced
+	- free option
+	- OpenPGP
+	- 2FA
+	- aliases, custom domains, encrypted cloud storage
+
+
+ProtonMail
+
+	- custom labels
+	- gpg
+	- short domain addresses (pm.me)
+	- freevpn
+	- staff can't read your emails
+	- end to end encryption
+	- 2FA
+	- Don't track IP addresses
+	- self destructing email options
+	- Android and iOS apps
+	- Proton Calendar
+	- Proton Drive
+	- TOR .onion site access
+
+
+StartMail
+
+	- from startpage.com
+	- $60pa 
+	- password & pgp
+	- unlimited aliases, pay in Bitcoin, no mobile apps
+
+
+FastMail
+
+	- native mobile apps
+	- 600 aliases
+	- calendars
+	- imap
+
+
+Tutanota
+
+	- native mobile & desktop apps
+	- calendar
+	- zero knowledge encryption
+	- password protect sent emails
+	- less polished
+
+Posteo
+
+
+Mailbox.org
+
+
+cock.li
+
+	- many domains
+	- accessible via .onion or regular web
+
+
+
+	--------------------------------------------------------------
+
+
+
+                      BURNER EMAIL SERVICES
+
+
+
+It is sometimes good to use a burner email - an email address you
+will only use for a short time and then destroy. This can be done
+by creating an email account with false information, but many email
+providers require details that identify the individual like phone
+numbers etc. Others block people coming to their site over an
+anonymous network like TOR.
+
+	burneremail.io
+
+	emailondeck.com
+
+	10minuteemail.com
+
+	maildrop.cc
+
+	guerillaemail.com
+
+	throwawayemail.com
+
+
+	TempMail
+
+		- disposble email addresses (receive only)
+		- temp-mail.org/en
+		- similar to guerilla mail etc
+		- maybe a better solution might be simplelogin
+
+
+	altaddress
+
+		- no registration temporary email
+		- 4 mailboxes, password protected if signup
+
+
+
+
+	--------------------------------------------------------------
+
+
+
+                     CREATING AN ONION EMAIL
+
+
+
+	$ sudo apt install torbrowser
+	$ torbrowser-launcher
+
+Turn off javascript or switch to more secure settings.
+
+Goto  mail2tor.com 
+
+Click on Onion link on main page to goto .onion site where you can
+sign up.
+
+
+
+	--------------------------------------------------------------
+
+
+
+                          SENDING EMAILS
+
+
+First it is always best to encrypt the message and any attachments. 
+
+If you wish to remain anonymous this requires that you either:
+
+	1. use symmetric encryption (which requires another secure
+	   method to pass on the encryption key)
+
+	2. use asymmetric encryption but you should use a key-pair
+	   with another identity (psuedonym)
+
+
+
+You should also be very careful in sending attachments and make
+sure that you remove all Metadata from the files you send.
+
+Metadata may contain the time and date when the file was created,
+the username who created it, the GPS coordinates or any number of
+bits of information that could identify you or the location where
+the file was created.
+
+
+REMOVING METADATA
+
+
+Windows
+
+	- document inspector is built in
+
+MacOS
+
+	- iLove Metadata Remover (in Mac App store)
+
+Linux 
+
+	- exiftool (also installed in TAILS OS)
+	- mat2
+
+
+There are many other tools that can remove metadata and also online
+services (if you can trust them).
+
+

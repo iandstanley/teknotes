@@ -1,0 +1,184 @@
+
+
+
+		    SAMPLE GPG USAGE SCENARIO
+
+
+I want to have a regular Yubikey plus also some Yubikey Nano's (left
+permanently inside).
+
+To stop messing up GNUPG's normal config, set $GNUPGHOME to another
+directory whilst performing the following.
+
+
+Keys to generate:
+
+
+- a Master key to be reused for many years (min 3072 bits or 4096
+  bits)
+
+- all of my devices should share a single signing subkey, so that
+  I don't expose unnecessary information about which computer I was
+  using when I signed a message.
+
+- each device should have it's own authentication subkey. This way,
+  if a device is lost or stolen, I only have to revoke and replace
+  a single subkey.
+
+
+
+This can be achieved by:
+
+
+1. Generate the MASTER KEY, SIGNING SUBKEY & ENCRYPTION SUBKEY on
+   a secure computer.
+
+2. Setup each Yubikey to support CCID (usually default).
+
+3. Copy the signing subkey and encryption keys to each Yubikey.
+
+4. Generate a fresh authentication key on each Yubikey and extract
+   the public part.
+
+5. Fix up other security settings for each Yubikey.
+
+6. Setup other machines to use the Yubikeys.
+
+
+
+	--------------------------------------------------------------
+
+
+		    GENERATING THE MASTER KEY
+
+
+Generate the master key:
+
+
+	$ gpg --expert --full-generate-key
+
+
+Choose (8) RSA (set your own capabilities).
+
+Toggle OFF all capabilities leaving CERTIFY on.
+
+'SAVE' to exit.
+
+Modern version of GPG will normally create a REVOCATION CERTIFICATE
+by default. Check in the .gnupg directories to see if it has (if
+not create one).
+
+
+
+	--------------------------------------------------------------
+
+
+	     GENERATE ENCRYPTION AND SIGNING SUBKEYS
+
+
+Next we need to generate some subkeys.
+
+
+	$ gpg --edit-key  <keyID>
+
+	gpg>  addkey
+
+
+Choose option 4 (sign only/RSA) and repeat for 6 (encrypt).
+
+Save your added subkeys with:
+
+	gpg> save
+
+	$
+
+
+
+	--------------------------------------------------------------
+
+
+		      BACKUP THESE NEW KEYS
+
+
+
+Next we should backup these new keys. KEEP THESE FILES SAFE.
+
+
+While we are loading Yubikeys, we will need to restore them a few
+times.
+
+
+	$ gpg --armor --export-secret-keys <masterID> > master.pgp.asc
+
+	$ gpg --armor --export-secret-keys <signID> > sign.pgp.asc
+
+	$ gpg --armor --export-secret-keys <encryptID> > encrypt.pgp.asc
+
+
+	--------------------------------------------------------------
+
+
+		 GENERATE AUTHENTICATION KEY ETC
+
+
+Next we will generate a new authentication key and move the signing
+and encryption keys to the card. This needs to be repeated for each
+Yubikey.
+
+I like to delete and reimport my private key before starting each
+one to make sure I am in a known state:
+
+
+	$ gpg --delete-secret-key <masterID>
+
+	$ gpg --import master.pgp.asc
+
+	$ gpg --edit-key <masterID>
+
+	gpg> addcardkey         (create auth key on card)
+
+	3 Authentication
+
+	...
+
+	gpg> toggle
+
+Then select each key and use 'keytocard' for the encryption and
+signing subkeys.
+
+	gpg> save
+
+
+Repeat this for every Yubikey.
+
+
+	--------------------------------------------------------------
+
+
+		      EXPORT THE PUBLIC KEY
+
+
+Once we have created each subkey and added them to each Yubikey we
+should backup the public key.
+
+
+
+	$ gpg --armor --export <masterID>  >  master.pub
+
+
+You should consider whether (or not) you should then upload to a
+public keyserver (depending on the keys usage).
+
+
+	--------------------------------------------------------------
+
+
+			   FINAL POINT
+
+
+
+Finally you should unset $GNUPGHOME (if we changed it at the
+beginning).
+
+
+

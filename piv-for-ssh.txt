@@ -1,0 +1,118 @@
+
+
+
+		USING PIV FOR SSH THROUGH PKCS#11
+
+
+
+This si a step-by-step guide on setting up a Yubikey with PIV to
+work for public key authentication with OpenSSH through PKCS#11.
+
+
+PREREQUISITES
+
+
+* a Yubikey with the PIV application loaded
+
+* the yubico-piv-tool software
+
+* OpenSSH
+
+* (If using OSX, OSX 10.13+)
+
+OpenSC is no longer required, since we now have a functional PKCS#11
+module named ykcs11.
+
+
+NOTES:   (i) RSA 4096 bit keys are not currently supported due to
+a
+	     limitation in the PIV spec.
+
+	(ii) We strongly advise changing the management key. IF you
+	     have changed the default management key, add '--key'
+	     to the command 'yubico-piv-tool -a import-certificate'
+	     command below.
+
+
+
+
+	--------------------------------------------------------------
+
+
+			    PROCEDURE
+
+
+
+	      1. IMPORT OR GENERATE A KEY IN SLOT 9A
+
+
+We need to import or generate a key in slot 9a (any slot could
+suffice but the spec  states 9a as default).
+
+
+To import an existing key:
+
+
+	$ yubico-piv-tool -s 9a -a import.key -i key.pem
+
+
+(If an external key has been imported and a certificate already
+exists, you should skip step 2.)
+
+
+Alternatively, to generate a key in slot 9a:
+
+
+	$ yubico-piv-tool -s 9a -a generate -o public.pem
+
+
+
+	       2. CREATE A SELF SIGNED CERTIFICATE
+
+
+Create a self signed certificate for a generated key. The only use
+for the X509 certificate is to satisfy the PIV/PKCS11 library. It
+needs to be able to extract the public key from the smartcard, and
+to do that through the X509 certificate.
+
+
+	$ yubico-piv-tool -a verify-pin -a selfsign-certificate \
+		-s 9a -S "/CN=SSH key/" -i public.pem -o cert.pem
+
+
+
+		     3. LOAD THE CERTIFICATE
+
+
+Next we need to load the certificate into a slot on the PIV card
+applet.
+
+
+	$ yubico-piv-tool -a import-certificate -s 9a -i cert.pem
+
+
+
+			 4. LOCATE YKCS11
+
+
+Find out where ykcs11 has been installed. For Debian it should be
+/usr/local/lib/libykcs11 (on MacOS in /usr/local/lib/libykcs11.dylib).
+
+
+
+
+                       5. EXPORT PUBLIC KEY
+
+
+Export the public key in correct format for SSH and then add it to authorized_keys on the target system.
+
+
+	$ ssh-keygen -D /usr/local/lib/libykcs11.so -e 
+
+
+Confirm that the ssh-agent finds the correct key and gets the public key in the correct format by:
+
+
+	$ ssh-add -L
+
+

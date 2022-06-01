@@ -1,0 +1,215 @@
+
+
+
+		      HOW TO RUN A TOR RELAY
+
+
+Running a TOR node or relay by yourself is really, really easy. All
+you need is a spare computer, even a Raspberry Pi or an old laptop
+and an internet connection.
+
+Technically, you don't even need these things because you could run
+one on a virtual server in the cloud as long as it is not against
+their terms of service (which it usually isn't as long as you are
+NOT running an EXIT NODE).
+
+
+This guide is going to be for a MIDDLE (GUARD) RELAY (ie NOT an
+EXIT node).
+
+The TOR Project documentation has instructions for many different
+operating systems for creating a middle relay.
+
+
+
+1.      Enable automatic software updates
+
+
+2.      Configure TOR Project repository for your package manager
+
+	# dpkg --print-architecture
+
+	# apt install apt-transport-https
+
+	# vi /etc/apt/sources.list.d/tor.list
+
+	deb [arch=amd64
+	signed-by=/usr/share/keyrings/tor_archive_keyring.gpg]
+	https://deb.torproject.org focal main
+
+	deb-src [arch=amd64
+	signed-by=/usr/share/keyrings/tor_archive_keyring.gpg]
+	https://deb.torproject.org focal main
+
+
+3.      Package installation
+
+	# apt update
+
+	# apt install tor deb.torproject.org-keyring
+
+
+4.      Configuration file
+
+	# vi /etc/tor/torrc
+
+	Nickname myNiceRelay    # change to something else
+
+	ContactInfo you@email   # public admin email for relay
+
+	ORPort  443             # default 9001
+
+	ExitRelay 0
+
+	SocksPort 0
+
+
+It is good practice to specify the relay name as then people don't
+have to refer to it by the onion address.
+
+If you are running more than one relay it is really good for ease
+of use.
+
+You might also want to include your PGP public key fingerprint. eg:
+
+
+	ContactInfo  0xFFFFF......FF Random Person <nobody@example.com>
+
+
+You can limit the bandwidth rates by modifying RelayBandwidthRate
+and RelayBandwidthBurst if you need to throttle traffic.
+
+
+5.      Restart the service
+
+
+	# systemctl enable tor
+
+	# systemctl start tor
+
+
+
+And now you are running a TOR relay!
+
+
+
+	--------------------------------------------------------------
+
+
+			    COOL STUFF
+
+
+The process is a little underwhelming and an anticlimax.
+
+So I am going to show you a way so that you can see some cool stuff
+like bandwidth and statistics about your TOR relay.
+
+To see these details you will want to install an application called
+'Tor NYX', which is an open source monitor for TOR.
+
+NYX gives you event logs, bandwidth graphs, connection data (similar
+to netstat), a configuration editor, torrc viewer, stem's interpreter
+giving you raw controller access, and much more!!
+
+
+To install NYX:
+
+
+	# apt install nyx
+
+
+To actually see your traffic with Nyx, you have to setup a control
+port otherwise you will just get an error.
+
+
+	# vi /etc/tor/torrc
+
+	ControlPort 9051
+
+
+You also need to usr either a 'HashedControlPassword' or
+'CookieAuthentication'.
+
+
+To generate a password, generate a long random password in your
+password manager, and paste it into a file.
+
+To get the hash of a password:
+
+
+	# tor --hash-password   (and then paste in your password)
+
+
+Copy the hash and paste it into the 'HashedControlPassword' stanza
+in '/etc/tor/torrc'.
+
+
+	# systemctl stop tor
+
+	# systemctl start tor
+
+
+When we run nyx again:
+
+
+	$ nyx
+
+	Tor controller password:
+
+
+Paste in your hashed password again, and you will see your statistics
+of the relay.
+
+You really want this to be on a dedicated device and not on your
+daily driver PC. You don't want your daily work to interfere with
+the running of the relay, asyour installed packages/services would
+increase the attack surface to the relay.
+
+You have to keep your tor relay running for a long time before the
+tor network will start to trust you with more processing bandwidth.
+Initially they may only push 8-16kb/sec even though you may have
+allocated Mb/sec or Gb/sec. Also putting contact emails in your
+torrc helps you become trusted a bit quicker.
+
+After running for a few days, Nyx will show that your rely will
+have the VALID flag ie the relay has been validated.
+
+I just want to share some things I have learnt running a tor relay,
+and some things to improve your relay and get more bandwidth going
+through it.
+
+Middle/Guard relays don't get as much bandwidth passed through them
+compared to exit nodes.
+
+There are some things you can do to get more bandwidth going through
+your middle relay.
+
+
+	/etc/tor/torrc
+
+		ORPort  9098 ORPort  [2001:4b42:b642::1101]:9099
+
+
+This is my IPv4 and IPv6 connection settings.
+
+Also I have setup my DirPort which lets me mirror directory info
+for others:
+
+
+	DirPort         9040
+
+
+In torrc, there is a variable MyFamily which lists keyids. Anytime
+you are going to run multiple tor relays (either two at your home;
+or one a t home and one VPS) you want to make sure that inside all
+of your respective torrc files you enable with this variable MyFamily
+and put in a comma separated list of the keyids of all of your
+servers. This tellsthe TOR directory authority that these relays
+are under your authority (ie potentially traceable to you eg a VPS).
+We don't want circuits being built hitting more than one of your
+relays, as this is very bad.
+
+You can potentially run upto 2 relays on a single public IPv4 IP
+address.
+
+

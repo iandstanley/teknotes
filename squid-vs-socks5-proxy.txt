@@ -1,0 +1,168 @@
+
+
+
+		       SQUID VS SOCKS5 PROXY
+
+
+
+We will look at the differences between a Squid proxy and SOCKS5
+proxy.
+
+
+
+	--------------------------------------------------------------
+
+
+		HOW TO CREATE A SQUID PROXY SERVER
+
+
+To install Squid:
+
+
+	$ ssh squid@myproxy
+
+	$ sudo apt install squid
+
+	$ cd /etc/squid
+
+	$ sudo cp squid.conf squid.conf.default
+
+(Or we could override with /etc/squid/conf.d/*.conf)
+
+Now uncomment:
+
+		#http_access  allow localnet
+
+		http_access allow localnet
+
+
+	$ sudo systemctl restart squid
+
+	$ sudo systemctl status
+
+
+Squid is now running.
+
+
+We can test this out using Postman.  Goto Settings -> Proxy. Deselect
+'Use System Proxy', and check 'Use Custom Proxy'.  Add details of
+your proxy. Now we can make a request from ifconfig.me which will
+tell us our public address.
+
+We get a '200 OK' response back together with our proxy's IP address.
+
+To confirm this worked we can also look at an access log that squid
+has.
+
+
+	$ sudo tail  /var/log/squid/access.log
+
+
+And as we can see in the log file we have a 200 indicating a success:
+
+
+	GET http://ifconfig.me TCP_TUNNEL /200
+
+
+Now lets add a little bit more security. First lets add basic
+authentication.
+
+
+	$ sudo vi /etc/squid/squid.conf
+
+
+Just before the 'ACL' section add:
+
+
+	auth_param basic program /usr/lib/squid/basic_ncsa_auth
+					     etc/squid/htpasswd
+
+	auth_param basic realm Squid Proxy Caching Web Server
+
+	acl authenticated proxy_auth REQUIRED
+
+	acl authenticated_ips src 192.168.45.5/32
+
+
+Where 192.168/45/4 is the IP address of my computer.
+
+And now we go back to the http_access section we uncommented earlier
+to add the acls.
+
+
+	# http_access allow localnet
+
+	http_access allow authenticated authenticated_ips
+
+
+To use our proxy you will need to have the password and come from
+a specified IP address.
+
+Now we create a password file. Enter the following, replacing
+USERNAME and PASSWORD with the username and password that you want
+to use.
+
+
+	$ printf "USERNAME:$(openssl passwd -crypt PASSWORD)\n" |
+	\
+		sudo tee -a /etc/squid/htpasswd
+
+
+Note:   password will be truncated to 8 characters before encrypting!
+
+
+Now restart the server:
+
+
+	$ sudo systemctl squid restart
+
+
+Go back and retest after adding the username and password to the
+authentication part of the proxy settings.
+
+
+	--------------------------------------------------------------
+
+
+		   HOW TO CREATE A SOCKS PROXY
+
+
+A socks proxy example is much simpler.
+
+Connect to the proxy server using the command:
+
+
+	$ ssh squid@192.168.70.4 -D 40932
+
+	...
+
+
+The -D option means dynamic port forwarding and the port is specified
+following the -D. In this case I will be opening up this port to
+the SSH application so it will listen in to any incoming connections.
+
+Lets go to Firefox to test out the socks proxy using a plugin called
+FoxyProxy which allows me to only proxy the connection from my
+Firefox browser. FoxyProxy -> Options. Give the proxy a name, type
+= SOCKS5, IP address = 127.0.0.1, Port No = 40932.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
