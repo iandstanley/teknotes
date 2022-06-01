@@ -1,0 +1,128 @@
+
+
+
+
+                        JAILS IN OPENBSD?
+
+
+
+Currently, OpenBSD doesn't support any "chroot on steroids" mechanism.
+
+In the past, the same jail feature (named SYSJAIL) was in ports, but was removed in 2007 because it was not easy to maintain and pretty insecure.
+
+Historically, OpenBSD only support chroot(8) and work exactly like other systems:
+
+
+
+
+       1. CREATE AND ALTERNATIVE ROOT WITH A USERLAND ON IT
+
+
+
+Create your target chroot:
+
+
+	# target="/tmp/chroot/"
+	# mkdir ${target}
+
+
+Build and install your userland:
+
+
+	# cd
+
+	# cvs -qz3 -d${repository} co src 	\
+		-r ${openbsd_release}
+
+	# cd /usr/src
+
+	# make obj && make && 			\
+		make install DESTDIR=${target}
+
+
+
+
+              2. START YOUR DAEMON OF SOFTWARE IN IT
+
+
+In root:
+
+
+	# chroot /tmp/chroot
+
+
+Run your daemon here. Note you need to init also dev dir and
+eventually customize /etc/fstab. /tmp is currently not allowed to
+have dev on it. Please see fstab(5) man page.
+
+A lot of software in base support the chroot(8) feature, OpenNTPD,
+OpenSSH, httpd and many others are configured by default in an
+isolated directory.
+
+Now, since OpenBSD 5.9, you can use the vmm(4) hypervisor, and
+vmctl(8) in base. You can start your vmd daemon and create isolated
+containers like any other hypervisor (bhyve, xen or kvm).
+
+From the OpenBSD vmctl(8) man page:
+
+
+	Example:
+
+	# vmctl create disk.img -s 4.6G
+
+	# vmctl start "myvm" -m 512m -i 1 -d disk.img -k /bsd
+
+	# vmctl stop 1
+
+
+You can also use another approach based on software in ports, qemu
+works pretty well but has poor performance on OpenBSD due to lack
+of kernel acceleration support, and in part because of fileystem
+structure.
+
+Now, concerning your main issue (offering a way of remote compiling
+source code), I guess the better idea is to truly isolate your code
+from your main syste,, and using something like vmctl or qemu could
+be a good answer. Perhaps qemu would be a better fit as it can be
+run by a standard user without kernel features, but compilation
+would be really slow.
+
+NOTE	vmm has changed in OpenBSD 6.9 changing the above example:
+
+	# vmm create -s 4.5G disk.img
+	# vmctl start -m 512m -i 1 -d disk.img -b /bsd "myvm"
+
+
+Also checkout pledge and unveil in your programming.
+
+It has been said that the OpenBSD chroot(8) and systrace(1) combination
+is considered good enough that no one is motivated to do more.
+Numerous threads can be found online that come to the same conclusion.
+
+With careful setup chroot(8) and systrace(1) is a great choice if
+you want to run a single running service per virtual jail.
+
+You can make it even tighter than a jail. But, OK it is a lot of
+work, jails make it easy to implement virtual servers. It is a nice
+feature, but I don't miss it in OpenBSD. The reason for jails is
+to run multiple domains on one machine with each domain in a seperate
+jail.
+
+Consider iteratively constraining what syscalls are allowed by
+pouring over the output from:
+
+
+	# systrace -A /usr/bin/inetd
+
+
+Note there were some email chains where the OpenBSD developers seem
+to consider systrace broken by design as systrace is too complicated
+to use for a regular user. They also called putting Perl in a chroot
+is akin to giving maximum security prisoners AK47s and ladders.
+
+Also consider that although a hypervisor has its values and is a
+popular option, it may not be the best one as the security aspect
+can be questionable. A failure in one component of a hypervisor can
+result in the resetting of the whole hypervisor platform.
+
+
