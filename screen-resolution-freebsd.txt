@@ -1,0 +1,115 @@
+
+
+
+	   FREEBSD: GETTING YOUR X GRAPHICS AND CONSOLE
+		    RESOLUTION WORKING QUICKLY
+
+
+
+One of the things you will notice, especially on the X1 Carbon or
+newer laptops is that the resolution is insanely high when you first
+install, the console is so small you can't even read it.
+
+You'll want to install your graphics driver 'drm-current' (or the
+less bleeding edge 'drm-fbsd'nn).
+
+
+	# pkg install drm-current
+
+	# vi /etc/rc.conf
+
+	  kld_list "/boot/modules/i915kms.ko cuse"
+
+
+Here we tell the boot loader to load the i915 kms kernel module
+(for X1 Carbon graphics Intel board), plus any other kernel modules.
+
+
+	# vi /boot/loader.conf
+
+	  kern.vt.fb.default_mode="1280x720"
+
+	  # ThinkPad
+
+	  acpi_video_load = "YES"
+
+	  acpi_ibm_load = "YES"
+
+	  # DRM
+
+	  drm.i915.enable_rcb=7
+
+	  drm.i915.semaphore="1"
+
+	  drm.i915.enable_fbc="1"
+
+
+What I normally do is goto a 'Resolution Scale Calculator'. For
+example:
+
+
+	https://bneijt.nl/pr/resolution-scale-calculator
+
+
+And enter the display resolution: for the X1 Carbon it is 2560x1440.
+It will then give you a list of scalings and I drop back one ot two
+levels to 1280x720.
+
+Then go to /boot/loader.conf and add the following line:
+
+
+	kern.vt.fb.default_mode="1280x720"
+
+
+You boot, and the module is reloaded we will see the resolution change to the specified 1280x720.
+
+
+	# vi /usr/local/etc/X11/xorg.conf.d/20-intel.conf 
+
+	--------------------------------------------------------------
+
+	  Section "Devices"
+
+		Identifier "Card0"
+	
+		# Driver "modesetting"
+
+		Driver "intel"
+
+		Option "DRI" "3"
+
+		# Option "AccelMethod" "glamor"
+
+		option "AccelMethod" "SNA"
+
+		Option "TearFree" "true"
+
+	  EndSection
+
+	  Section "Screen"
+
+		Identifier "Default Screen"
+
+		Monitor "Configured Monitor"
+
+		Device "Card0"
+
+		DefaultDepth 24
+
+		Subsection "Display"
+
+			Depth 24
+
+			Modes "2560x1440"
+
+		EndSubSection
+
+	  End Section
+
+	--------------------------------------------------------------
+
+
+See the iBSD blog for an article "Installing drm-kmod on FreeBSD and increasing console font".
+
+
+

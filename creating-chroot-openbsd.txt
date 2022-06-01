@@ -1,0 +1,196 @@
+
+
+
+
+		   CREATING A CHROOT IN OPENBSD
+
+
+Chroots haev many uses in UNIX-like operating systems, and chroot(8)
+command is not unique to OpenBSD.
+
+They are often used for security reasons in order to run a potentially
+vulnerable service in its own environment.
+
+For my uses, chroots are great for creating small sandbox instances
+of an operating system where I can muck about, compile and install
+software and build/test OpenBSD ports. When I am done, I can simply
+obliterate the chroot and replace it with a fresh one. Chroots
+effectively perform the same task as a virtual machine but do not
+produce the same overhead of an entire operating system.
+
+It is easy to create a chroot in OpenBSD. The following steps outline
+the process, and by the end you should have a fully up and running
+instance of OpenBSD to be utilized in any way you choose.
+
+
+
+			      SETUP
+
+
+The first thing to do is decide where you want to store your created
+chroots within your system.
+
+This is important because if this is on an existing partition, the
+mount flags need to be changed within /etc/fstab so that nosuid and
+nodev are not set. This has a few security considerations and so
+it is much better to create a new partition and dedicate it entirely
+to chroots. These flags need to be remove since the chroot will
+need to be able to create device nodes and suid binaries on the
+partition for current operation.
+
+I am storing my chroots in /jails (a seperate partition I created
+during installation) so my /etc/fstab needed to be modified as
+follows:
+
+
+	814fb7ecfd84e045.l  /jails  ffs  rw,nodev,nosuid  1  2
+
+
+Should become:
+
+
+	814fb7ecfd84e045.l  /jails  ffs  rw  1  2
+
+
+Now that the partition is set and has been remounted with the new
+flags (or just reboot the machine); I create a new folder in it
+which will contain the new chroot.
+
+Since my intended use for it is often to function as a build sandbox,
+I will call it sandbox.
+
+
+	# cd /jails
+
+	# mkdir sandbox
+
+	# cd sandbox
+
+
+Now we want to construct the base layout for OpenBSD.
+
+This is where an Operating System with simple base packages makes
+this easier since we do not need to rely on a package manager for
+this step. Instead we simply extract the small number of archives
+containing the entire base system.
+
+These files are found on the OpenBSD FTP server or on the install
+CD we can mount the CD with:
+
+
+	# mount -t cd9660 /dev/cd0a /mnt
+
+
+And we extract them into our current location (the sandbox directory).
+I also suggest copying these archives to your hard disk for future
+chroot setups.
+
+
+	# tar -xzf /mnt/5.5/i386/base55.tgz
+
+	# tar -xzf /mnt/5.5/i386/etc55.tgz
+
+	# tar -xzf /mnt/5.5/i386/comp55.tgz
+
+	# tar -xzf /mnt/5.5/i386/xbase55.tgz
+
+	# tar -xzf /mnt/5.5/i386/xshare55.tgz
+
+	# tar -xzf /mnt/5.5/i386/xetc55.tgz
+
+	# tar -xzf /mnt/5.5/i386/xfont55.tgz
+
+	# tar -xzf /mnt/5.5/i386/xserv55.tgz
+
+	# tar -xzf /mnt/5.5/i386/base55.tgz
+
+
+Note that I also extracted the Xenocara (x*.tar.gz) packages. This
+is because OpenBSD recommends always installing them as part of
+base even if they are not used. Since I intended to build software
+in the chroot, I needed them, otherwise the ports system requires
+additional steps to get working.
+
+At this point I also downloaded the ports tarball and extracted it.
+This is optional depending on what you intend to do with the chroot.
+
+
+	# cd usr
+
+	# wget ftp://ftp.openbsd.org/pub.OpenBSD/5.5/ports.tar.gz
+
+	# tar -xzf ports.tar.gz
+
+	# cd ..
+
+
+In order for the programs in the chroot to work properly, it needs
+the /dev folder to be populated. You will notice that the MAKEDEV
+script has been extracted as part of the base:
+
+
+	# cd dev
+
+	# ./MAKEDEV all
+
+	# cd ..
+
+
+Once this is done, I copy across the /etc/resolv.conf file from the
+host so that I can correctly resolve DNS entries from within the
+chroot.
+
+
+	# cp /etc/resolv.conf etc/
+
+
+We will finally use the chroot command to call ldconfig within the
+sandbox so to ensure that the /var/run/ls.so.hints file is correctly
+generated.
+
+This is required so that any program that we run in the chroot that
+utilizes a shared library will be able to find it?
+
+
+	# chroot /jails/sandbox ldconfig /usr/lib 	 \
+		/usr/local/lib /usr/X11R6/lib
+
+
+Now we are ready to use the chroot command again to actually enter the newly created instance. I also specify 'su -l' so that the correct environment is set for the superuser of that chroot:
+
+
+	# chroot /jails/sandbox su -l 
+
+
+Congratulations, the chroot is now setup and ready to use.
+
+If you plan on using it to build ports, then you can immediately start doing so as follows:
+
+
+	# cd /usr/ports/net/curl
+
+	# make package clean
+
+
+From here, you can do a lot of damage without adversely affecting the host instal.
+
+Be aware though it is possible for a malicious user or program to break out of this setup.
+
+This is quite unlikely to happen for my purposes but if you are concerned about this, you might want to look into alternatives such as jails on FreeBSD (or Zones on Solaris, WPARS on AIX).
+
+
+
+ADDITIONAL
+
+
+One thing that you may find useful is to script the above setup steps. This will allow you to setup and tear down chroots quickly as needed.
+
+Luckily almost all the steps (apart from setting up the partitions) are very straight forward to add to a shell script.
+
+Another thing is to note: that OpenBSD comes with Xephyr as part of the base system. This tool makes it very easy to run X11 applications from within the chroot. Once Xephyr is running, executing the following command from WITHIN the chroot should open up an xterm WITHIN the Xepyr window:
+
+
+	# DISPLAY=:1 xterm &
+
+
+

@@ -1,0 +1,105 @@
+
+
+
+
+		 AN INTRODUCTION TO FREEBSD JAILS
+
+
+
+There is more than one way of doing this. Today we will use bsdinstall.
+You can do it from source, from exjail, but bsdinstall is quick and
+easy.
+
+
+	# bsdinstall jail /usr/home/jails/www
+
+
+Bsdinstall will pull the OS from FreeBSD's OS mirrors and install
+to a directory that you specified on the command line.
+
+
+	# ls /usr/home/jails
+
+	  www
+
+
+	# vi /etc/rc.conf
+
+	  ifconfig_rc0_alias0="inet 10.148.86.198" jail_enable="YES"
+
+
+	# vi /etc/jails.conf
+
+	  www {
+
+		host.hostname = www.home.local;
+
+		ip4.addr = 10.148.86.198;
+
+		path = "/usr/home/jails/www";
+
+		#devfs_ruleset = "www_ruleset";
+
+		mount.devfs;
+
+		exec.start = "/bin/sh /etc/rc";
+
+		exec.stop = "/bin/sh /etc/rc.shutdown";
+
+	}
+
+
+
+This is the base minimum config we need. Once we've got this we can
+start it.
+
+
+	# service jail start www
+
+	# jls
+
+	  JID   IP Address      Hostname         Path
+
+	  2     10.148.86.198   www.home.local   /usr/home/jails/www
+
+
+So how do I get into my jail?
+
+
+	# jexec  2  csh
+
+	root@www:/#
+
+
+Here we remotely execute csh on jail "2" (you can use the jail name
+instead if you wish).
+
+
+	root@www:/#  uname -a FreeBSD www.home.local ...
+
+
+We can install software inside the jail:
+
+
+	root@www:/  pkg install pico-alpine
+
+
+So what can we do with a jail. Well pretty much anything you can
+do on a slot.
+
+e.g. with our www jail:
+
+
+	# jexec www csh
+
+	root@www:/# vi /etc/rc.conf
+
+	  sshd_enable = "YES"
+
+	#root@www:/ pkg install nginx php80 php80-extensions
+
+You can also install the package inside the jail from outside the
+jail with 'pkg --jail <jail name or ID> ...' 
+
+
+
