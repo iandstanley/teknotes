@@ -1,0 +1,73 @@
+
+
+
+
+
+	     CHANGING ASSOCIATION TO ANOTHER YUBIKEY
+
+
+
+
+If you created your GPG keys using an alternate directory (setting
+$GNUPGHOME to another directory), then GPG will not know anything
+about the keys on your Yubikey.
+
+You can recover this by removing $GNUPGHOME, and insert your Yubikey.
+If you have set the URL to where your public key can be found:
+
+
+	$ gpg --edit-card
+
+	gpg/card>  list
+
+	(shows nothing)
+
+	gpg/card>  fetch
+
+	(shows GPG pulling the public key from the card's URL)
+
+	gpg/card>  list
+
+	(shows your key)
+
+	$
+
+
+Note:   Entries showing
+
+	'ssb#' indicates that the keys are on ANOTHER card.
+
+	'ssb>' indicates that the keys are associated with THIS
+	card
+
+
+
+If you need to change which card is associated with a key, you can
+do something like:
+
+
+	$ gpg --with-keygrip -K 27470C40DF746792
+
+	....
+
+
+The keygrip for each subkey will correspond to a file under
+~/.gnupg/private-keys-v1.d/ directory. Delete these files and run
+'gpg --card-status' to get them re-associated with the new card.
+
+Now gpg has your key and knows to look on your card for the secret
+parts.
+
+Edit ~/.gnupg/gpg.conf and set the default-key to your signing
+subkey.
+
+And test:
+
+
+	$ echo test | gpg -ear 27470C40DF746792 --sign | gpg -d
+
+
+You should be prompted for your PIN if you haven't typed it in
+recently.
+
+

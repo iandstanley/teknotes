@@ -1,0 +1,166 @@
+
+
+
+
+		    FIREFOX HARDENING IN 2022
+
+
+
+There are a number of things you can do to improve your security
+and privacy in Firefox in 2022. It should be noted that the TOR
+Browser or TAILS OS is a much better solution for privacy.
+
+
+	--------------------------------------------------------------
+
+
+			    EASY STUFF
+
+
+- enable automatic updates for newest patches
+
+- disable 'Recommended extensions as you browse' and 'Features as
+  you browse'
+
+- for most users, enable DNS over HTTPS, and change from CloudFlare
+  to a more privacy respecting provider: (e.g.
+  https://dns.quad9.net/dns-query)
+
+- disable snippets
+
+- disable recent activity
+
+- change search engine to a privacy orientated engine such as
+  DuckDuckGo or StartPage
+
+- disable 'Provide Search Suggestions'
+
+- set Firefox's Privacy Protections to STRICT
+
+- enable 'Delete Cookies and Site Data when Firefox is closed', and
+  utilize exceptions for any sites you want to stay logged in (NOT
+  RECOMMENDED)
+
+- disable popups in the address bar (Firefox Suggest)
+
+- disable all 'Firefox data collection and use' settings
+
+- enable ALL 'Security' options (eg. Block Dangerous and deceptive
+  content) ...
+
+- Firefox 83 introduced 'HTTPS Only' mode, so enable HTTPS ONLY in
+  ALL windows. This negates the need for 'HTTPS Everywhere' which
+  is becoming end-of-life.
+
+- finally, avoid untrusted extensions at all cost.
+
+This puts you ahead of 99% of all people in the world.
+
+
+
+	--------------------------------------------------------------
+
+
+			  MODERATE STUFF
+
+
+- Javascript Storage APIs can be used for cross site tracking. If
+  you toggled the STRICT Privacy Protection mentioned above turned
+  on, Firefox uses Dynamic State Partitioning protection to prevent
+  this.
+
+- website isolation with FISSION is a fairly new and important
+  security feature which is not currently enabled by default in
+  production Firefox. To enable, load the 'about:config' page into
+  Firefox and search for 'fission'. Set 'fission.autostart' to
+  'true' and restart your browser. This is important and may become
+  ON by default in coming months.
+
+- Let's talk about extensions. Lets cover what to install.
+
+	* UBLOCK ORIGIN for ad tracking, and script protection
+
+	* FIREFOX MULTI-ACCOUNT CONTAINERS for better compartmentalization
+
+	* SMART REFERRER in strict mode (?)
+
+	* SKIP DIRECT (?)
+
+	* CANVAS BLOCKER (?) (Note: Firefox has its own canvas
+	protection now)
+
+  In fact ALL of these are semi-questionable, with the exception
+  of UBLOCK ORIGIN.
+
+  Note:
+
+	* UMATRIX is no longer maintained and should be removed
+	  (UBLOCK ORIGIN covers most of the functionality)
+
+	* GHOSTERY, DISCONNECT, PRIVACY BADGER, DUCKDUCKGO PRIVACY
+	  ESSENTIALS & tracker blockers aren't really needed with
+	  everythng we have done already.
+
+	* NEAT URL, CLEAR URLS are replaced by UBLOCK ORIGIN
+
+	* HTTPS EVERYWHERE is scheduled for deprecation and is
+	  replaced with Firefox's internal settings
+
+	* LOCAL CDN, DECENTRALEYES have their own issues that can
+	  make things worse
+
+	* Other extensions may not benefit you
+
+
+	--------------------------------------------------------------
+
+
+		     ADVANCED HARDENING TIPS
+
+
+
+We truely live in an age of Firefox hardening.
+
+ARKENFOX is a project that handles almost all of the advanced
+hardening techniques convieniently. Installing the file is very
+simple:
+
+	- open Firefox
+
+	- goto 'Help' -> 'More Troubleshooting Information'
+
+	- Next to 'Profile Folder', click 'Open Directory'
+
+	- copy/move the 'user.js' from Arkenfox there
+
+
+The ARKENFOX wiki can help you get started, AS WELL AS OVERRIDE
+some settings to avoid site breakage which will not happen by
+default: this is not a drag and drop thing like installing an
+extension, it is much more involved that that - so don't do it
+unless you are comfortable.
+
+Keep in mind, if you use ARKENFOX and enable RFP (which is explained
+in their Wiki) then SMART REFERRER and CANVAS BLOCKER are certainly
+not needed.
+
+
+Finally, a BONUS SUPER TIP:
+
+
+	INSTALL THE TOR BROWSER alongside hardened Firefox is as
+	good for protecting you from fingerprinting as the TOR
+	Browser standardises the browser to share the same
+	settings/window size/extensions/etc as every other TOR
+	Browser. The TOR Browser is designed and configured to
+	resist fingerprinting.
+
+	Every browser straight out of the box has been proven by
+	research papers to be very fingerprintable.
+
+
+
+
+	      github.com/arkenfox/privacyguides.org
+
+

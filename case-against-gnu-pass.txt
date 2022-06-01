@@ -1,0 +1,152 @@
+
+
+
+		    THE CASE AGAINST GNU PASS
+
+
+GNU Pass, Standard Unix Password Manager, is a command line Linux/BSD
+password manager built on top of gpg.
+
+There are two issues with Pass. Both of the issues have to do with
+encryption at rest and how they are handled by 'pass' and 'gpg' in
+general.
+
+'Encryption at rest' means that your data should be encrypted and
+unreadable when not in use.
+
+
+
+
+		ISSUE 1: HOW PASS HANDLES METADATA
+
+
+When you run pass it creates files and folders in your .password-store
+directory. The issue is that none of the names and folders in your
+password store are encrypted at all, even though the actual password
+file contents (passwords) are.
+
+There is an extension called pass-tomb that attempts to migrate
+this issue by storing your entire password tree inside of a Tomb
+Vault (LUKS encrypted container file) so you need your password any
+time you want to see anything about your password store, including
+the metadata associated with them.
+
+Pass-tomb is a lot better but there is still another issue relating
+to GNUPG as well.
+
+
+
+
+    ISSUE 2: GPG KEYS ARE USED TO UNLOCK YOUR STORED PASSWORDS
+
+
+And GPG has a big problem that no one is really talking about when
+it comes to encrypting your local files.
+
+In order to explain this issue, lets assume that you know how to
+use GPG, that you have a gpg keyring setup, and that you are using
+a modern version of gpg (v2.0+).
+
+In order to demonstrate this issue, we need to examine a specific
+detail about our gpg keys and our gpg keyring.
+
+GPG is kind of restrictive, in that it doesn't let us actually
+examine the verbose secret key details without first exporting our
+secret keys to a file.
+
+
+	$ gpg --list-keys
+
+	...
+
+
+Lets export the secret key to a file.
+
+
+	$ gpg --output secret-key.gpg \
+		--export-secret-key 0x58fdje...73hei72
+
+
+
+Next, lets use the command to list packets that are included in the
+exported gpg file, so that we can see the specific information about
+it.
+
+
+	$ gpg --list-packets secret-key.gpg
+
+
+You will see a big output with signatures, and all kinds of junk
+in there.
+
+But if you scroll down to any one of your secret key packets we
+will get a little bit more information.
+
+Lets examine the section on Iteration and Salting. This actually
+refers to the encryption algorithm and hashing method that is used
+to encrypt your gpg passphrase for your gpg private key. AKA this
+is what was used to encrypt the password that you are going to use:
+that you are going to enter every single time you are prompted for
+a password.
+
+You will notice that gpg is probably using algorithm #7 and hashing
+method #2. These algorithms are defined in RFC4880 standard for PG
+encrypted message encryption. So if we cross reference the RFC4880
+standard we will see that algorithm #7 is AES128 and hashing method
+2 is SHA-1 (FIPS180).
+
+If you know anything about cryptography, you will know AES128 and
+SHA1 are both computationally fast cryptographic methods.
+
+This means that an attacker can much more effectively perform a
+brute force attack against these ciphers, because it takes less
+time to compute a simple decryption event.
+
+Whilst using a long passphrase helps mitigate a brute force attempt;
+SHA1 is completely deprecated as a password hashing algorithm in
+the modern day.
+
+SHA1 is prone to hashing collisions which makes it significantly
+easier to brute force than other encryption ciphers. And in the
+modern day you should be using something like ARGON2 or something
+like that for password hashing.
+
+Now you may be asking yourself, "Who cares, just configure gpg to
+use a different cipher for hashing your password".
+
+But this issue actually runs deeper than you think.
+
+Even though gpg does have command line arguements to change the
+STRING-TO-KEY (often abbreviated as S2K) settings so that your
+private key's passphrase can be more protected; these options don't
+actually work. It's actually ridiculous, since if you tried to use
+any of the S2K options to configure a different cipher suite gpg
+will actually ignore your command line options and fall back to
+using AES128 and SHA1 anyway.
+
+GPG doesn't even give you a warning message that it failed and
+switched to worse cipher settings.
+
+Just submit a bug report though, they'll fix it right.
+
+Well, it's actually been an issue on gpg development bug tracker
+since at least  2017 and nobody seems to care. As of the writing
+of this article, gpg's bu tracker is actually down so we can't even
+tell you if there has been any traction.
+
+Both the metadata issue and the cipher issue aren't the end of the
+world. After all an attacker has to get access to your computer to
+exploit either one of these vectors. That's pretty hard to do and
+even then it's still way better than no encryption.
+
+But why put up with these issues? Even if GPG fixes the S2K issue,
+which is doubtful in the near term, gpg will probably never get
+support for truely modern hasing algorithms like ARGON2.
+
+These modern algorithms have advanced features like GPG computation
+resistance to help keep your passwords secure from brute force
+attacks.
+
+One could recommend using a tool like keepassxc instead.
+
+

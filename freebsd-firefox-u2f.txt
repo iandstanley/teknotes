@@ -1,0 +1,25 @@
+
+
+
+
+               YUBIKEY U2F WON'T WORK WITH FIREFOX
+
+
+
+Note the additional setup instructions when you install security/u2f-devd
+(which can be found here): 
+
+https://svnweb.freebsd.org/ports/head/security/u2f-devd/files/pkg-message.in?revision=508909&view=markup
+
+U2F authentication requires read/write access to USB devices. To
+facilitate such access it comes with a devd.conf(5) file, but you
+still need to restart devd(8), add the desired users to "u2f" group
+and log those out of the current session. For example:
+
+# service devd restart
+# pw group mod u2f -m <user>
+$ exit
+
+For details, see /usr/local/etc/devd/u2f.conf
+
+

@@ -1,0 +1,194 @@
+
+
+
+
+	    LINUX PROXYCHAINS USING SSH & SOCKS PROXY
+
+
+
+The SSH protocol is well known for being able to remotely administer
+servers. It also can encapsulate and tunnel different types of
+traffic such as port forwarding OR you can also use it as a proxy.
+
+Tis can be really useful if you want to administer a remote network
+and you don't want to go to the trouble of setting up a full VPN
+(or is not really necessary because the services you need to access
+are just browser-based services), then coming through a proxy works
+really well.
+
+Proxys do not support the full protocol stack as they are much more
+simplistic, and VPNs allow you to connect to larger networks and
+bridge all protocols into the network.
+
+For something like I want to use remote web administration on a
+server, proxys work absolutely great.
+
+You may ask, "Is the data secure?". In the case of SSH, you are
+encapsulating the proxied data. The proxy data may or may not be
+secured, but that is irrelevant if you are tunneling it through SSH
+tunnels.
+
+Nothing special needs to be done other than turning on a SSH server
+on the target (and intermediate) servers.
+
+
+
+
+			     EXAMPLE:
+
+
+First check connection:
+
+
+	$ ssh root@104.248.168.203 # exit
+
+
+Now we add the proxy information:
+
+
+	$ ssh -D 9055 root@104.248.168.203
+
+
+Here the port 9055 only has to be known by you and not in use. We
+still get our root login, but now we have our proxy port.
+
+Now we can start firefox.
+
+Go into settings and edit the proxy settings:
+
+	 - select 'Manual Proxy Configuration'
+
+	 - SOCKS HOST = 127.0.0.1
+
+	 - PORT = 9055
+
+	 - SOCKS VERSION = v5
+
+
+
+Now check your IP/Weather/... and you will see that it is proxied.
+
+That's great
+
+The downside is having to setup this proxy all the time. Don't
+forget to remove firefox proxy settings!
+
+
+	# exit $
+
+
+Now repeat the command but change the port to 9050. Why 9050? Well
+it's the default port for PROXYCHAINS.
+
+
+Proxychains is a Linux/UNIX program that hooks into network related
+functions and dynamically allows us to wrap everything into a
+proxychain.
+
+
+	$ ssh -D 9050 root@104.248.168.203
+	#
+
+
+On ANOTHER terminal:
+
+
+	$ sudo apt install proxychain
+	$ sudo -e /etc/proxychains.conf
+
+	$ curl ifconfig.co/country
+	United States
+
+	$ proxychains curl ifconfig.co/country
+	ProxyChains-3.1 (http://proxychains.sf.net)
+	|DNS-request| ifconfig.co
+	|S-chain|-<>-127.0.0.1:9050-<><>-4.2.2.2:53-<><>-OK
+	|DNS-reponse| ifconfig.co is 104.248.168.203
+	|S-chain|-<>-127.0.0.1:9050-<><>-104.248.168.203:80-<><>-OK
+	United Kingdom
+	$ 
+
+
+Notice Proxychains wraps our DNS as well (because DNS can leak our
+IP/info).
+
+Any program can be wrapped through our SSH proxy.
+
+
+	$ proxychains firefox ifconfig.co/country
+
+
+This is really handy if you have tools that you want to run from
+the Linux command line, but you want to run from the Linux command
+line, but you want to launch them as the IP address of the server.
+
+Another example:
+
+	Laptop ------ Internet ----- pfSense ----- NextCloud
+				     Firewall      Server
+				     192.168.1.1   192.168.1.2
+
+
+	$ ssh -D 9050 bob@myfirewall.com -p 1022
+	pfsense$ 
+
+	$ firefox 192.168.1.1
+
+
+We get the pfsense firewall UI.
+
+
+	$ proxychains firefox 192.168.1.2
+
+
+And we get the NextCloud UI.
+
+
+	pfsense$ exit
+
+
+But it is a pain to remember to have to type out the full command
+each time.
+
+Now we will edit the ssh.
+
+
+	$ vi .ssh/config 
+
+		Host pfsense-at-home
+			Hostname myfirewall.com
+			user bob
+			port 1022
+			DynamicForward 9050
+
+	$ ssh pfsense-at-home
+	pfsense$ 
+
+	(On another terminali ...) 
+
+	$ proxychains firefox 192.168.1.1
+
+	(pfsense UI)
+
+	$ vi .ssh/config
+
+		Host london
+			user root
+			port 22
+			DynamicForward 9050
+
+	$ ssh london
+	london$ 
+
+	(On another terminali ...) 
+
+	$ proxychain firefox ifconfig.co/country
+
+
+I can actually SSH into more than just the firewall. I could setup
+a jump box to SSH through to another server beyond it and then run
+proxychains to tunnel an application through to that server behind
+the jump box.
+
+
+

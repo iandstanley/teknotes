@@ -1,0 +1,132 @@
+
+
+
+
+
+                        CHROOTS ON DEBIAN
+
+
+
+
+	# apt install -y binutils debootstrap
+
+	# mkdir -p /chroot/stretch
+
+	# debootstrap --arch i386 stretch /chroot/stretch \
+		https://deb.debian.org/debian
+
+	# chroot /chroot/stretch
+
+
+A more convienient way to enter a chroot is provided by the 'schroot'
+package.
+
+The  'schroot' wrapper allows unprivileged users to have access to
+one or more chroot(2) environments.
+
+Schroot handles the chroot(2) call as well as dropping privileges
+inside the chroot(2), setting up /etc/resolv.conf and bind mounting
+resources into the chroot (like home directories, /dev, /sys, /proc).
+
+
+
+
+			  CONFIGURATION
+
+
+In general, it is necessary to create/edit key configuration points.
+
+Create a /usr/sbin/policy-rc.d file IN THE CHROOT so that dpkg
+won't start daemons unless desired.
+
+This example prevents all daemons from being started in the chroot.
+
+
+	# chroot /chroot/stretch
+
+	# cat  > ./usr/sbin/policy-rc.d
+
+	#!/bin/sh
+
+	exit 101
+
+	EOF
+
+	# chmod a+x ./usr/sbin/policy-rc.d
+
+	# chroot /chroot/stretch
+
+	# dpkg-install 	--direct /usr/bin/ischroot.debianutils \
+			--rename /usr/bin/ischroot
+
+	# ln -s /bin/true /usr/bin/ischroot
+
+
+According to an old 2012 post:
+
+	NOTE: The 'ischroot' command is buggy and doesn't detect
+	that it is running in a chroot. Several packages depend
+	upon ischroot for determining correct behaviour. An easy
+	fix for this is to replace ischroot with /bin/true.
+
+
+To edit the bash prompt, add an identifier to /etc/debian-chroot
+and the contents get added to $PS1.
+
+Mount filesystems from the underlying host (NOT in the chroot).
+
+
+
+
+                   MOUNTING PSEUDO FILESYSTEMS
+
+
+/proc           check the chrooted system the prescence of /procif
+		the chroot is not likely to be fully operational.
+		A priori, since version Debian/Wheezy debootstrap
+		integrates natively mount /proc and /sys
+
+		proc on /proc type proc (rw)
+		sysfs on /sys type sysfs bind (rw)
+
+
+/dev/pts        It is also advisable to do a 'bind' /dev/pts to
+		prevent error messages like "Must be connected to
+		a terminal" or "Can not access /dev/pts/0 No such
+		file or directory" with using the control screen
+
+		# mount --bind /dev/pts /chroot/stretch/dev/pts
+
+
+
+
+                    ADDING / REMOVING PACKAGES
+
+
+Eliminate unnecessary packages.
+
+	# apt install  deborphan
+	# deborphan -a
+	# apt remove --purge telnet pppconfig ipchains .......
+
+
+
+
+                              USAGE
+
+
+Common examples of chroot usage:
+
+* recompiling application in a context other than the machine that
+  hosts the chroot (backport, cross-compiling ...)
+
+* update service production by tilting the old service (host machine)
+  to the new (installed in the chroot)
+
+* securing a service "chrooted" from the host machine (and vice
+  versa)
+
+
+
+
+
