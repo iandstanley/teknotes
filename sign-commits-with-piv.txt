@@ -1,0 +1,187 @@
+
+
+
+
+		SIGN GIT COMMITS AND SSH WITH PIV
+
+
+
+
+GIT SIGNING
+
+
+It is very easy to spoof who made a git commit by simply changing
+the email. GitHub would associate such pushes with another users
+account. It is good practice to always sign your commits.
+
+To use our GPG key to sign all git commits.
+
+
+	$ gpg --list-secret-keys --keyid-format long
+
+	...
+
+	$ git config --global user.signingkey E870E880
+
+	$ git config --global commit.gpgsign true
+
+
+Now you can import the key into GitHub.
+
+
+	$ open https://github.com/settings/keys
+
+
+Click 'New GPG Key' and paste. If using keybase:
+
+
+	$ keybase pgp export | pbcopy
+
+
+
+SSH WITH PIV
+
+
+While it is technically possible to authenticate SSH sessions using
+GPG, gpg-agent does not always play well with ssh-agent.
+
+Using PIV for authenticating SSH remains the recommended solution.
+Only RSA keys are supported so we can't use ECC for authentication.
+Also the 4096 bit key size is not supported with PIV so we must use
+RSA 2048 (Q. why not 3072?). This should be sufficient for most
+cases.
+
+Install yubico-piv-tool:
+
+
+	$ sudo apt install yubico-piv-tool
+
+Or if you are on MacOS 'brew install yubico-piv-tool'.
+
+
+Generate a private key using the management key:
+
+
+	$ yubico-piv-tool -s 9a generate -k             \
+		--pin-policy=once --touch-policy=never  \
+		--algorithm=RSA2048 -o public.pem
+
+
+Create a self-signed certificate.
+
+I could have made a certificate signing request (CSR) to be signed
+by an internal certificate authority (CA), but this should be
+sufficient.
+
+The only use for this self signed certificate is to make the PIV /
+PKCS#11 library happy.
+
+
+	$ yubico-piv-tool -a verify-pin 	\
+		-a selfsign-certificate		\
+		-s 9a -S "/CN=ssh/"		\
+		--valid-days=$((365*3))		\
+		-i public.pem -o cert.pem
+
+
+Enter your Yubikey PIN.
+
+
+Import the self-signed certificate:
+
+
+	$ yubico-piv-tool -k -a import-certificate	\
+		-s 9a -i cert.pem
+
+
+Enter the management key.
+
+
+Install OpenSC and save its location to a variable:
+
+
+	$ sudo apt install opensc
+
+	$ export OPENSC_PK=$(/usr/.../lib/opensc-pkcs11.so)
+
+
+Now export the file, and add a comment to better identify it:
+
+
+	$ ssh-keygen -D $OPENSC_PK -e > yubikey-ssh.pub
+
+
+Note the above command will export all keys stored on the Yubikey
+device. So if you have multiple keys you will need to edit the file
+to include only the public key that is associated with the privaye
+key we just generated.
+
+
+	$ vi yubikey-ssh.pub
+
+
+
+Once in vi we add a comment to the end of the line with 'A'. 
+
+
+To view the random art for fun:
+
+
+	$ ssh-keygen -lv - yubikey-ssh.pub
+
+
+To check the slot status (optional):
+
+
+	$ yubico-piv-tool -a status
+
+
+
+
+         MOVE THE PUBLIC KEY TO THE AUTHORIZED KEYS FILE
+
+
+You can copy the file to the clipboard:
+
+
+	linux$ cat yubikey-ssh.pub | xclip 
+
+Or on a Mac:
+
+	MacOS$ cat ybuikey-ssh.pub | pbcopy
+
+
+And then paste into ~/.ssh/authorized_keys or use ssh-copyid.
+
+
+
+
+
+             AUTHENTICATE TO THE SERVER WITH NEW KEY
+
+
+You can verify that you can login to the server with the new key
+on the smartcard:
+
+
+	$ ssh -I $OPENSC_PK user@remote.com
+
+
+Make ssh-agent work:
+
+
+	$ ssh-add -s /usr/x86_64/lib/libykcs11.so
+
+
+Or even alias them in your .bashrc:
+
+
+	alias loadkey='ssh-add -s /usr/x86_64/lib/libykcs11.so'
+
+	alias unloadkey='ssh-add -e /usr/x86_64/lib/libykcs11.so'
+
+
+Now try to login to the server.
+
+
+
