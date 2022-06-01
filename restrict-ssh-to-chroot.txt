@@ -1,0 +1,223 @@
+
+
+
+
+	       RESTRICT SSH USER ACCESS TO CERTAIN
+		  DIRECTORY USING CHROOTED JAIL
+
+
+
+There are several reasons to restrict a SSH user session to a
+particular one is system secrity. We can use the chroot mechanism.
+
+We will show you how to restrict a SSH user access to a given
+directory in Linux. Note all of these commands should be run as
+root (or use sudo).
+
+
+
+		     1. CREATE A CHROOT JAIL
+
+
+	# mkdir -p /home/test
+
+
+Now we need to identify required files according to the sshd_config
+man page, the ChrootDirectory option specifies the pathname of the
+directory to chroot to after authentication. That directory must
+contain the necessary files and directories to support a user's
+session.
+
+For an interactive session, this requires at least a shell, commonly
+'sh', and a basic /dev nodes such as null, zero, stdin, stdout,
+stderr, random and tty devices.
+
+
+	# ls -l /dev/{null,zero,stdin,stdout,stderr,random,tty}
+
+
+Create the /dev files as follows:
+
+
+	# mkdir -p /home/test/dev
+
+	# cd /home/test/dev
+
+	# mknod -m 666 null c 1 3
+	# mknod -m 666 tty c 5 0
+	# mknod -m 666 zero c 1 5
+	# mknod -m 666 random c 1 8
+
+
+Then set the appropriate permission on the chroot jail. Note the
+chroot jail and its subdirs mst be owned by the root user and NOT
+WRITEABLE by ANY normal user or group.
+
+
+	# chown root:root /home/test
+
+	# chown 0755 /home/test
+
+	# ls -ld /home/test
+
+
+
+
+          2. SETUP INTERACTIVE SHELL FOR SSH CHROOT JAIL
+
+
+First create the bin directory:
+
+
+	# mkdir -p /home/test/bin
+
+	# cp -v /bin/bash /home/test/bin
+
+
+Now identify bash required shared libs.
+
+
+	# ldd /bin/bash
+
+	# mkdir -p /home/tets/lib64
+
+	# cp -v /lib64/{libtinfo.so.5, libdl.so.2, libc.so.6, \
+		ld-linux-x86-64.so.2} /home/test/lib64
+
+
+
+                 3. CREATE AND CONFIGURE SSH USER
+
+
+	# useradd tecmint
+
+	# passwd tecmint
+
+
+Create the chroot jail general configuration directory:
+
+
+	# mkdir /home/test/etc
+
+	# cp -vf /etc/{passwd,group} /home/test/etc
+
+
+Note:   each time you add more SSH users to the system, you will
+	need to copy the updated account files into the /home/test/etc
+	directory.
+
+
+
+                4. CONFIGURE SSH TO USE CHROT JAIL
+
+
+	# vi /etc/ssh/sshd_config
+
+		# define username to apply to chroot jail 
+
+		Match User tecmint
+
+		# Specify chroot jail
+
+		ChrootDirectory  /home/test
+
+
+
+	# systemctl restart sshd
+
+	(or service sshd restart)
+
+
+
+                 5. TESTING SSH WITH CHROOT JAIL
+
+
+
+Here you should see a series of "command not found" errors.
+
+
+	# ssh tecmint@192.168.0.10
+
+	-bash-4.1$ ls
+	-bash-4.1$ date
+	-bash-4.1$ uname
+
+
+
+    6. CREATE SSH USER'S HOME DIRECTORY AND ADD LINUX COMMANDS
+
+
+	# mkdir -p /home/test/home/tecmint
+
+	# chown -R tecmint:tecmint /home/test/home/tecmint
+
+	# chmod -R 0700 /home/test/home/tecmint
+
+
+And install a few user commands (or why not use busy box instead?).
+
+
+	# cp -v /bin/ls /home/test/bin/
+
+	# cp -v /bin/date /home/test/bin/
+
+	# cp -v /bin/mkdir /home/test/bin/
+
+
+
+Check the shared libraries for the commands:
+
+
+	# ldd /bin/ls
+
+	# cp -v /lib64/{libselinux.so.1, libcap.so.2, 	\
+		libacl.so.1, libc.so.6, libpcre.so.1, 	\
+		libdl.so.2, ld-linux-x86-64.so.2, 	\
+		libattr.so.1, libpthread.so.0} /home/test/lib64
+
+
+
+                 7. TESTING SFTP WITH CHROOT JAIL
+
+
+Do a final test using sftp to check if commands you have installed
+are working:
+
+
+	# vi /etc/ssh/sshd_config
+
+		# enable sftp to chrooted jail
+
+		ForceCommand 	internal-sftp
+
+
+
+	# systemctl restart sshd
+
+	(or service sshd restart)
+
+
+And test using SSH:
+
+
+	# ssh tecmint@192.168.0.10
+
+	  This service only allows sftp connections only.
+
+	  Connection to 192.168.0.10 closed.
+
+
+And try using sftp:
+
+
+	# sftp tecmint@192.168.0.10
+
+	  Connected to 192.168.0.10
+
+	  sftp>
+
+
+
+And try the sftp commands: pwd, mkdir, ls, ls -l etc...
+
+
