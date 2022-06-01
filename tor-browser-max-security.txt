@@ -1,0 +1,104 @@
+
+
+
+		  TOR BROWSER MAX SECURITY SETUP
+
+
+
+
+BEFORE WORKING ON TOR:
+
+
+- don't use MS Windows with TOR. Windows logs all keystrokes and
+  sends them to Microsoft. It has many bugs and faults. As revealed
+  by NSA whilsteblower Edward Snowden, Microsoft actively works
+  with the NSA and other USA/UK/non-US authorities who are part of
+  the Fourteen Eyes.
+
+- make sure everything is upto date especially TOR itself
+
+- make sure your harddrive is encrypted (so people cannot access
+  any leftover data from a TOR session).
+
+- TOR should be separate from your actual identity - use only
+  pseudonyms inside of TOR
+
+
+
+MOVING TO THEIR (THE TOR PROJECT) LIST
+
+
+- never torrent over the TOR network, as it slows down the entire
+  network and is NOT SECURE for you either. Use a VPN for torrenting.
+
+- don't enable or install browser plugins (that don't come as default
+  ... only use NoSCript, HTTPS Everywhere, TorButton, TorLauncher).
+
+- if possible, never download anything to your computer because you
+  don't really know what is in the downloaded file.
+
+- finally, use common sense: don't do anything that is illegal or
+  that will get you into trouble. That's NOT what TOR was created
+  for.
+
+
+
+Lets look at the actual program:
+
+
+- the first thing you should do is to click on the button to test
+  network settings to ensure that you are being routed via the TOR
+  network.
+
+- next, click the Onion on the button bar and goto 'Security
+  Settings', and set it to the most secure. This can slow down your
+  browsing experience, but we are going for maximum security here.
+
+- make sure your script blocker (NoScript) is fully enabled globally
+  so scripts will be blocked on all websites. You should see the
+  red symbol over the 'S'.
+
+
+Next, lets go into some of the options.
+
+
+Press the menu bar and then 'Settings':
+
+
+- goto 'Search' and disable EVERYTHING except DuckDuckGo and StartPage
+  and disconnect/remove other search engines
+
+- under 'Content', popups should be disabled by default.
+
+- under 'Privacy', check everything in 'Tracking', 'Never Remember
+  History'
+
+- in 'Security', enable everything in General and disable everything
+  in 'Logins' You should AVOID logging into most, if not all accounts
+  while using TOR.
+
+- do not setup a Firefox account. And do not sync anything.
+
+- in 'Advanced', under 'Update' enable automatic TOR updates.
+
+
+
+Some more things:
+
+
+- don't save any bookmarks. If you are using TAILS OS (or GNUPG/GPG
+  manually) you are recommended to create a text file and encrypt
+  the file if you need to write anything down.
+
+- avoid saving pages from the browser
+
+- never Maximize the TOR Browser. If you need more space it is
+  recommended to manually drag the window corners to a larger size,
+  BUT NEVER to cover the whole screen.
+
+
+A controversial thing is whether to combine TOR with a VPN. If you
+decide to use a VPN, make sure you use a VPN with a good security/privacy
+profile (and not what they say in their advertising).
+
+

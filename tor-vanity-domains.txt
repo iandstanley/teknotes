@@ -1,0 +1,177 @@
+
+
+
+		    TOR VANITY .ONION DOMAINS
+
+
+
+PROS
+
+	- easier than it sounds
+	- no registrar for domain name
+	- the .onion address generated from the private key is your
+	  only identifying information.
+	- sets you apart from other .onion addresses
+
+CONS
+
+	- still harder to remember than a regular.com
+	- could be time consuming or expensive especially if renting
+	  cpu bashing time
+
+
+
+                          TIME INVOLVED
+
+
+Using a regular home computer (1-2 million hashes/sec)
+
+
+	1 character	< 0.01 secs
+	...
+	5		11 secs
+	6		6 mins
+	7		8 hours
+	8		10 days
+	9		1 year
+	10		41 years
+	11		1,311 years
+	12		42,000 years
+	13		1.3 million years
+	14		43 million years
+	15		1.4 bilion years
+	16		44 billion years
+
+
+It is laughable after you hit 8 characters to see how long it will
+take to crack someones .onion address.
+
+NOTE    These are ONLY ESTIMATES. You can get lucky an get an 8
+	character address in under an hour or could even run for a
+	few days.
+
+
+	--------------------------------------------------------------
+
+
+                           PROPOSAL 224
+
+
+	* better crypto (SHA3/ed25519/curve25519)
+
+	* improved directory protocol
+
+		- leaks less info to directory servers
+
+		- smaller target attach surface
+
+	* better .onion security vs impersonators (collisions)
+
+	* more extensible introduction/rendezvous protocol
+
+	* cleaner, more modular codebase
+
+
+There's something called mkp224o (Make Proposal 224 Onion) which
+generates the ed25519 keys used by Tor. It replaces projects like
+shallot and runs on any platform (Windows requires WSL).
+
+Open source:    github.com/cathugger/mkp224o
+
+
+
+                       BUILDING FROM SOURCE
+
+
+The program is optimized for different architectures: See
+OPTIMIZATION.TXT for details on how to make it run faster on your
+hardware at the ./configure [options] command.
+
+
+	$ sudo apt install build-essentials git lib-sodium
+
+	$ git clone https://github.com/cathugger/mkp244o.git
+
+	$ cd mkp224o
+
+	$ ./autogen.sh
+
+	$ ./configure 	[options]
+
+	$ make
+
+
+	$ ./mkp224o [options] <filter>
+
+
+
+Example run:
+
+
+	$ ./mkp224o -sBd myonions  myname
+
+
+Here the -s produces some statistics; -d specifies a directory
+'myonions'; -B Bash mode.
+
+
+Bash mode is UPTO 50x FASTER than non-bash mode.
+
+
+
+	$ ls myonions/
+
+
+Here we will see a series of 1+ directories with the extension
+.onion.  Inside each directory we will see a series of files.
+
+
+	$ cd myonions/
+
+	$ ls -p 
+	f8eda61e6a56667a4b9b304b65f71cadff671c9c1be45dfe2e233ac.onion/
+
+	$ ls f8eda61e6a56667a4b9b304b65f71cadff671c9c1be45dfe2e233ac.onion/
+	hostname  hs_ed25519_public_key  hs_ed25519_secret_key
+
+
+The hostname file just contains the .onion address
+
+
+	$ cd f8eda61e6a56667a4b9b304b65f71cadff671c9c1be45dfe2e233ac.onion
+	$ cat hostname
+	f8eda61e6a56667a4b9b304b65f71cadff671c9c1be45dfe2e233ac.onion
+
+
+The software mkp2240 is in the Arch AUR and FreeBSD ports (security).
+
+
+
+	--------------------------------------------------------------
+
+
+                             ESCHALOT
+
+
+Also available is eschalot that allows you to specify how many
+threads to use:
+
+
+	$ sudo apt install build-essentials libssl-dev
+	$ git clone https://github.com/ReclaimYourPrivacy/eschalot
+	$ cd eschalot
+	$ make
+
+
+Next run the program:
+
+	$ ./eschalot -t4 -vp test >> results.txt
+	Verbose, single result, no digits, 4 threads, prefixes 4-4 characters long
+	Thread #1 started.
+	Thread #2 started.
+	Thread #3 started.
+	Thread #4 started.
+	Running, collecting performance data
+	Found a key for test (4) test 
+	testa61e6a56667a4b9b304b65f71cadff671c9c1be45dfe2e233ac.onion
+

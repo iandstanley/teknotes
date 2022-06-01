@@ -1,0 +1,44 @@
+
+
+
+
+                 USING OBSF4 BRIDGES IN TAILS OS
+
+
+Obtaining A Bridge Line:
+
+
+	Visit:  bridges.torproject.org/options
+
+	OR
+
+	From Gmail or RiseUp email:
+
+		bridges@torproject.org
+
+		writing "get transports obfs4"
+		in email body
+
+Use Applications -> Internet -> Unsafe Browser to access a web based
+email containing your bridge line.
+
+Use encrypted persistent volume to retrieve your bridge line from
+a text file where you have stored it.
+
+When TAILS boots, on the start screen, click the '+' button and
+select network.
+
+Select configure a TOR bridge or local proxy. Click 'Add'. Click
+'Start Tails'.
+
+After TAILS has fully booted you will see a dialog box 'Connect to
+TOR". Click 'Configure'. Click 'TOR is censored in my country'.
+Paste your bridge line. Click 'Connect'. When you see the message
+'TOR is ready', goto Applications -> TOR Browser.
+
+Visit 'check.torproject.org'. Click the small 'i' with a circle
+around it. You should see your chosen bridge listed as the first
+node in your circuit.
+
+
+

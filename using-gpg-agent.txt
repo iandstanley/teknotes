@@ -1,0 +1,76 @@
+
+
+
+
+
+		 REPLACE SSH-AGENT WITH GPG-AGENT
+
+
+
+GPG-AGENT has support for the SSh protocol but we need to enable
+it.
+
+
+	$ echo enable-ssh-support >> ~/.gnupg/gpg-agent.conf
+
+	$ gpg-connect-agent reloadagent /bye
+
+
+This lets you use the authentication keys saved on your Yubikey for
+SSH authentication.
+
+To point at gpg-agent instead of ssh-agent, we need to change the
+socket.
+
+
+	$ export SSH_AUTH_SOCKET=$XDG_RUNTIME_DIR/.gnupg/S.gpg-agent.ssh
+
+
+Now make sure your public key is loaded:
+
+
+	$ ssh-add -L
+
+	ssh-rsa ....................... cardno: 0006070020192
+
+
+Notice the 'cardno' comment shows the same serial number that GPG
+recognises for the Yubikey.
+
+This confirms that our key has been properly loaded, but also happens
+to be the correct format for asking to SSH's authorized_keys file.
+
+Take the output of ssh-add -L and append it:
+
+
+	$ ssh-add -L >> ~/.ssh/authorized_keys
+
+
+You will need to do this for each Yubikey, since we generated a
+separate authentication key for each one.
+
+Some Linux OS'es have hard-coded to start ssh-agent when it starts
+your X session (eg Fedora). To correct this create a file:
+
+	# vi /etc/X11/xinit/xinitrc.d/90-gpg-agent.sh
+
+		#!/bin/sh
+
+		export
+		SSH_AUTH_SOCK=${XDG_RUNTIME_DIR}/.gnupg/S.gpg-agent.ssh
+
+		gpg-connect-agent -q /bye
+
+
+This will be sourced by all of the Fedora X startup scripts,
+regardless of your desktop environment.
+
+If SSH_AUTH_SOCK is set, ssh-agent is not launched when starting
+the session, and SSH_AUTH_SOCK gets inherited by all child processes
+in the session.
+
+If you are using Wayland it will not work. You may be able to achieve
+a similar effect by adding a file in '/etc/config/environment.d/'.
+
+
+
