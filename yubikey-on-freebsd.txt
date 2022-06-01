@@ -1,0 +1,21 @@
+
+
+
+            REQUIRED SOFTWARE ON FREEBSD FOR YUBIKEYS
+
+
+
+
+Use pkg to install the following software
+
+	pcscd
+
+	yubico*
+
+	yubikey*
+
+	yk*
+
+Also add the user to group u2f.
+
+
