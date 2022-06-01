@@ -1,0 +1,17 @@
+
+
+
+
+                  GIT REPO ON TOR HIDDEN SERVICE
+
+
+To clone:
+
+	git -c http.proxy=socks5h://127.0.0.1:9050 \
+		clone http://ksd98ewiu3...32498d.onion/git/repo.git
+
+
+	git config -add remote.origin.proxy "socks5h://127.0.0.1:9050"
+
+
+

@@ -1,0 +1,24 @@
+
+
+
+                          GIT REMOTE TOR
+
+
+			github.com/agentofuser/git-remote-tor/
+
+
+USAGE:
+
+	git clone tor::http://jsdousd702jk...23hr7r9jw3nkd.onion
+	git clone tor::https://github.com/agentofuser/logit.git
+
+
+Crucially the 'tor::' prefix gets added to the .git/config as part
+of the remote's URL. So you don't have to do anything special.
+Afterwards git fetch origin, git pull etc all run over tor.
+
+Requires:
+
+	$ sudo apt install tor torsocks rust
+
+

@@ -1,0 +1,373 @@
+
+
+
+			NETCAT CHEAT SHEET
+
+
+
+
+NETCAT VS NCAT VS NC
+
+Often mentioned as synonyms for the same tool -- but this is
+incorrect.
+
+
+	netcat          original feature rich tool (by Hobbit).
+			There has been rewrites of this tool by GNU
+			and OpenBSD.
+
+	ncat            a reimplementation of netcat (by the Nmap
+			project). Has some shiny new features.
+
+	nc              Traditionally this is simply a reference
+			to the original netcat installed on the
+			system. Ususally symlinked. Eg. Kali Linux
+			symlinks nc to the later ncat when installed
+			via apt.
+
+
+	--------------------------------------------------------------
+
+
+FUNDAMENTALS
+
+By default this will execut ea port scan:
+
+	nc [options] [host][port]
+
+
+Initiate a listener on the given port:
+
+	nc -l [host] [port]
+
+
+	--------------------------------------------------------------
+
+
+NETCAT FILE TRANSFER
+
+Send a file:
+
+	nc [host][port] < filename.out
+
+
+Receive a file:
+
+	nc -l [host][port] > filename.in
+
+
+	--------------------------------------------------------------
+
+
+NETCAT BACKDOOR SHELLS
+
+
+	nc -l -p [port] -e /bin/bash
+
+Run a shell on Linux. Disabled by default. This feature needs to
+be compiled in with DGAPING_SECURITY_HOLE option.
+
+
+	--------------------------------------------------------------
+
+
+NETCAT RELAYS ON LINUX
+
+	nc -l -p [port] 0 < backpipe | \
+
+		nc [clientIP] [port] | \
+
+		tee backpipe
+
+
+	--------------------------------------------------------------
+
+
+NETCAT COMMAND FLAGS
+
+
+	nc -4           use IPv4 only
+
+	nc -6           use IPv6 only
+
+	nc -u           use UDP instead of TCP
+
+	nc -k -l        continue listening after disconnection
+
+	nc -n           skip DNS lookups
+
+	nc -v           verbose output
+
+
+
+	--------------------------------------------------------------
+
+
+NETCAT PORT SCANNER
+
+Scan a single port:
+
+	nc -zv hostname.com 80
+
+
+Zoom a set of individual ports:
+
+	nc -zv hostname.com 80 84
+
+
+Scan a range of ports
+
+	nc -zv hostname.com 80-84
+
+
+	--------------------------------------------------------------
+
+
+NETCAT BANNERS
+
+Obtain the TCP banners for a range of ports:
+
+	echo "" | nc -zv -w! [host] [port range]
+
+
+	--------------------------------------------------------------
+
+
+A SIMPLE WEBSERVER WITH NETCAT
+
+	$ nc -l 8000
+
+	$ curl localhost:8000/index.html
+
+
+Back at netcat you will see:
+
+
+	$ nc -l 8000
+
+	GET /index.html HTTP/1.1
+	HOST: localhost:8000
+	User-Agent: curl/7.54.0
+	Accept: */*
+
+
+Netcat is waiting for your response. Paste in the following:
+
+
+	HTTP/1.1 200 Everything Is Just Fine
+	Server: netcat!
+	Content-Type text/html; charset=UTF-8
+
+	<!doctype html>
+	<html>
+	<body>
+	<h1>A webpage served with netcat</h1>
+	</body>
+	</html> 
+
+
+As you type you will see it appearing in curl.
+
+Hit CTRL-D to send and EOF. Netcat sends an EOF and closes the
+connection and exits.
+
+
+To run a persistent server.
+
+Paste the above HTTP/HTML response code int index.html.
+
+
+	$ while true; do cat index.html | nc -l 8000; done
+
+
+You can even simulate a slow webserver by using 
+'pv --rate-limit 10' to read the file at 10 bytes per second:
+
+
+	$ while true ; do  pv --rate-limit 10 \
+		index.html | nc -l 8000; done
+
+If you run Chrome to connect to this you will see Chrome's progressive
+rendering.
+
+
+	--------------------------------------------------------------
+
+
+SPOOF SOURCE IP ADDRESSES
+
+	$ nc -s spoofed_ip_remote_host port
+
+Causes target server to respond to another machine at
+spoofed_ip_remote_host IP address.
+
+
+	--------------------------------------------------------------
+
+
+SIMPLE CHAT CLIENT/SERVER WITH NETCAT
+
+
+	$ nc -l -p 1300
+
+	$ nc localhost 1300
+
+
+	--------------------------------------------------------------
+
+
+CLONE A HARD DRIVE OVER THE NETWORK
+
+
+	$ nc -l -p 1234 | dd of=/dev/sda
+
+	$ dd if=/dev/sdb | nc 192.168.0.12 1234
+
+
+	--------------------------------------------------------------
+
+
+CREATE A WEB PROXY FOR A WEBSITE
+
+
+	$ mkfifo proxypipe
+
+	$ while true; do nc -l 5000 < proxypipe | \
+		nc www.google.com 80  1>proxypipe; done
+
+Point your browser at http://127.0.0.1:5000
+
+
+	--------------------------------------------------------------
+
+
+CREATE AN SSL PROXY FOR A WEBSITE
+
+
+	$ mkfifo proxypipe ; mkfifo proxypipe2
+
+	$ nc -l 5000 -k > proxypipe < proxypipe2 & 
+
+
+	$ while true; do openssl s_client  \
+		--connect www.google.com:443 \
+		-quiet < proxypipe > proxypipe2; \
+		done
+
+
+The '-k' is to keep running.
+
+
+	--------------------------------------------------------------
+
+
+STREAM A VIDEO
+
+On server 192.168.233.208
+
+
+	$ cat video.avi | nc -l 5000
+
+
+On client:
+
+	$ nc 192.168.233.208 5000 | mplayer -v0 x11 -cache 3000 -
+
+
+	--------------------------------------------------------------
+
+
+DEACTIVATE READING STDIN (-d)
+
+On server:
+
+	$ nc -l 2345
+
+On client:
+
+	$ nc -d localhost 2345
+	Hi
+
+The 'Hi' will not be sent on to the server as we used the -d flag
+on the client.
+
+
+	--------------------------------------------------------------
+
+
+KEEP AWAKE AFTER AN EOF (-q)
+
+On server:
+
+	$ nc -l 2345
+
+On client:
+
+	$ nc -q 5 localhost 2345
+
+Netcat waits 5 seconds before closing the connection.
+
+
+	--------------------------------------------------------------
+
+
+NETCAT TIMEOUT 
+
+On server:
+
+	$ nc -l 8888
+
+On client:
+
+	$ nc -w 10 localhost 8888
+
+Wait 10 seconds before timing out.
+
+
+	--------------------------------------------------------------
+
+
+USING NETCAT AS A RELAY
+
+
+Say port 22 is blocked and want to relay SSH over another port (no
+sshd to run on that port).
+
+Lets try to see if we can connect to port 4444:
+
+
+	$ nc -v -l -p 4444
+
+	$ nc 192.168.1.7 4444
+	(connection made)
+
+Now lets use a netcat relay backpipe to access a sshd server (regular
+port is blocked at network firewall).
+
+Create a named pipe (as FIFO using 'p'):
+
+	$ mknod /tmp/backpipe p
+
+	$ nc -l -p 4444 0</tmp/backpipe | \
+		nc localhost 22 1> /tmp/backpipe
+
+On client:
+
+	$ ssh user@192.168.1.7 -p 4444
+
+
+	--------------------------------------------------------------
+
+
+SSL ENCRYPTED GROUP CHAT WITH NCAT
+
+
+On server:
+
+	$ ncat --ssl -l -p 4443 --chat
+
+On client:
+
+	$ ncat 10.0.0.1 4442 --ssl 
+
+

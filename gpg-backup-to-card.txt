@@ -1,0 +1,28 @@
+
+
+
+
+                        GPG BACKUP TO CARD
+
+
+
+
+The GNUPG tool has a command to backup keys to a card.
+
+
+
+	$ gpg
+
+	gpg> help
+
+
+Here we see the command backup to card "bkuptocard <file>".
+
+The bkuptocard command takes a filename as a parameter. The filename is a file which has been created using the options:
+
+		--export-options backup
+
+
+This backup format includes all data required to restore the key(s) later with gpg.
+
+

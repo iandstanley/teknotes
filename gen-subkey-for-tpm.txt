@@ -1,0 +1,24 @@
+
+
+
+
+               GENERATING A SECRET SUBKEY FOR A TPM
+
+
+
+Once you have generated a normal gpg key and added some subkeys you
+can transfer a subkey to a TPM module using the command:
+
+
+	gpg>  keytotpm
+
+
+This generates a copy of the key in TPM format. 
+
+
+TPM v2.0 only supports rsa2048 and nistp256 as a minimum, more modern TPMs may support other options.
+
+
+The key isn't transformed to the TPM, but merely encrypted by the TPM, so if the keyfile is deleted, the key is lost. The key file cannot be converted back.
+
+

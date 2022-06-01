@@ -1,0 +1,81 @@
+
+
+
+		       HOW TO DITCH YOUTUBE
+
+
+
+Youtube has issues. From advertising, to privacy, censorship and
+way more. With regards to creators, you will likely have heard about
+the algorithm, being demonitized etc. There are valid complaints.
+
+
+	--------------------------------------------------------------
+
+
+			     VIEWERS
+
+
+Lets first discuss ways to watch Youtube itself in a better way.
+
+
+- Choose the best browser, eg. on Android, browsers like Brave allow
+  background video playback. Firefox on the desktop allows picture
+  in picture. Brave also has a builtin ad blocker that blocks Youtube
+  ads, and for other browsers we recomend 'uBlock Origin'.
+
+- If you want to download a video for offline viewing, you can goto
+  youtubepp.com (BUT USE AN AD BLOCKER AS THIS SITE IS VERY INVASIVE);
+  or use youtube-dl on Linux.
+
+- there are 3rd party tools to access your Youtube videos. So you
+  can wwatch Youtube content, but not from the official website or
+  app.
+
+  Android       - Newpipe
+
+  Desktop       - SkyTube, and FreeTube
+
+  You can also use 'VLC Media Player' to watch Youtube.
+
+  Additionally FFMPEG is a FOSS tool you can use to download Youtube
+  videos.
+
+  iOS           - on iOS you aren't going to fair well. There are
+		  some 3rd party iOS apps for Youtube but your
+		  mileage will vary
+
+Some people ask "How do I stay subscribed to my favourite channels?".
+Some of the clients mentioned above supports local subscriptions
+(eg Newpipe).
+
+An EASIER alternative is to use RSS. There are a number of good RSS
+reasers out there. It can be a bit tricky to setup, but is very
+easy to use afterwards.
+
+
+	--------------------------------------------------------------
+
+
+			     CREATORS
+
+
+Well you are mostly stuck on Youtube, so play by the rules.
+
+
+ALTERNATIVES
+
+There is currently NO "best" Youtube alternative:
+
+
+- LBRY.TV       predominently using the front end 'odysee'. It's
+		good for users and makes it easy for content creators
+		to migrate.
+
+- BITCHUTE      Bitchute has a messier interface and content can
+		be quite clutters. No mobile apps
+
+- PEERTUBE      a decentralized Open Source platform. Being
+		decentralized, every instance has their own rules.
+
+

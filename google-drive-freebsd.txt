@@ -1,0 +1,41 @@
+
+
+
+
+                ACCESSING GOOGLE DRIVE ON FREEBSD
+
+
+GRIVE2
+
+
+	# pkg install grive2
+	# rehash
+
+
+	$ grive 
+
+This gives an error as we need to set it up
+
+
+	$ mkdir ~/googledrive
+	$ cd ~/googledrive
+
+	$ grive -a 
+
+Grive tells you to goto a url, authenticate yourself and then enter
+the authentication code into grive.
+
+Grive will now sync anything in ~/googledrive.
+
+You can add any files you want to backup (preferably encrypted).
+Then you must run 'grive' again manually.
+
+
+
+OTHER OPTIONS
+
+	- Rclone (my favourite)
+	- Gnome's Nautilus has Google Drive built in - just add a
+	  Google Account in the settings
+	- InSync (not FOSS, paid)
+	- OverGrive (grive with a gui)

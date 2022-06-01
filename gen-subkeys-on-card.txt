@@ -1,0 +1,23 @@
+
+
+
+	  GENERATING SUBKEYS ON A CARD AND ADD TO A KEY
+
+
+
+After we have generated a regular gpg key we can add a subkey to a
+card and attach it to the current key.
+
+
+	gpg> addcardkey
+
+
+It is similar to addkey but key is generated on the card itself.
+
+
+This is useful particularly if you generate a key but want individual
+auth subkeys on different Yubikeys to make it simpler to revoke
+individual keys.
+
+
+
