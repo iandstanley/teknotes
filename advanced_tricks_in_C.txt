@@ -1,0 +1,199 @@
+
+
+
+
+                  ADVANCED TIPS AND TRICKS IN C
+
+
+
+COMPILATION MAGIC
+
+
+	#include <stdio.h>
+
+	#define COUNT_OF(ptr) ( sizeof(ptr) / sizeof( (ptr)[0] )
+
+	/* Determine size of an array AT compilation time */
+
+	int main(void) {
+
+		static const char *strings[] = {
+			"Hello",
+			"World"
+		};
+
+		for ( size_t i=0; COUNT_OF(strings); i++ )
+			printf("Value is %s\n", strings[i]);
+		return 0;
+	}
+
+
+
+	--------------------------------------------------------------
+
+
+
+	#define STATIC_ARRAY_FOREACH(item, array) 		\
+		for ( size_t keep=1, index=0; 			\
+			keep && index < COUNT_OF(array); 	\
+			keep = !keep, index++)			\
+		for ( item = &array[index]; keep; keep = !keep)
+
+		/* process an array statically */
+
+
+	--------------------------------------------------------------
+
+
+	/* inform the compiler about the probability of a condition */
+	#define likely(x) __builtin_expect( (x), 1 )
+	#define unlikely(x) __builtin_expect( (x), 0 )
+
+
+	--------------------------------------------------------------
+
+
+	/* inform compiler about functions called often or not */
+	#define __hot_function __attribute__((hot))
+	#define __cold_function __attribute__((cold))
+
+
+	--------------------------------------------------------------
+
+
+	#define __const_function __attribute__((const))
+	#define __noreturn_function __attribute__((noreturn))
+	#define __non_null_function __attribute__((nonnull))
+	#define __pure_function __attribute__((pure))
+
+
+Here a pure function can only return a value:
+
+	- const function, like pure but cannot read global memory
+	- nonnull arguements, compiler checks if there are cases
+	  where null arguements are supplied, and throws an error
+	- the function can't return anything and wont ever (infinite
+	  loop, exit() functions, ...)
+
+
+	--------------------------------------------------------------
+
+
+
+	#define __unused __attribute__((unused))
+
+	/* tells compiler that a function variable is not used
+	   only useful for partial refactoring, keeping legacy 
+	   API
+	*/
+
+	void some_function( int arg1, __unused int arg2) {
+		printf("arg1 = %d\n", arg1); 
+	}
+
+
+	--------------------------------------------------------------
+
+
+	/* always inline a function */
+
+	#define inline __attribute__((always_inline))
+
+
+	--------------------------------------------------------------
+
+
+	/* always inline a function */
+
+	volatile
+
+
+	--------------------------------------------------------------
+
+
+	/* determine the offset of a struct member at compilation */
+
+	#define offsetof(TYPE, MEMBER) ((size_t)&((TYPE*)0)->MEMBER)
+
+
+	--------------------------------------------------------------
+
+
+	/* determine the type of a mvariable at compilation */
+
+	#define typeof __typeof__
+
+		int a;
+
+		typeof(a) b = 10;
+
+	#define auto(n, val) typeof(val) n = val
+
+		auto(c, 150);
+
+		printf("%d %d", b, c);
+
+
+	--------------------------------------------------------------
+
+
+	/* determine the parent structure from a pointer at compilation */
+
+	#define container_of(ptr, type, number) ({		\
+		const typeof( ((type *)0)->member) *__mptr = (ptr); \
+		(type *)((char *)__mptr - offsetof(type, member));})
+
+	void function(a_t *ptr) {
+
+		b_t *parent = container_of(ptr, b_t, a);
+
+	}
+
+Where we have defined:
+
+	typedef struct { a_t a; int b; } b_t;
+
+And also:
+
+	typedef struct { int val; } a_t;
+
+
+	
+	--------------------------------------------------------------
+
+
+                       HOW SLOW ARE CPU OPS
+
+
+						@LIGHT SPEED
+
+	Register OP				< 5 cm
+	Memory write				5 cm
+	Right prediction for a condition	10 cm
+	Floating point addition			15 cm
+	Multiplication				30 cm
+	L1 Read					30 cm
+	L2 Read					1 m
+	Wrong prediction for a condition	1 m 50 cm
+	Floating point division			2 m
+	Integer division			2 m
+	C function call 			2 m
+	RAM read				50 m
+	Kernel call				600 m
+	Context switch				30 km
+	HDD SATA disk I/O			150,000 km
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

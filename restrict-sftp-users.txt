@@ -1,0 +1,110 @@
+
+
+
+             RESTRICT SFTP USERS TO HOME DIRECTORIES
+
+
+
+	# groupadd sftpgroup
+
+	# usermod -G sftpgroup tecmint
+
+	# adduser senthil -g sftpgroup -s /sbin/nologin
+
+	# passwd tecmint
+
+
+	# vi /etc/ssh/sshd_config
+
+
+	Subsystem sftp internal-sftp
+		MatchGroup 		sftpgroup
+		ChrootDirectory 	/home
+		ForceCommand		internal-sftp
+		X11Forwarding		no
+		AllowTCPForwarding	no
+
+
+Now restart sshd:
+
+	# systemctl restart sshd
+
+	(or service sshd restart)
+
+	# chmod 700 /home/tecmint
+
+If you chroot multiple users to the same directory, you should
+change perms of each user's home directory in order to prevent users
+browsing other users home dirs.
+
+
+
+VERIFY SSH AND SFTP
+
+
+	# ssh tecmint@192.168.1.150
+
+	  Could not chdir to home directory /home/tecmint
+
+	  No such file or directory
+
+	  This service allows sftp connections only.
+
+	  Connection to 192.168.1.150 closed
+
+	# sftp tecmint@192.168.1.150
+
+	  tecmint@192.168.1.150's password:
+
+	  Connected to 192.168.1.150
+
+	  sftp>
+
+
+Check the sftp commands you want to use: pwd, ls, cd etc ...
+
+
+	# groupadd sftpgroup
+
+	# mkdir -p /sftpusers/chroot
+
+	# chown root:root /sftpusers/chroot
+
+	# adduser tecmint -g sftpusers
+
+	# passwd tecmint
+
+	# mkdir /sftpusers/chroot/tecmint
+
+	# chown tecmint sftpgroup /sftpusers/chroot/tecmint
+
+	# chmod 700 /sftpusers/chroot/tecmint
+
+
+
+CONFIGURE SSH FOR SFTP ACCESS
+
+
+	# vi /etc/ssh/sshd_config
+
+		# subsystem sftp /usr/libexec/openssh/sftp-server
+		Subsystem sftp internal-sftp
+		MatchGroup sftpgroup
+			ChrootDirectory		/sftpusers/chroot
+			ForceCommand		internal-sftp
+			X11Forwarding		no
+			AllowTCPForwarding	no
+
+
+
+	# systemctl restart sshd
+
+	(or service sshd restart)
+
+
+And test you can login via SFTP but not SSH.
+
+Be mindful this method will disable shell access.
+
+
+
