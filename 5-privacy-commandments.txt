@@ -1,0 +1,38 @@
+
+
+
+
+                      5 PRIVACY COMMANDMENTS
+
+
+
+1.	KNOW WHO I AM TRUSTING
+
+	Be intentional about who you are trusting. Find out about
+	the company. Who is running the company and from where.
+
+
+2. 	LIMIT HOW MUCH YOU TRUST EACH COMPANY
+
+3.	DIVIDE CONTROL OF YOUR DATA AND PRIVACY
+
+	Don't place too much reliance on any single provider.
+
+4.	CONTROL MY OWN DATA (AS MUCH AS POSSIBLE)
+
+	- Client side encryption (eg GPG, boxcryptor, cryptomaster)
+
+	- local storage (local harddrives, usb, local password manager)
+
+	- data segregation (separate your most sensitive data and
+	  treat them differently)
+
+
+5.	BACKUP, BACKUP, BACKUP AGAIN!!!
+
+	- backups on at LEAST 2 different drives and 2 different
+	  locations.
+
+
+
+

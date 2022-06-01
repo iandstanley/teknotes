@@ -1,0 +1,101 @@
+
+
+
+
+	     ANONYMIZE NETWORK TRAFFIC WITH TORGHOST
+
+	      (github.com/SusmithKrishnan/torghost)
+
+
+
+TorGhost is an anonymization script.
+
+
+TorGhost redirects ALL internet traffic through the Socks5 tor
+proxy. DNS requests are also redirected via tor, thus preventing
+DNS leaks.
+
+The script also disables unsafe packets exiting the system. Some
+packets like ping can compromise your identity.
+
+
+
+	--------------------------------------------------------------
+
+
+                             INSTALL
+
+
+	$ git clone https://github.com/SusmithKrishnan/torghost.git
+
+	$ cd torghost
+
+	$ chmod +x build.sh
+
+	$ ./build.sh
+
+
+	$ sudo apt install python-pip
+
+	$ sudo pip install requests stem
+
+
+
+	$ vi torghost.py
+
+
+In the section 'iptables_rules'
+
+
+	TOR_UID="debian-tor"
+
+
+
+Also change/comment out:
+
+
+	#% subprocess.getoutput('id -ur debian-tor')
+
+
+
+	--------------------------------------------------------------
+
+
+			       TEST
+
+
+Next we should test the installation:
+
+
+First get a baseline without Torghost:
+
+
+	$ curl http://www.ipmonkey.com | grep "IP Address"
+
+
+This shows your actual IP address.
+
+
+
+Now start torghost:
+
+
+	$ sudo python torghost.py --start Torghost
+
+	$ curl http://www.ipmonkey.com | grep "IP Address"
+
+
+Amoungst all the Torghost output it shows an IP address.
+
+When we run the ipmonkey curl we get the same IP address (NOT your
+original IP address).
+
+
+
+To make Torghost stop and go back to normal:
+
+
+	$ sudo python torghost.py --stop Torghost
+
+
+
