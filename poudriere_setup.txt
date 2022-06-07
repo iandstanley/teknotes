@@ -1,0 +1,300 @@
+
+
+
+		    POUDRIERE SETUP ON FREEBSD
+
+
+
+We are going to setup a poudriere package building system.
+
+
+	# pkg install poudriere
+
+
+We shall install portmaster as well as it will come in handy later.
+
+
+	# pkg install portmaster git
+
+	# rehash
+
+
+As we are going to run this over TLS/SSL we are going to make some
+certificates.
+
+
+	# mkdir -p /usr/local/etc/ssl/{keys,certs}
+
+	# chmod 0600 /usr/local/etc/ssl/keys/
+
+	# cdusr/local/etc/ssl/keys/
+
+	# openssl genrsa -out poudriere.key 4096
+
+
+And we will also create the correct format:
+
+
+	# openssl rsa -in poudriere.key -pubout poudriere.cert
+
+
+Let's look at the configuration file:
+
+
+	# vi /usr/local/etc/poudriere.conf
+
+
+We need to change a couple of things. As I want to use zfs, I need
+to uncomment:
+
+
+	ZPOOL=zroot
+
+	ZROOTFS=/poudriere
+
+
+And then after 'FREEBSD_HOST', setup where we will pull from:
+
+
+	FREEBSD_HOST=ftp://ftp.freebsd.org/
+
+
+And then we setup the database:
+
+
+	BASEFS=/usr/local/poudriere
+
+	#POUDRIERE_DATA=${BASEFS}/data
+
+
+We need to set:
+
+
+	CHECK_CHANGED_OPTIONS=verbose
+
+	CHECK_CHANGED_DEPS=yes
+
+	PKG_REPO_SIGNING_KEY=/usr/local/etc/ssl/keys/poudriere.key
+
+	URL_BASE=https://10.148.86.105
+
+
+Now we need to create the actual jail and set it running.
+
+Poudriere creates itself a jail in order to compartmentalize itself.
+
+
+	# poudriere jail -c -j freebsd_13_0 -v 13.0-RELEASE
+
+
+This command ftp's FreeBSD from their ftp site and extracts it into
+a new jail (named 'freebsd_13_0').
+
+
+	# poudriere jail -l
+
+	freebsd_13 13.0-RELEASE-p6 amd64 http 2022-01-06 11:02:18
+			/usr/local/poudriere/jails/freebsd_13_0
+
+
+
+Lets now create the ports repository based on the version HEAD.
+
+
+	# poudriere ports -c -p HEAD
+
+
+FreeBSD transistioned away from Apache's Subversion to Git.
+
+
+	# cd /usr/local/etc/poudriere.d/
+
+	# vi port-list
+
+	  www/nginx
+
+
+Now we can copy the options to save us manually worrying about this
+everytime.
+
+
+	# mkdir -p /usr/local/etc/poudriere.d/freebsd_13_options
+
+	# cp -r /var/db/ports/*         \
+		/usr/local/etc/poudriere.d/freebsd_13_options/
+
+
+If you get no match you may get an error from 'cp: no match'. This
+is because we haven't built any port on the machine. To remedy this
+do a quick build:
+
+
+	# cd /usr/ports/www/nginx
+
+	# make                   (choose default options)
+
+
+And then re-run the above cp command again.
+
+
+	# cd /usr/local/etc/pourdriere.d/freebsd_13_options/
+
+	# ls -lah
+
+	  www_nginx/
+
+	# ls www_nginx
+
+
+Inside you will see on options file:
+
+
+	# cd /usr/local/etc/poudriere.d/
+
+
+We are now ready to test this:
+
+
+	# pourdriere options -j freebsd_13 -p HEAD      \
+		-f /usr/local/etc/poudriere.d/port-list
+
+
+Now we can actually build our ports:
+
+
+	# pourdriere bulk -j freebsd_13 -p HEAD         \
+		-f /usr/local/etc/poudriere.d/port-list
+
+
+The 'poudriere bulk' command builds all of our ports in the port-list
+AND any dependancies needed (eg for nginx it will build perl etc).
+
+While we are waiting for those packages we can configure nginx.
+
+
+	# cd /usr/local/etc/nginx
+
+
+Remember last time we created a domain directory:
+
+
+	# cd domains && ls
+
+	10.148.86.105.conf
+
+	# vi 10.148.86.105.conf
+
+
+I want to change a few bits here:
+
+
+	root /usr/local/share/poudriere/html
+
+
+And at the bottom:
+
+
+	location /data {
+
+		alias /usr/local/poudriere/data/logs/bulk;
+
+		autoindex on;
+
+	}
+
+	location /packages {
+
+		root /usr/local/poudriere/data;
+
+		autoindex on;
+
+	}
+
+
+And restart nginx:
+
+
+	# /usr/local/etc/rc.d/nginx restart
+
+
+And while we are at it ... let's make the logs readable:
+
+
+	# cd ..
+
+	# vi mime.types
+
+		text/plain  txt log;
+
+	# /usr/local/etc/rc.d/nginx  restart
+
+	# firefox 10.148.86.105/
+
+
+We can see our poudriere builds, and we can click on builds to see
+progress. If we click on a log file it appears in our browser.
+
+We can setup a host to use poudriere as a package source. 
+
+
+	# mkdir -p /usr/local/etc/pkg/repos
+
+	# vi poudriere.conf
+
+	(this can be called anything)
+
+	poudriere: {
+
+	  url: "file:///usr/local/poudriere/data/packages/freebsd_13-HEAD",
+
+	  mirror_type: "srv",
+
+	  signature_type: "pubkey",
+
+	  pubkey: "/usr/local/etc/ssl/certs/poudriere.cert",
+
+	  enabled: yes
+
+	}
+
+
+And we should also tell it not to use the FreeBSD repo.
+
+
+	# vi /usr/local/etc/pkg/repos/freebsd.conf
+
+	FreeBSD: {
+
+		enabled: no
+
+	}
+
+
+If we check back with Poudriere on firefox, all the builds have
+run, none failed. Good.
+
+We can now try to install from them.
+
+
+	# pkg upgrade
+
+	Updating poudriere repository catalogue.
+
+
+We will see 1 candidate for upgrade (nginx). You may also see an
+upgraded 'pkg' package if needed.
+
+
+	# pkg update
+
+
+Let's now restart nginx:
+
+
+	# /usr/local/etc/rc.d/nginx restart
+
+To add more packages to poudriere just add the port to the 'ports-list'
+file we created earlier.
+
+
+

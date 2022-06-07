@@ -1,0 +1,276 @@
+
+
+
+
+		   OPENSSH AND SSH CERTIFICATES
+
+
+
+We will have a look at key management, also Host and user certificates.
+
+OpenSSH key management is about improving the security if your SSH
+servers and SSH clients.
+
+In technology there is always better ways to do things. So things
+change with time.
+
+Most technology people would agree that using a public key
+authentication is better than using passwords. However, SHS public
+keys have their own sets of issues. One of the weaknesses of SSH
+is Trust-On-First-Use (aka TOFU).
+
+
+
+BEST PRACTICE #1: USE SSH CERTIFICATES
+
+
+This is a step up from public key authentication and was added in
+OpenSSH5.4+.
+
+SSH Certificates require a SSH Certificate Authority to issue and
+cryptographically sign certificates.
+
+The issued and signed certificates cant then be used to authenticate
+hosts to end users and users to hosts.
+
+Most of the certs we will see here are the equivalent of a lightweight
+PKI. It does not have the auditing you would have on the full PKI
+like you would with the SSL/TLS certificate issued by a public
+trust: because then you could trace back the chain of trust to the
+root authority and you would know that it had been properly audited.
+
+In this method all you have is a signed certificate by your internal
+host and you have to trust that this internal host has not been
+compromised.
+
+OpenSSH allows the creation of SSH certificates.
+
+
+
+CREATING HOST CA CERTIFICATES
+
+
+Create the Host Certificate Authority keys:
+
+
+	$ ssh-keygen -t rsa -b 4096 -f host_ca -C host_ca
+
+
+This will create two keys:
+
+
+	1.      host_ca
+
+	2.      host_ca.pub
+
+
+This is the same used to create any key whether it be an initial
+host certificate, or a user certificate.
+
+Keep the Host CA private key a secret, do not give it out to anyone!
+
+Ideally the access to your Host CA server should be restricted. You
+may want to pull it off the network, or put it on a restricted
+network if you are using automated certificate generation.
+
+
+
+BEST PRACTICE #2: SEPARATE THE USERS & HOSTS CA's
+
+
+You should create separate certificates for:
+
+	1.      Host Certificate Authority
+
+	2.      User Certificate Authority
+
+
+REASON: It is NOT a good idea to use the same process to sign host
+	certificates and the one that also signs user certificates.
+
+
+Using separate CA's means that in the event of a private key being
+compromised, you only need to reissue the certificates for either
+your hosts OR your users, but not both.
+
+
+
+CREATING USER CA CERTIFICATES
+
+
+Create a user certificate with:
+
+
+	$ ssh-keygen -t rsa -b 4096 -f user_ca -C user_ca
+
+
+This creates two keys:
+
+
+	1.      user_ca
+
+	2.      user_ca.pub
+
+
+As with the host_ca private key, the user_ca private key should be
+kept secret.
+
+
+
+CREATING HOST CERTIFICATES
+
+
+Once we have the host_ca pair (private & public keys) we can create
+our host keys.
+
+You can either generate a new host key:
+
+
+	$ ssh-keygen -f ssh_host_rsa_key -N '' -b 4096 -r rsa
+
+
+Where -N is the passphrase '' (null string for no passphrase).
+
+
+OR you can copy your existing host key (public) from your ssh server
+and skip the host_rsa key generation.
+
+
+
+SIGNING HOST KEYS
+
+
+Next we want to sign our host_rsa key with the host_ca certificate
+like this:
+
+
+	$ ssh-keygen -s host_ca -l host.example.com -h  \
+		-n host.example.com -V +52w             \
+			ssh_host_rsa_key.pub
+
+
+	-s      specifies the private key to sign with
+
+	-l      comment which key you can use to identify key
+
+	-h      designates we want to sign the HOST public key
+
+	-n      identifies which hosts will be authenticated using
+		host_ca
+
+	-V      specifies the expiration period +52w
+
+
+You should have 3 files:
+
+
+	1.      ssh_host_rsa_key
+
+	2.      ssh_host_rsa_key.pub
+
+	3.      ssh_host_rsa_key-cert.pub
+
+
+Copy these 3 files to your SSH server's /etc/ssh directory.
+
+Edit your /etc/sshd_config and add this line:
+
+
+	HostCertificate /etc/ssh/ssh_host_rsa_key-cert.pub
+
+
+Finally, restart the sshd instance on your ssh server machine.
+
+
+Next, FOR EACH SSH CLIENT MACHINE you want to use to connect to
+your server you will need to make some modifications in order to
+use your new host certificate.
+
+Edit your clients ~/.ssh/known_hosts file and add your host's CA
+PUBLIC key:
+
+
+	@cert-authority *.example.com ssh-rsa AAABB...Q4W+...==hostca
+
+
+The *.example.com can also be a list of hostnames separated by
+commas, or a list of IP addresses also separated by commas.
+
+Finally, remove any entries in known_hosts for the server with the
+new host certificate.
+
+
+
+SSH USER CERTIFICATES
+
+
+We want to generate a new key or just copy one of your existing
+user public keys.
+
+
+	$ ssh-keygen -f user-key -b 4096 -t rsa
+
+
+Next, we sign the user key from your user_ca certificate:
+
+
+	$ ssh-keygen -s user_ca -l dj@example.com       \
+		-n djames -V +52w user-key.pub
+
+
+	-s      is the user_ca private key
+
+	-l      is a description used to identify what the cert is
+		and who it belongs to
+
+	-n      userid for the user(s) that will be using this
+		certificate
+
+	-V      expiration date
+
+
+You should have 3 files:
+
+
+	1.      user_key
+
+	2.      user_key.pub
+
+	3.      user_key-cert.pub
+
+
+
+Copy those files to your ssh client user directory ~/.ssh/.
+
+Copy your user_ca.pub from your CA server to your SSH servers
+/etc/ssh directory.
+
+Configure the SSH server so it knows about User Certificates by
+adding the following line to your /etc/ssh/sshd_config:
+
+
+	TrustedUserCAKeys       /etc/ssh/user_ca.pub
+
+
+Restart your sshd server, and repeat this change for each SSH server
+you want to use User Certificates with.
+
+
+
+ADDITIONAL BEST PRACTICES
+
+
+#3.     Force all SSH connections through a Bastion Host (if coming
+from outside).
+
+#4.     Use 2 factor SSH authentication
+
+
+Do NOT confuse a Bastion Host with a SSH Proxy, OR a SSH JUMP server;
+it isn't the same thing.
+
+Two factor can also be Multifactor SSH authentication.
+
+
+
+

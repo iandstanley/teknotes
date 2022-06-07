@@ -1,0 +1,232 @@
+
+
+
+
+		     HOW TO USE GNU AUTOTOOLS
+	    (AUTOMAKE, AUTOCONF, ACLOCAL, AUTOHEADER)
+
+
+
+
+Let's use a simple hello world program:
+
+
+	$ ls
+
+	  hello.c
+
+	$ cat hello.c
+
+	  #include <stdio.h>
+
+	  int main (int argc, char * argv[]) {
+
+		printf("Hello World\n");
+
+		return 0;
+
+	  }
+
+
+With autotools you can build a lot of different programs eg. Python,
+C, C++ or whatever.
+
+Autotools is just a way of running different scripts that makes it
+easy to recreate a package on different systems so it can be portable.
+
+Autotools helps you to find all the different libraries and tools
+you need to build your application.
+
+To do all of this we need to write a configuration script for
+autotools/autoconf (in M4).
+
+
+	$ vi configure.ac
+
+	AC_INIT([hello],[0.1],[daniel@test.se])
+
+	AM_INIT_AUTOMAKE
+
+	AC_PROG_CC
+
+	AC_CONFIG_FILES([Makefile])
+
+	AC_OUTPUT
+
+
+This script initializes autoconf with the name of the program
+(version & author); it then initializes automake; it sets up the C
+compiler, and the configuration files needed for the build.
+
+
+	$ vi Makefile.am
+
+	bin_PROGRAMS = helloworld
+
+	helloworld_SOURCES = hello.c
+
+	clean-local:
+		@rm config.status configure config.log
+		@rm Makefile
+		@rm -r autom4te.cache/
+		@rm aclocal.m4
+		@rm compile install missing Makefile.in
+
+
+So now we have setup everything required for this build.
+
+So now we need to run a lot of different commands.
+
+
+	$ aclocal
+
+
+Now aclocal will look at your system and work out what it can use.
+
+
+	$ autoheader
+
+	autoheader: error AC_CONFIG_HEADERS not found in configure.ac
+
+
+Now autoheader looks at the header files looking for dependancies.
+But as you can see from the error we haven't actually added a header
+configuration line (AC_CONFIG_HEADERS) in our configure script.
+
+Now we run automake.
+
+
+	$ automake
+
+
+The automake tool will look at the directory and try to create what is missing.
+Now we run automake.
+
+
+	$ automake
+
+
+The automake tool will look at the directory and try to create what
+is missing.
+
+In our example, automake complains about the following required
+files that are missing.
+
+
+	configure.ac	./compile not found
+	configure.ac	./install-sh not found
+
+	Makefile.am	./INSTALL not found
+	Makefile.am	./NEWS not found
+	Makefile.am	./README not found
+	Makefile.am	./AUTHORS not found
+	Makefile.am	./ChangeLog not found
+	Makefile.am	./COPYING not found
+	Makefile.am	./COPYING not found
+
+
+Automake also tells us that it can create some of the missing files
+(compile, install-sh, INSTALL, COPYING, decomp) by adding '--add-missing'
+option.
+
+So automake won't continue until the following files are created.
+Let's just create empty files for now:
+
+
+	$ touch INSTALL
+	$ touch NEWS
+	$ touch README
+	$ touch AUTHORS
+	$ touch ChangeLog
+
+	$ automake
+
+
+If we run automake again we will find that we still have a lot of
+errors, but al of these can be fixed with '--add-missing'.
+
+
+	$ automake --add-missing
+
+	$ ls -la
+
+
+Now we see the missing files were linked in from
+/usr/share/automake*/filename, eg:
+
+
+	$ less COPYING
+
+
+We see that automake helpfully/rudely inserts the GNU GPL3 licence.
+
+If you actually want to use this you should make a copy of it and
+change the last statement of the file to say who has built this,
+what it is called etc.
+
+Now everything is setup we can run configure:
+
+
+	$ ./configure
+
+
+Configure runs through and sees the abilities of the C compiler.
+
+The configure script, when run, creates an actual makefile.
+
+
+	$ make
+
+
+We see that configure has created a very large command line to
+compile hello.c
+
+
+	$ ./helloworld
+	Hello World
+
+
+We can also create a distribution tarball with the command:
+
+
+	$ make dist
+
+
+We can test the distribution tarball:
+
+
+	$ mkdir tmp && cd tmp
+	$ tar -zxvf ../hello-0.1.tar.gz
+
+
+And test the build again:
+
+
+	$ ./configure
+
+	$ make
+
+	$ ./helloworld
+
+
+And clean up:
+
+
+	$ cd ..
+	$ rm -rf tmp
+
+	$ make clean
+
+
+I ran a whole bunch of programs to get this far but I could have
+run:
+
+
+	$ autoreconf
+
+
+Autoreconf would run all of these command plus 2 commands called
+'libtoolize'  and 'autopoint'.
+
+
+

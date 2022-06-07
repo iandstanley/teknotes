@@ -1,0 +1,157 @@
+
+
+
+
+	       SETUP A FIREWALL ON FREEBSD WITH PF
+
+
+
+Today we will setup a quick firewall with PF and a wifi card and a
+wired connection on FreeBSD.
+
+
+	# vi /etc/pf.conf
+
+	block all pass in proto tcp to port 22 pass out proto {tcp
+	udp} to port {22 53 80 123 443 110 143 993}
+
+
+This is a basic setup allowing only SSH inbound on port 22 and
+everything is blocked outbound except the range of ports listed
+(basic web browsing, ssh, dns, and email).
+
+
+	pass out inet proto icmp icmp-type {echoreq}
+
+
+This allows us to ping out but not ping in.
+
+This is a basic workstation setup.
+
+Let us enable PF:
+
+
+	# sysrc pf_enable="YES" # sysrc pflog_enable="YES"
+
+
+	# cat /etc/rc.conf
+
+
+We would restart the server / workstation, or:
+
+
+	# /etc/rc.d/pf start
+
+
+Note:   This would kick us out of ssh.
+
+
+
+	# pfctl -si
+
+
+This shows us the status of the state tables and a bunch of counters.
+
+Let us try pinging:
+
+
+	# ping google.com
+
+
+Also lets check we can still reach the package repositories:
+
+
+	# pkg upgrade
+
+
+We should then confirm from another system that we can't ping
+inbound. We see a series of time outs. To confirm it is because of
+that ruleset.
+
+Duplicate the icmp line in /etc/pf.conf this time allowing icmp:
+
+
+	pass in inet proto icmp icmp-type {echoreq}
+
+
+And reload the firewall rules.
+
+
+	# /etc/rc.d/pf reload
+
+
+And try the ping inbound again.
+
+We can remove the inbound ping/icmp config from the firewall config.
+
+
+This is a basic ruleset that you can build upon.
+
+Normally, I wouldn't separate an ethernet and a wifi connection as
+they both connect you to the network. HOWEVER, if one of those is
+INTERNAL and the other is EXTERNAL, then I would separate them.
+
+We can protect the SSH port using public key auth and other limitations
+on the SSH port:
+
+
+	pass in proto tcp to port 22    \
+		keep state (max-src-conn 15, max-src-conn-rate 3/1,
+		\ overload <bruteforce> flush global)
+
+
+Here we add brute force attacks to a table <bruteforce>.
+
+
+	# /etc/rc.d/pf reload
+
+
+Let's add some more before the "block all":
+
+
+	set skip on lo0 scrub in all fragment reassemble max-mss
+	1440
+
+
+This skips the firewall on the loopback device, and handles
+fragmentation.
+
+
+We need to declare the bruteforce table in the top of the config
+file making it persistent across reloads/restarts.
+
+
+	table <bruteforce> persist
+
+
+And we should limit the allowed icmp types.
+
+
+	icmp_types="{echoreq unreach}"
+
+
+and change:
+
+
+	pass out inet proto icmp icmp-type $icmp_types
+
+
+If we need to split ethernet and wifi:
+
+
+	icmp_types="{echoreq unreach}"
+	table <bruteforce> persist
+	set skip on lo0
+	scrub in all fragment reassemble max-mss 1440
+	antispoof quick for wlan0
+	block all
+	pass in on wlan0 proto tcp to port 22 		\
+		keep state (max-src-conn 15, max-src-conn-rate 3/1,	\
+		overload <bruteforce> flush global)
+	pass in on bge0 proto tcp to port 22 		\
+		keep state (max-src-conn 15, max-src-conn-rate 3/1,	\
+		overload <bruteforce> flush global)
+	pass out proto {tcp,udp} to port {22 53 80 123 443 110 143 993}
+	pass out inet proto icmp icmp-type $icmp_types
+
+

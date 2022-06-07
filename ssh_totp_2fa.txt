@@ -1,0 +1,67 @@
+
+
+
+    SSH 2FA: ADD AN EXTRA LAYER OF SECURITY TO YOUR SSH SERVER
+
+
+
+
+Securing your SSH access is a good thing. There are a few things
+we can do. First, we can randomize the SSH pool which is easily
+enough done. We can stop root from logging in.
+
+The other thing I like to do is add 2FA. We can use Google Authenticator
+alongsize a ssh key.
+
+The first we want to do is install the required software.
+
+
+	# pkg install pam_google_authenticator
+
+
+Next, we need to edit our PAM sshd configuration:
+
+
+	# vi /etc/pam.d/sshd
+
+
+In the section under auth add:
+
+
+	auth required /usr/local/lib/pam_google_authenticator.so
+
+
+To set this up, we just run:
+
+
+	% google-authenticator
+
+
+We can choose whether or not we want it to be time-based (recommended).
+
+This shows us a large ascii QR code, the secret key and then gets
+us to enter the code from the app.
+
+Once we have added the code from the app we get our emergency scratch
+codes.
+
+Google authenticator then asks us whether we want to update our
+~/.google-authenticator file.
+
+It also asks us if we want to disallow multiple uses of the same
+authentication token. if we say yes to this it limits us to ONE
+login every 30 seconds. This can increase security but interfere
+with operations/scripting etc.
+
+We can also limit login with rate-limiting.
+
+
+	% cat .google-authenticator
+
+	YWPFTPBI02A56K7A34U45MCGRE " WINDOW SIZE 17 " TOTP_AUTH
+	56201762 20174288 99952005 11572938 20760559
+
+
+You will also see some recovery keys there (same as the emergency
+scratch codes above).
+

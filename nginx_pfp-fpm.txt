@@ -1,0 +1,121 @@
+
+
+
+	    INSTALL/SETUP NGINX AND PGP-FPM ON FREEBSD
+
+
+Nginx is rock solid and easy to configure.
+
+
+	# pkg update
+
+	# pkg install nginx php74
+
+	# cd /usr/local/etc/php
+
+	# ls
+
+As we have no modules installed we only see:
+
+	php-fpm.conf            php-fpm.d/      php.ini-development
+	php-fpm.conf-default    php.conf        php.ini-production
+
+
+To enable these:
+
+	# sysrc php-fpm-enable="YES"
+
+	# sysrc nginx-enable="YES"
+
+	# /usr/local/etc/rc.d/nginx start
+
+	# /usr/local/etc/rc.d/php-fpm start
+
+	# firefox 10.148.86.105
+
+
+And we see the nginx is running page.
+
+So nginx is running, but we need to configure php to run.
+
+First let's add some php extensions:
+
+
+	# php-74-extensions
+
+	# /usr/local/etc/rc.d/php-fpm restart
+
+	# cd /usr/local/etc/php-fpm.d/
+
+	# vi www.conf
+
+		listen = /var/run/php-fpm.sock
+
+		listen.owner = www
+
+		listen.group = www
+
+		listen.mode = 0660
+
+	# /usr/local/etc/rc.d/php-fpm restart
+
+	# ls /var/run/php-fpm
+
+
+PHP-FPM has created the socket (and a pid file).
+
+
+	# cd /usr/local/etc/nginx
+
+	# vi nginx.conf                 # if you like or create a
+					# virtual domain in the .d dir
+
+
+	# mkdir domains && cd domains
+
+	# vi 10.148.86.105.conf
+
+		server {
+			server_name 10.148.86.105;
+			access_log /var/log/nginx/10.148/86.105.access.log;
+			error_log /var/log/nginx/10.148/86.105.error.log;
+			root /usr/local/www/nginx;
+
+			# php config to let nginx talk to php socket
+			location ~ [^/]\.php(/|$) {
+				fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+				if (!-f $document_root$fastcgi_script_name) {
+					return 404;
+				}
+
+				# mitigate https://httpoxy.org/vulnerabilities
+				fastcgi_param HTTP_PROXY "";
+				fastcgi_pass unix:/var/run/php-fpm.sock;
+				fastcgi_index index.php;
+
+				# include the fastcgi_param setting
+				include fastcgi_params;
+
+				# SCRIPT_FILENAME parameter is used for
+				# PHP FPM determining script name
+				fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+			}
+		}
+
+
+	# cd ..
+
+	# vi nginx.conf
+
+And insert the following just before the end of the config file
+(before the closing brace) to include files in the domains directory:
+
+
+			include domains/*.conf;
+		}
+
+
+
+	# /usr/local/etc/rc.d/nginx restart
+
+

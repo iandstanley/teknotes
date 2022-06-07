@@ -1,0 +1,84 @@
+
+
+
+
+		       AUDITING WITH LYNIS
+			  ( cisofy.com )
+
+
+Lynis is a tool for auditing, system hardening and compliance
+testing.
+
+Lynis doesn't by itself make your system more secure but it does
+prove useful in identifying issues and ranking systems on common
+security problems.
+
+Lynis should be used to generate a report that can be used as a
+battle plan to make your system more secure. Lynis runs tests but
+you have to act on those tests to correct the system configuration.
+
+
+
+SUPPORTED OS
+
+Lynis runs on almost all UNIX based systems including: AIX, SOLARIS,
+FreeBSD, HP/UX Linux, MacOS, NetBSD, NixOS, OpenBSD, Solaris and
+others. It even runs on the Raspberry Pi and IoT devices.
+
+
+
+LYNIS SCANNING
+
+Lynis scanning is modular and you can add plugins into it.
+
+Your results are also going to be stored in a logfile (lynis.log).
+
+For enterprise customers there is Lynis Enterprise for which the
+core developers maintain a set of plugins. It is priced reasonably
+($3 per system).
+
+Typically most demonstrations of Lynis are shown without much
+configurationTypically most demonstrations of Lynis are shown without
+much configuration.
+
+You do have the option of disabling or white listing certain tests
+that do not apply to you and your specific system.
+
+Whitelisting is important as when you run Lynis in the future after
+you establish a baseline, on subsequent runs you will not see the
+same warnings that have been deemed irrelevant on your system. There
+are several ways to install Lynis, eg on an Ubuntu fresh install:
+
+
+	$ cd /usr/local/ $ sudo git clone
+	https://github.com/CISofy/lynis.git $ cd lynis
+
+	$ sudo lynis audit system
+
+
+Note:   you can do an 'audit system', a 'remote audit' or even
+'audit dockerfile'.
+
+
+There are different modes for lynis including '--forensics' or a
+'--pentest' (this shows points of interest for pentesting).
+
+
+	$ sudo lynis audi system
+
+
+On our example system our baseline hardening index = 64, running
+264 tests.
+
+The reason why this score might be higher than your base install
+of Ubuntu is that my install uses separate partitions for /, home,
+var, boot, tmp.
+
+Typically Lynis will report as a potential security risk if you
+just have the one partition. A lot of Linux distros just dump
+everything on one partition (/).
+
+Each fail/warning/suggestion comes with a webpage link to a document
+about the issue.
+
+
