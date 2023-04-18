@@ -97,7 +97,7 @@ it.
 	192.168.20.53	freebsdports freebsdports.local 
 	192.168.20.54	opendocs opendocs.local		# openbsd documentation team
 	192.168.20.55	openbsdports openbsdports.local 
-	
+	192.168.20.56	dev.xrds.org.uk corssroads	# crossroads website
 
 	##	TFTP, BOOTP server
 	192.168.20.88 	tftp tftp.local bootp bootp.local	# tftp/bootp server
